@@ -1,0 +1,3 @@
+module.exports=[99322,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(3671);a.n(d("[project]/boss-rent-app/node_modules/next/dist/client/components/builtin/global-error.js <module evaluation>"))},37483,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(3671);a.n(d("[project]/boss-rent-app/node_modules/next/dist/client/components/builtin/global-error.js"))},82810,a=>{"use strict";a.i(99322);var b=a.i(37483);a.n(b)},60787,a=>{a.n(a.i(82810))}];
+
+//# sourceMappingURL=0_oc_next_dist_client_components_builtin_global-error_1smo5_e.js.map

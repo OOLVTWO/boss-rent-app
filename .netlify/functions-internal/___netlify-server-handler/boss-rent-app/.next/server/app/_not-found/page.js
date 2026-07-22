@@ -1,0 +1,13 @@
+var R=require("../../chunks/ssr/[turbopack]_runtime.js")("server/app/_not-found/page.js")
+R.c("server/chunks/ssr/[root-of-the-server]__0x3put3._.js")
+R.c("server/chunks/ssr/0_oc_1aua249._.js")
+R.c("server/chunks/ssr/0_oc_next_dist_esm_build_templates_app-page_1-cn7p9.js")
+R.c("server/chunks/ssr/[root-of-the-server]__0h0vcj3._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__1ycv4f3._.js")
+R.c("server/chunks/ssr/boss-rent-app_src_app_layout_10ba8kg.js")
+R.c("server/chunks/ssr/0_oc_next_dist_client_components_1alyln9._.js")
+R.c("server/chunks/ssr/0_oc_next_dist_client_components_builtin_forbidden_03611je.js")
+R.c("server/chunks/ssr/0_oc_next_dist_client_components_builtin_unauthorized_04mr6lg.js")
+R.c("server/chunks/ssr/boss-rent-app__next-internal_server_app__not-found_page_actions_0zatyq5.js")
+R.m(1684)
+module.exports=R.m(1684).exports

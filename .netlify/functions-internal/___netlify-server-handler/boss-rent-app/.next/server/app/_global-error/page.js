@@ -1,0 +1,10 @@
+var R=require("../../chunks/ssr/[turbopack]_runtime.js")("server/app/_global-error/page.js")
+R.c("server/chunks/ssr/[root-of-the-server]__1d1hpeq._.js")
+R.c("server/chunks/ssr/0_oc_1aua249._.js")
+R.c("server/chunks/ssr/0_oc_next_dist_esm_build_templates_app-page_15p4mhz.js")
+R.c("server/chunks/ssr/[root-of-the-server]__0h0vcj3._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__1ycv4f3._.js")
+R.c("server/chunks/ssr/0_oc_next_dist_client_components_builtin_global-error_1smo5_e.js")
+R.c("server/chunks/ssr/boss-rent-app__next-internal_server_app__global-error_page_actions_0gelutj.js")
+R.m(67500)
+module.exports=R.m(67500).exports

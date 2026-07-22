@@ -1,0 +1,3 @@
+module.exports=[11810,a=>{"use strict";a.s(["compressImage",0,function(a,b=800,c=.7){return new Promise((d,e)=>{if(!a||!a.type.startsWith("image/"))return e(Error("File harus berupa gambar (JPG, PNG, WEBP)."));let f=new FileReader;f.onerror=()=>e(Error("Gagal membaca file gambar dari perangkat.")),f.onload=a=>{let f=new Image;f.onerror=()=>e(Error("Format gambar tidak dapat dibaca.")),f.onload=()=>{let a=document.createElement("canvas"),e=f.width,g=f.height;e>b&&(g=Math.round(g*b/e),e=b),a.width=e,a.height=g,a.getContext("2d").drawImage(f,0,0,e,g),d(a.toDataURL("image/jpeg",c))},f.src=a.target.result},f.readAsDataURL(a)})}])}];
+
+//# sourceMappingURL=boss-rent-app_src_lib_imageCompressor_1cyc8yz.js.map
