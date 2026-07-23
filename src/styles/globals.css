@@ -2324,8 +2324,8 @@ button, a, input, select, textarea {
 }
 
 .bento-metric-pill {
-  border-radius: 18px;
-  padding: 16px 20px;
+  border-radius: var(--radius-full);
+  padding: 16px 26px;
   display: flex;
   flex-direction: column;
   gap: 8px;
