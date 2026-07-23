@@ -2324,36 +2324,34 @@ button, a, input, select, textarea {
 }
 
 .bento-metric-pill {
-  background: var(--bg-elevated);
-  border: 1px solid var(--bg-border);
-  border-radius: var(--radius-md);
-  padding: 14px 16px;
+  border-radius: 18px;
+  padding: 16px 20px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: all var(--transition-fast);
+  transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
 }
 
 .bento-metric-pill:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-  background: var(--bg-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .bento-metric-pill.available {
-  background: var(--bg-elevated);
-  border: 1px solid var(--bg-border);
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.35);
 }
 
 .bento-metric-pill.rented {
-  background: var(--bg-elevated);
-  border: 1px solid var(--bg-border);
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.35);
 }
 
 .bento-metric-pill.maintenance {
-  background: var(--bg-elevated);
-  border: 1px solid var(--bg-border);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
 .bento-metric-pill .pill-head {
