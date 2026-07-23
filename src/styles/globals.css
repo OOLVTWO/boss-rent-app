@@ -2821,3 +2821,120 @@ button, a, input, select, textarea {
   min-width: 150px;
 }
 
+/* =========================================
+   BENTO HERO CARD RESPONSIVE STYLING
+   ========================================= */
+.bento-hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bento-hero-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  background: var(--bg-elevated);
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--bg-border);
+}
+
+.bento-stat-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bento-stat-sub.expense {
+  border-left: 1px solid var(--bg-border);
+  padding-left: 16px;
+}
+
+.bento-stat-sub .sub-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.bento-stat-sub .sub-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bento-stat-sub .sub-icon.income-icon {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22C55E;
+}
+
+.bento-stat-sub .sub-icon.expense-icon {
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+}
+
+.bento-stat-sub .sub-val {
+  font-size: 18px;
+  font-weight: 800;
+  padding-left: 34px;
+}
+
+.bento-stat-sub .sub-val.income-val {
+  color: #22C55E;
+}
+
+.bento-stat-sub .sub-val.expense-val {
+  color: #EF4444;
+}
+
+@media (max-width: 768px) {
+  .bento-hero-top {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .bento-hero-top .tx-status-pill {
+    width: 100% !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .bento-hero-value-wrap {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .bento-hero-value {
+    font-size: 28px !important;
+  }
+
+  .bento-hero-stats {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 12px !important;
+  }
+
+  .bento-stat-sub.expense {
+    border-left: none !important;
+    border-top: 1px solid var(--bg-border) !important;
+    padding-left: 0 !important;
+    padding-top: 10px !important;
+  }
+
+  .bento-stat-sub .sub-val {
+    padding-left: 34px !important;
+    font-size: 16px !important;
+  }
+}
+

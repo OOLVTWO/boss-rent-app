@@ -124,25 +124,25 @@ export default function DashboardClient({ transactions, vehicles }) {
             </div>
           </div>
 
-          <div className="bento-hero-stats" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', background: 'var(--bg-elevated)', padding: '14px 16px', borderRadius: '12px', border: '1px solid var(--bg-border)' }}>
-            <div className="bento-stat-sub income" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div className="sub-head" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>
-                <div className="sub-icon" style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'rgba(34, 197, 94, 0.15)', color: '#22C55E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <i className="fa-solid fa-arrow-down-left" style={{ fontSize: '11px' }}></i>
+          <div className="bento-hero-stats">
+            <div className="bento-stat-sub income">
+              <div className="sub-head">
+                <div className="sub-icon income-icon">
+                  <i className="fa-solid fa-arrow-down-left"></i>
                 </div>
                 <span>Pemasukan Kotor (Sewa)</span>
               </div>
-              <div className="sub-val" style={{ fontSize: '18px', fontWeight: 800, color: '#22C55E', paddingLeft: '34px' }}>{formatRupiah(totalRevenue)}</div>
+              <div className="sub-val income-val">{formatRupiah(totalRevenue)}</div>
             </div>
 
-            <div className="bento-stat-sub expense" style={{ display: 'flex', flexDirection: 'column', gap: '4px', borderLeft: '1px solid var(--bg-border)', paddingLeft: '16px' }}>
-              <div className="sub-head" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>
-                <div className="sub-icon" style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <i className="fa-solid fa-arrow-up-right" style={{ fontSize: '11px' }}></i>
+            <div className="bento-stat-sub expense">
+              <div className="sub-head">
+                <div className="sub-icon expense-icon">
+                  <i className="fa-solid fa-arrow-up-right"></i>
                 </div>
                 <span>Pengeluaran Operasional</span>
               </div>
-              <div className="sub-val" style={{ fontSize: '18px', fontWeight: 800, color: '#EF4444', paddingLeft: '34px' }}>{formatRupiah(totalExpenses)}</div>
+              <div className="sub-val expense-val">{formatRupiah(totalExpenses)}</div>
             </div>
           </div>
         </div>
