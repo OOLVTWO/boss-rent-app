@@ -44,6 +44,31 @@ const COLOR_OPTIONS = [
   { hex: '#EC4899', label: 'Pink' },
 ];
 
+const DEFAULT_STORAGE_PHOTOS = [
+  { id: 'logo-company', title: 'Company Official Logo (logoCompany.png)', url: '/images/logoCompany.png', date: 'System Asset' },
+  { id: 'logo-brand', title: 'Brand Logo Badge (logo.png)', url: '/images/logo.png', date: 'System Asset' },
+  { id: '1', title: 'Customer Bali Scooter', url: '/images/boss_rent_customer_bali.png', date: 'Bento Asset' },
+  { id: '2', title: 'Mint Green Vespa Sprint Fleet', url: '/images/boss_rent_bento_1.png', date: 'Bento Asset' },
+  { id: '3', title: 'Fleet Lineup Serviced & Clean', url: '/images/boss_rent_fleet_lineup.png', date: 'Bento Asset' },
+  { id: '4', title: 'Pererenan Beach Ride & Sunset', url: '/images/boss_rent_bento_2.png', date: 'Bento Asset' },
+  { id: '5', title: 'Key Handover & Villa Delivery', url: '/images/boss_rent_bento_3.png', date: 'Bento Asset' },
+  { id: '6', title: 'Canggu Coastal Road Exploring', url: '/images/boss_rent_bento_4.png', date: 'Bento Asset' },
+  { id: '7', title: 'Scenic Countryside Rice Paddies', url: '/images/boss_rent_bento_5.png', date: 'Bento Asset' },
+  { id: '8', title: 'Sanitized Clean Helmets Service', url: '/images/boss_rent_bento_6.png', date: 'Bento Asset' },
+  { id: '9', title: '24/7 Roadside Assistance Bali', url: '/images/boss_rent_bento_7.png', date: 'Bento Asset' },
+  { id: '10', title: 'Red Honda Scoopy Sunset Edition', url: '/images/boss_rent_bento_8.png', date: 'Bento Asset' },
+  { id: '11', title: 'Yamaha NMAX 155 Maxi Scooter', url: '/images/boss_rent_bento_9.png', date: 'Bento Asset' },
+  { id: '12', title: 'Honda PCX 160 Touring Edition', url: '/images/boss_rent_bento_10.png', date: 'Bento Asset' },
+  { id: '13', title: 'Yamaha Aerox Cyber City Sport', url: '/images/boss_rent_bento_11.png', date: 'Bento Asset' },
+  { id: '14', title: 'Helmet Handover Villa Delivery', url: '/images/boss_rent_helmet_handover.png', date: 'Bento Asset' },
+  { id: 'v-vespa', title: 'Vehicle Model: Vespa Sprint 150', url: '/images/vehicle_vespa.png', date: 'Fleet Model Asset' },
+  { id: 'v-nmax', title: 'Vehicle Model: Yamaha NMAX 155', url: '/images/vehicle_nmax.png', date: 'Fleet Model Asset' },
+  { id: 'v-pcx', title: 'Vehicle Model: Honda PCX 160', url: '/images/vehicle_pcx.png', date: 'Fleet Model Asset' },
+  { id: 'v-scoopy', title: 'Vehicle Model: Honda Scoopy 110', url: '/images/vehicle_scoopy.png', date: 'Fleet Model Asset' },
+  { id: 'v-vario', title: 'Vehicle Model: Honda Vario 160', url: '/images/vehicle_vario.png', date: 'Fleet Model Asset' },
+  { id: 'v-aerox', title: 'Vehicle Model: Yamaha Aerox 155', url: '/images/vehicle_aerox.png', date: 'Fleet Model Asset' },
+];
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('storage'); // 'storage', 'payment', 'security', 'business', 'wacustom'
   const [alert, setAlert] = useState(null);
@@ -91,30 +116,7 @@ export default function SettingsPage() {
       { url: '/images/boss_rent_bento_2.png', title: 'Pererenan Beach Exploring', tag: 'Canggu Area', icon: 'fa-solid fa-umbrella-beach' },
       { url: '/images/boss_rent_bento_3.png', title: 'Easy Key Handover Service', tag: 'Express Pickup', icon: 'fa-solid fa-key' }
     ],
-    uploadedStoragePhotos: [
-      { id: 'logo-company', title: 'Company Official Logo (logoCompany.png)', url: '/images/logoCompany.png', date: 'System Asset' },
-      { id: 'logo-brand', title: 'Brand Logo Badge (logo.png)', url: '/images/logo.png', date: 'System Asset' },
-      { id: '1', title: 'Customer Bali Scooter', url: '/images/boss_rent_customer_bali.png', date: 'Bento Asset' },
-      { id: '2', title: 'Mint Green Vespa Sprint Fleet', url: '/images/boss_rent_bento_1.png', date: 'Bento Asset' },
-      { id: '3', title: 'Fleet Lineup Serviced & Clean', url: '/images/boss_rent_fleet_lineup.png', date: 'Bento Asset' },
-      { id: '4', title: 'Pererenan Beach Ride & Sunset', url: '/images/boss_rent_bento_2.png', date: 'Bento Asset' },
-      { id: '5', title: 'Key Handover & Villa Delivery', url: '/images/boss_rent_bento_3.png', date: 'Bento Asset' },
-      { id: '6', title: 'Canggu Coastal Road Exploring', url: '/images/boss_rent_bento_4.png', date: 'Bento Asset' },
-      { id: '7', title: 'Scenic Countryside Rice Paddies', url: '/images/boss_rent_bento_5.png', date: 'Bento Asset' },
-      { id: '8', title: 'Sanitized Clean Helmets Service', url: '/images/boss_rent_bento_6.png', date: 'Bento Asset' },
-      { id: '9', title: '24/7 Roadside Assistance Bali', url: '/images/boss_rent_bento_7.png', date: 'Bento Asset' },
-      { id: '10', title: 'Red Honda Scoopy Sunset Edition', url: '/images/boss_rent_bento_8.png', date: 'Bento Asset' },
-      { id: '11', title: 'Yamaha NMAX 155 Maxi Scooter', url: '/images/boss_rent_bento_9.png', date: 'Bento Asset' },
-      { id: '12', title: 'Honda PCX 160 Touring Edition', url: '/images/boss_rent_bento_10.png', date: 'Bento Asset' },
-      { id: '13', title: 'Yamaha Aerox Cyber City Sport', url: '/images/boss_rent_bento_11.png', date: 'Bento Asset' },
-      { id: '14', title: 'Helmet Handover Villa Delivery', url: '/images/boss_rent_helmet_handover.png', date: 'Bento Asset' },
-      { id: 'v-vespa', title: 'Vehicle Model: Vespa Sprint 150', url: '/images/vehicle_vespa.png', date: 'Fleet Model Asset' },
-      { id: 'v-nmax', title: 'Vehicle Model: Yamaha NMAX 155', url: '/images/vehicle_nmax.png', date: 'Fleet Model Asset' },
-      { id: 'v-pcx', title: 'Vehicle Model: Honda PCX 160', url: '/images/vehicle_pcx.png', date: 'Fleet Model Asset' },
-      { id: 'v-scoopy', title: 'Vehicle Model: Honda Scoopy 110', url: '/images/vehicle_scoopy.png', date: 'Fleet Model Asset' },
-      { id: 'v-vario', title: 'Vehicle Model: Honda Vario 160', url: '/images/vehicle_vario.png', date: 'Fleet Model Asset' },
-      { id: 'v-aerox', title: 'Vehicle Model: Yamaha Aerox 155', url: '/images/vehicle_aerox.png', date: 'Fleet Model Asset' },
-    ],
+    uploadedStoragePhotos: DEFAULT_STORAGE_PHOTOS,
     faqs: [
       {
         q: 'What documents are required to rent a scooter at Boss Rent Pererenan?',
@@ -608,9 +610,12 @@ export default function SettingsPage() {
     }
   };
 
-  const showAlert = (message, type = 'success') => {
-    setAlert({ message, type });
-    setTimeout(() => setAlert(null), 4000);
+  const showAlert = (message, type = 'success', title = '') => {
+    setAlert({
+      message,
+      type,
+      title: title || (type === 'danger' ? 'Pemberitahuan System Error' : 'Berhasil Diperbarui ✓')
+    });
   };
 
   // Fetch DB Statistics
@@ -642,10 +647,20 @@ export default function SettingsPage() {
     fetchStats();
     setPaymentMethodsState(getPaymentMethods());
 
-    // Load business settings from local storage if available
+    // Load business settings from local storage if available, and merge all default storage photos
     try {
       const savedBiz = localStorage.getItem('boss_rent_biz_settings');
-      if (savedBiz) setBizForm(JSON.parse(savedBiz));
+      if (savedBiz) {
+        const parsed = JSON.parse(savedBiz);
+        const existingUrls = new Set((parsed.uploadedStoragePhotos || []).map(p => p.url));
+        const missingDefaults = DEFAULT_STORAGE_PHOTOS.filter(dp => !existingUrls.has(dp.url));
+        const mergedStorage = [...(parsed.uploadedStoragePhotos || []), ...missingDefaults];
+
+        setBizForm({
+          ...parsed,
+          uploadedStoragePhotos: mergedStorage
+        });
+      }
     } catch {
       // ignore
     }
@@ -759,41 +774,71 @@ export default function SettingsPage() {
         <p>Kelola koneksi database, metode pembayaran, keamanan akun, dan konfigurasi rental</p>
       </div>
 
-      {/* FLOATING TOAST POP-UP NOTIFICATION ALERT */}
+      {/* INTERACTIVE MODAL NOTIFICATION POP-UP WITH OK BUTTON */}
       {alert && (
-        <div style={{
-          position: 'fixed',
-          top: '24px',
-          right: '24px',
-          zIndex: 99999,
-          background: alert.type === 'danger' ? '#EF4444' : '#0F172A',
-          color: '#FFFFFF',
-          padding: '16px 22px',
-          borderRadius: '14px',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3)',
-          border: '2px solid var(--brand-primary)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          maxWidth: '460px',
-          animation: 'fadeIn 0.3s ease-out'
-        }}>
-          <div style={{ fontSize: '22px', color: alert.type === 'danger' ? '#FFF' : '#22C55E' }}>
-            <i className={alert.type === 'danger' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-check'}></i>
-          </div>
-          <div style={{ flex: 1, fontSize: '13px', fontWeight: 700, lineHeight: 1.45 }}>
-            {alert.message}
-          </div>
-          <button
-            onClick={() => setAlert(null)}
-            style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FFF', borderRadius: '50%', width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '12px', fontWeight: 800 }}
+        <div
+          className="modal-overlay"
+          style={{ zIndex: 999999, background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(5px)' }}
+          onClick={() => setAlert(null)}
+        >
+          <div
+            className="modal modal-sm"
+            onClick={e => e.stopPropagation()}
+            style={{
+              textAlign: 'center',
+              padding: '28px 24px',
+              borderRadius: '20px',
+              border: `2px solid ${alert.type === 'danger' ? '#EF4444' : 'var(--brand-primary)'}`,
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
+              background: '#0F172A',
+              animation: 'fadeIn 0.25s ease-out'
+            }}
           >
-            ✕
-          </button>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: alert.type === 'danger' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)',
+              border: `2px solid ${alert.type === 'danger' ? '#EF4444' : '#22C55E'}`,
+              color: alert.type === 'danger' ? '#EF4444' : '#22C55E',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '32px',
+              margin: '0 auto 16px auto',
+              boxShadow: `0 0 24px ${alert.type === 'danger' ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`
+            }}>
+              <i className={alert.type === 'danger' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-check'}></i>
+            </div>
+
+            <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#F8FAFC', margin: '0 0 8px 0' }}>
+              {alert.title || (alert.type === 'danger' ? 'Pemberitahuan System Error' : 'Berhasil Diperbarui ✓')}
+            </h3>
+
+            <p style={{ fontSize: '13.5px', color: '#CBD5E1', lineHeight: 1.5, marginBottom: '24px' }}>
+              {alert.message}
+            </p>
+
+            <button
+              type="button"
+              className="btn btn-primary btn-block"
+              onClick={() => setAlert(null)}
+              style={{
+                padding: '12px',
+                fontSize: '14px',
+                fontWeight: 800,
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}
+            >
+              <i className="fa-solid fa-check"></i> OK, Selesai
+            </button>
+          </div>
         </div>
       )}
-
-      {alert && <div className={`alert alert-${alert.type}`} style={{ marginBottom: '20px' }}>{alert.message}</div>}
 
       {/* Scrollable Tabs Chips / Horizontal Pills Bar */}
       <div className="scrollable-tabs-bar">
