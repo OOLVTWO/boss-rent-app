@@ -2660,3 +2660,36 @@ button, a, input, select, textarea {
   }
 }
 
+/* =========================================
+   SETTINGS RESPONSIVE BRAND LOGO GRID
+   ========================================= */
+.settings-logo-grid {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+@media (max-width: 600px) {
+  .settings-logo-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .settings-logo-preview-box {
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 200px !important;
+  }
+
+  .settings-logo-upload-wrap {
+    width: 100% !important;
+  }
+
+  .settings-logo-upload-wrap .btn {
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-content: center !important;
+  }
+}
+

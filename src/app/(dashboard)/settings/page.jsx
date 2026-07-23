@@ -1537,24 +1537,24 @@ export default function SettingsPage() {
               {cmsSubTab === 'profile' && (
                 <div>
                   {/* Editable Brand Logo Manager Card */}
-                  <div style={{ background: 'var(--bg-elevated)', padding: '16px', borderRadius: '12px', border: '1px solid var(--bg-border)', marginBottom: '20px' }}>
-                    <label className="form-label" style={{ fontSize: '13px', fontWeight: 800, color: 'var(--brand-primary-light)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ background: 'var(--bg-elevated)', padding: '16px', borderRadius: '14px', border: '1px solid var(--bg-border)', marginBottom: '20px' }}>
+                    <label className="form-label" style={{ fontSize: '13px', fontWeight: 800, color: 'var(--brand-primary-light)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <i className="fa-solid fa-image"></i> Logo Brand Perusahaan (Tampil di Sidebar, Header Admin & Web Customer)
                     </label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '16px', alignItems: 'center' }}>
-                      <div style={{ background: '#FFF', padding: '8px', borderRadius: '8px', border: '1px solid var(--bg-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <img src={bizForm.logoUrl || '/images/logoCompany.png'} alt="Logo Preview" style={{ height: '54px', width: 'auto', objectFit: 'contain' }} />
+                    <div className="settings-logo-grid">
+                      <div className="settings-logo-preview-box" style={{ background: '#FFF', padding: '10px', borderRadius: '10px', border: '1px solid var(--bg-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img src={bizForm.logoUrl || '/images/logoCompany.png'} alt="Logo Preview" style={{ maxHeight: '56px', maxWidth: '100%', width: 'auto', objectFit: 'contain' }} />
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', width: 'fit-content' }}>
-                          <i className="fa-solid fa-cloud-arrow-up" style={{ color: 'var(--brand-primary)' }}></i>
-                          <span>Upload Logo Baru Dari HP / Laptop</span>
+                      <div className="settings-logo-upload-wrap" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px 16px', width: '100%' }}>
+                          <i className="fa-solid fa-cloud-arrow-up" style={{ color: 'var(--brand-primary)', fontSize: '15px' }}></i>
+                          <span style={{ fontWeight: 700 }}>Upload Logo Baru Dari HP / Laptop</span>
                           <input type="file" accept="image/*" onChange={handleLogoFileUpload} style={{ display: 'none' }} />
                         </label>
                         <input
                           type="text"
                           className="form-control"
-                          style={{ fontSize: '11px' }}
+                          style={{ fontSize: '11.5px', width: '100%' }}
                           placeholder="URL / Path Logo Custom (/images/logoCompany.png atau data:image/...)"
                           value={bizForm.logoUrl || ''}
                           onChange={e => setBizForm(p => ({ ...p, logoUrl: e.target.value }))}
@@ -1565,7 +1565,7 @@ export default function SettingsPage() {
 
                   <div className="form-group">
                     <label className="form-label" htmlFor="biz-name">
-                      <i className="fa-solid fa-building" style={{ marginRight: '6px' }}></i> Nama Rental
+                      <i className="fa-solid fa-building" style={{ marginRight: '6px', color: 'var(--brand-primary)' }}></i> Nama Rental / Perusahaan <span className="required">*</span>
                     </label>
                     <input
                       id="biz-name"
@@ -1579,7 +1579,7 @@ export default function SettingsPage() {
 
                   <div className="form-group">
                     <label className="form-label" htmlFor="biz-location">
-                      <i className="fa-solid fa-location-dot" style={{ marginRight: '6px' }}></i> Lokasi Alamat Store
+                      <i className="fa-solid fa-location-dot" style={{ marginRight: '6px', color: 'var(--brand-primary)' }}></i> Lokasi Alamat Store / Garasi
                     </label>
                     <input
                       id="biz-location"
@@ -1606,7 +1606,7 @@ export default function SettingsPage() {
                     </div>
                     <div className="form-group">
                       <label className="form-label" htmlFor="biz-ig-url">
-                        <i className="fa-solid fa-link" style={{ marginRight: '6px' }}></i> Instagram Profile Link
+                        <i className="fa-solid fa-link" style={{ marginRight: '6px', color: '#3B82F6' }}></i> Instagram Profile Link
                       </label>
                       <input
                         id="biz-ig-url"
@@ -1635,7 +1635,7 @@ export default function SettingsPage() {
                   <div className="form-row cols-2">
                     <div className="form-group">
                       <label className="form-label" htmlFor="biz-phone">
-                        <i className="fa-solid fa-phone" style={{ marginRight: '6px' }}></i> WhatsApp Admin
+                        <i className="fa-solid fa-phone" style={{ marginRight: '6px', color: '#22C55E' }}></i> No. WhatsApp Admin / Hotline
                       </label>
                       <input
                         id="biz-phone"
@@ -1647,7 +1647,7 @@ export default function SettingsPage() {
                     </div>
                     <div className="form-group">
                       <label className="form-label" htmlFor="biz-deposit">
-                        <i className="fa-solid fa-vault" style={{ marginRight: '6px' }}></i> Default Deposit (Rp)
+                        <i className="fa-solid fa-vault" style={{ marginRight: '6px', color: '#F59E0B' }}></i> Default Deposit (Rp)
                       </label>
                       <input
                         id="biz-deposit"
