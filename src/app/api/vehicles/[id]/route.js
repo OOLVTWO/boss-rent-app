@@ -31,12 +31,27 @@ export async function PUT(request, { params }) {
   if ('current_km' in updateData) updateData.current_km = parseInt(updateData.current_km) || 0;
   if ('last_service_km' in updateData) updateData.last_service_km = parseInt(updateData.last_service_km) || 0;
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('vehicles')
     .update(updateData)
     .eq('id', id)
     .select()
     .single();
+
+  if (error && (error.message.includes('Could not find') || error.message.includes('column') || error.message.includes('schema cache') || error.code === 'PGRST204')) {
+    console.warn('Fallback vehicle update without unmigrated columns:', error.message);
+    const { owner_type: _ot, owner_name: _on, owner_contact: _oc, revenue_share_percentage: _rsp, purchase_date: _pd, purchase_price: _pp, image_url: _i, current_km: _ck, ...fallbackUpdateData } = updateData;
+
+    const retry = await supabase
+      .from('vehicles')
+      .update(fallbackUpdateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    data = retry.data;
+    error = retry.error;
+  }
 
   if (error) {
     console.error('Update vehicle error:', error);

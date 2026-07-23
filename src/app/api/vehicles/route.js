@@ -50,7 +50,7 @@ export async function POST(request) {
     .select()
     .single();
 
-  if (error && (error.message.includes('Could not find the') || error.message.includes('schema cache'))) {
+  if (error && (error.message.includes('Could not find') || error.message.includes('column') || error.message.includes('schema cache') || error.code === 'PGRST204')) {
     console.warn('Fallback vehicle insert without unmigrated columns:', error.message);
     const { owner_type: _ot, owner_name: _on, owner_contact: _oc, revenue_share_percentage: _rsp, purchase_date: _pd, purchase_price: _pp, image_url: _i, current_km: _ck, ...fallbackPayload } = payload;
 
