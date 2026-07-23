@@ -582,8 +582,7 @@ export default function MaintenancePage() {
           </div>
           {activeTab === 'diagnostics' && (
             <select
-              className="form-control"
-              style={{ width: 'auto' }}
+              className="form-control filter-select"
               value={filterStatus}
               onChange={e => setFilterStatus(e.target.value)}
             >

@@ -411,8 +411,7 @@ export default function ExpensesPage() {
             />
           </div>
           <select
-            className="form-control"
-            style={{ width: 'auto' }}
+            className="form-control filter-select"
             value={categoryFilter}
             onChange={e => setCategoryFilter(e.target.value)}
           >

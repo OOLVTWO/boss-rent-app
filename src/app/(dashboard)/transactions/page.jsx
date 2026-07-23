@@ -1524,8 +1524,7 @@ export default function TransactionsPage() {
             />
           </div>
           <select
-            className="form-control"
-            style={{ width: 'auto' }}
+            className="form-control filter-select"
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
           >

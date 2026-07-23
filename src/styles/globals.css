@@ -517,15 +517,44 @@ a:hover { color: var(--brand-primary-light); }
 
 .form-control {
   width: 100%;
-  padding: var(--space-3) var(--space-4);
+  height: 44px;
+  padding: 10px 16px;
   background: var(--bg-elevated);
   border: 1px solid var(--bg-border);
   border-radius: var(--radius-md);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 13.5px;
   font-family: 'Inter', sans-serif;
   transition: all var(--transition-fast);
   outline: none;
+  box-sizing: border-box;
+}
+
+select.form-control {
+  height: 44px;
+  padding-right: 38px;
+  border-radius: var(--radius-md);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: var(--bg-elevated);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239898B0'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px 16px;
+  cursor: pointer;
+}
+
+.filter-select {
+  width: 190px;
+  min-width: 160px;
+  height: 44px;
+  border-radius: var(--radius-md);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 80px;
 }
 
 .form-control:focus {
@@ -541,6 +570,7 @@ a:hover { color: var(--brand-primary-light); }
 .form-control option {
   background: var(--bg-card);
   color: var(--text-primary);
+  padding: 8px;
 }
 
 /* Custom Date Input Calendar Indicator styling */
@@ -2604,8 +2634,13 @@ button, a, input, select, textarea {
   .search-bar .form-control,
   .filter-bar select,
   .filter-bar input,
-  .filter-bar button {
+  .filter-bar button,
+  .filter-select {
     width: 100% !important;
+    min-width: 100% !important;
+    height: 44px !important;
+    border-radius: var(--radius-md) !important;
+    box-sizing: border-box !important;
   }
 
   .form-row.cols-2,

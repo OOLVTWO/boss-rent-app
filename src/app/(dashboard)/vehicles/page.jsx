@@ -873,8 +873,7 @@ export default function VehiclesPage() {
           </div>
           <select
             id="vehicle-status-filter"
-            className="form-control"
-            style={{ width: 'auto' }}
+            className="form-control filter-select"
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
           >
