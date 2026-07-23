@@ -38,7 +38,7 @@ export async function POST(request) {
     owner_name: body.owner_name || '',
     owner_contact: body.owner_contact || '',
     revenue_share_percentage: parseInt(body.revenue_share_percentage) || 70,
-    purchase_date: body.purchase_date || null,
+    purchase_date: (body.purchase_date && String(body.purchase_date).trim() !== '') ? body.purchase_date : null,
     purchase_price: parseFloat(body.purchase_price) || 0,
   };
 

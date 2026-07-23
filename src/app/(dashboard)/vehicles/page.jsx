@@ -439,6 +439,7 @@ function VehicleModal({ isOpen, onClose, onSubmit, editData, onOpenAdjuster }) {
       current_km:     safeInt(form.current_km),
       revenue_share_percentage: safeInt(form.revenue_share_percentage) || 70,
       purchase_price: safeInt(form.purchase_price),
+      purchase_date: (form.purchase_date && String(form.purchase_date).trim() !== '') ? form.purchase_date : null,
     });
     setLoading(false);
   };

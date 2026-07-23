@@ -30,6 +30,9 @@ export async function PUT(request, { params }) {
   if ('year' in updateData) updateData.year = parseInt(updateData.year) || new Date().getFullYear();
   if ('current_km' in updateData) updateData.current_km = parseInt(updateData.current_km) || 0;
   if ('last_service_km' in updateData) updateData.last_service_km = parseInt(updateData.last_service_km) || 0;
+  if ('purchase_date' in updateData) {
+    updateData.purchase_date = (updateData.purchase_date && String(updateData.purchase_date).trim() !== '') ? updateData.purchase_date : null;
+  }
 
   let { data, error } = await supabase
     .from('vehicles')
