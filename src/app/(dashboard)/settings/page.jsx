@@ -764,7 +764,7 @@ export default function SettingsPage() {
 
       {/* TAB: TEMPLATE WHATSAPP CUSTOM (INVOICE & REMINDER) */}
       {activeTab === 'wacustom' && (
-        <div style={{ maxWidth: '820px' }}>
+        <div style={{ maxWidth: '100%' }}>
           <div className="card">
             {/* Header & Sub-tabs */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
@@ -1086,7 +1086,7 @@ export default function SettingsPage() {
 
       {/* TAB 3: KEAMANAN & PASSWORD */}
       {activeTab === 'security' && (
-        <div style={{ maxWidth: '600px' }}>
+        <div style={{ maxWidth: '100%' }}>
           <div className="card">
             <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '6px' }}>
               <i className="fa-solid fa-lock" style={{ marginRight: '8px', color: 'var(--brand-primary-light)' }}></i>
@@ -1152,7 +1152,7 @@ export default function SettingsPage() {
 
       {/* TAB 4: PENGATURAN OPERASIONAL RENTAL & CMS WEB PUBLIK */}
       {activeTab === 'business' && (
-        <div style={{ maxWidth: '720px' }}>
+        <div style={{ maxWidth: '100%' }}>
           <div className="card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
               <div>
@@ -1393,9 +1393,18 @@ export default function SettingsPage() {
               {/* SUB-TAB 3: GALERI FOTO WEB SHOWCASE */}
               {cmsSubTab === 'gallery' && (
                 <div>
+                  <div style={{ background: 'var(--bg-elevated)', padding: '14px 18px', borderRadius: '10px', border: '1px solid var(--bg-border)', marginBottom: '16px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--brand-primary-light)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <i className="fa-solid fa-circle-info"></i> Konsep Galeri Foto Landing Page (5 Foto Default + See More)
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                      Sistem menampilkan <strong>5 foto teratas (Foto #1 s/d #5)</strong> secara default pada halaman utama agar tampilan mobile tetap ringkas dan bebas lag. Jika pelanggan menekan tombol <strong>"See More Photos"</strong>, seluruh foto selebihnya (Foto #6 dst.) akan langsung terbuka secara otomatis.
+                    </div>
+                  </div>
+
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                     <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--brand-primary-light)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <i className="fa-solid fa-images"></i> Kelola Foto Showcase Web Pelanggan
+                      <i className="fa-solid fa-images"></i> Daftar Foto Showcase Landing Page ({bizForm.galleryPhotos?.length || 0} Foto Total)
                     </h4>
                     <button type="button" className="btn btn-secondary btn-sm" onClick={handleAddGalleryPhoto}>
                       <i className="fa-solid fa-plus" style={{ marginRight: '4px' }}></i> Tambah Foto Baru
@@ -1404,30 +1413,52 @@ export default function SettingsPage() {
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {(bizForm.galleryPhotos || []).map((photo, idx) => (
-                      <div key={idx} style={{ background: 'var(--bg-elevated)', padding: '14px', borderRadius: '10px', border: '1px solid var(--bg-border)', display: 'grid', gridTemplateColumns: '80px 1fr auto', gap: '14px', alignItems: 'center' }}>
-                        <img src={photo.url} alt={photo.title} style={{ width: '80px', height: '60px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--bg-border)' }} />
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <input
-                            type="text"
-                            className="form-control"
-                            style={{ fontSize: '12px' }}
-                            placeholder="Judul Foto (Title)..."
-                            value={photo.title}
-                            onChange={e => handleUpdateGalleryPhoto(idx, 'title', e.target.value)}
-                          />
-                          <input
-                            type="text"
-                            className="form-control"
-                            style={{ fontSize: '11px' }}
-                            placeholder="URL / Path Foto (/images/...)"
-                            value={photo.url}
-                            onChange={e => handleUpdateGalleryPhoto(idx, 'url', e.target.value)}
-                          />
+                      <div key={idx} style={{ background: 'var(--bg-elevated)', padding: '16px', borderRadius: '12px', border: idx < 5 ? '1px solid var(--brand-primary)' : '1px solid var(--bg-border)', display: 'grid', gridTemplateColumns: '90px 1fr auto', gap: '16px', alignItems: 'center' }}>
+                        <div style={{ position: 'relative' }}>
+                          <img src={photo.url} alt={photo.title} style={{ width: '90px', height: '68px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--bg-border)' }} />
+                          <span style={{ position: 'absolute', bottom: '4px', left: '4px', background: 'rgba(15,23,42,0.85)', color: '#FFF', fontSize: '10px', padding: '2px 6px', fontWeight: 800, borderRadius: '4px' }}>
+                            #{idx + 1}
+                          </span>
                         </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {idx < 5 ? (
+                              <span style={{ fontSize: '10px', background: '#22C55E', color: '#FFF', padding: '3px 8px', fontWeight: 800, borderRadius: '4px' }}>
+                                📌 [1-5] Tampil Default Halaman Utama
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: '10px', background: '#3B82F6', color: '#FFF', padding: '3px 8px', fontWeight: 800, borderRadius: '4px' }}>
+                                👁️ [#{idx + 1}] Tampil saat Customer Klik "See More"
+                              </span>
+                            )}
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            <input
+                              type="text"
+                              className="form-control"
+                              style={{ fontSize: '12px' }}
+                              placeholder="Judul Foto (Title)..."
+                              value={photo.title}
+                              onChange={e => handleUpdateGalleryPhoto(idx, 'title', e.target.value)}
+                            />
+                            <input
+                              type="text"
+                              className="form-control"
+                              style={{ fontSize: '11px' }}
+                              placeholder="URL / Path Foto (/images/...)"
+                              value={photo.url}
+                              onChange={e => handleUpdateGalleryPhoto(idx, 'url', e.target.value)}
+                            />
+                          </div>
+                        </div>
+
                         <button
                           type="button"
                           onClick={() => handleDeleteGalleryPhoto(idx)}
-                          style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}
+                          style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#EF4444', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}
+                          title="Hapus Foto Ini"
                         >
                           <i className="fa-solid fa-trash-can"></i>
                         </button>
