@@ -274,10 +274,19 @@ export default function ReportsPage() {
                         </div>
                       </td>
                       <td>
-                        <span className="tx-info-pill" style={{ color: '#3B82F6', borderColor: 'rgba(59, 130, 246, 0.3)', background: 'rgba(59, 130, 246, 0.1)', padding: '4px 10px' }}>
-                          <i className="fa-solid fa-clock" style={{ fontSize: '10px', marginRight: '5px' }}></i>
-                          {tx.duration_days} Hari
-                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '130px' }}>
+                          <div>
+                            <span className="tx-info-pill" style={{ color: '#60A5FA', borderColor: 'rgba(59, 130, 246, 0.35)', background: 'rgba(59, 130, 246, 0.15)', padding: '5px 12px', fontWeight: 700, fontSize: '11.5px', borderRadius: '50px' }}>
+                              <i className="fa-solid fa-clock" style={{ fontSize: '11px', marginRight: '6px' }}></i>
+                              {tx.duration_days} Hari
+                            </span>
+                          </div>
+                          {tx.start_date && tx.end_date && (
+                            <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                              {new Date(tx.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} — {new Date(tx.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td>
                         <strong style={{ fontSize: '14px', color: '#22C55E' }}>{formatRupiah(tx.total_price)}</strong>
