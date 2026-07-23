@@ -454,7 +454,7 @@ export default function SharpSquareBusinessWebsitePage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <a
               href={biz.instagramUrl}
               target="_blank"
@@ -464,17 +464,6 @@ export default function SharpSquareBusinessWebsitePage() {
             >
               <i className="fa-brands fa-instagram" style={{ fontSize: '16px' }}></i>
               <span>{biz.instagramHandle}</span>
-            </a>
-
-            <a
-              href={biz.mapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn sharp-btn"
-              style={{ background: '#F8FAFC', color: '#1E293B', padding: '9px 16px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
-            >
-              <i className="fa-solid fa-map-location-dot" style={{ color: '#4285F4' }}></i>
-              <span>Google Maps Location</span>
             </a>
           </div>
         </div>
@@ -581,24 +570,26 @@ export default function SharpSquareBusinessWebsitePage() {
           </div>
         </div>
 
-        {/* TIGHT 5-CARD BENTO GRID MATRIX WITH SEE MORE TOGGLE */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+        {/* CLEAN 5-CARD RESPONSIVE GRID MATRIX (No Overflow / No Stacking Gaps) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', width: '100%', boxSizing: 'border-box' }}>
           {(showAllPhotos ? bentoPhotos : bentoPhotos.slice(0, 5)).map((photo, idx) => (
             <div
               key={idx}
               className="bento-card-sharp"
               style={{
-                minHeight: '260px',
-                gridColumn: photo.span === 'wide' ? 'span 2' : 'span 1'
+                height: '240px',
+                width: '100%',
+                overflow: 'hidden',
+                boxSizing: 'border-box'
               }}
             >
               <img src={photo.url} alt={photo.title} className="bento-img" onError={handleImgError} />
-              <div className="bento-overlay">
+              <div className="bento-overlay" style={{ boxSizing: 'border-box', padding: '16px', width: '100%' }}>
                 <span style={{ fontSize: '10px', background: '#0F172A', color: '#FFF', padding: '4px 10px', fontWeight: 800, width: 'fit-content', marginBottom: '6px', border: '1px solid rgba(255,255,255,0.3)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                   <i className={photo.icon} style={{ color: '#E85D04', fontSize: '11px' }}></i>
                   <span>{photo.tag}</span>
                 </span>
-                <div style={{ fontSize: photo.span === 'wide' ? '19px' : '16px', fontWeight: 900 }}>{photo.title}</div>
+                <div style={{ fontSize: '15px', fontWeight: 900, lineHeight: 1.2, wordBreak: 'break-word' }}>{photo.title}</div>
               </div>
             </div>
           ))}
