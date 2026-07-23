@@ -82,25 +82,28 @@ export default function ReportsPage() {
         <p>Analisis terpisah antara Pemasukan, Pengeluaran, dan Laba Bersih Boss Rent</p>
       </div>
 
-      {/* Tabs Menu */}
-      <div className="flex gap-4 mb-6" style={{ borderBottom: '1px solid var(--bg-border)', paddingBottom: '12px' }}>
+      {/* Scrollable Tabs Chips / Pills Bar */}
+      <div className="scrollable-tabs-bar">
         <button
-          className={`btn ${activeReportTab === 'income' ? 'btn-primary' : 'btn-secondary'}`}
+          type="button"
+          className={`scrollable-tab-btn ${activeReportTab === 'income' ? 'active' : ''}`}
           onClick={() => setActiveReportTab('income')}
         >
-          <i className="fa-solid fa-sack-dollar" style={{ marginRight: '6px' }}></i> Laporan Pemasukan (Sewa)
+          <i className="fa-solid fa-sack-dollar"></i> Laporan Pemasukan (Sewa)
         </button>
         <button
-          className={`btn ${activeReportTab === 'expenses' ? 'btn-primary' : 'btn-secondary'}`}
+          type="button"
+          className={`scrollable-tab-btn ${activeReportTab === 'expenses' ? 'active' : ''}`}
           onClick={() => setActiveReportTab('expenses')}
         >
-          <i className="fa-solid fa-money-bill-transfer" style={{ marginRight: '6px' }}></i> Laporan Pengeluaran Operasional
+          <i className="fa-solid fa-money-bill-transfer"></i> Laporan Pengeluaran Operasional
         </button>
         <button
-          className={`btn ${activeReportTab === 'profit_loss' ? 'btn-primary' : 'btn-secondary'}`}
+          type="button"
+          className={`scrollable-tab-btn ${activeReportTab === 'profit_loss' ? 'active' : ''}`}
           onClick={() => setActiveReportTab('profit_loss')}
         >
-          <i className="fa-solid fa-calculator" style={{ marginRight: '6px' }}></i> Ringkasan Laba Rugi
+          <i className="fa-solid fa-calculator"></i> Ringkasan Laba Rugi
         </button>
       </div>
 

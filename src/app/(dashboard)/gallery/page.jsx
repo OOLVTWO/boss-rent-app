@@ -433,20 +433,22 @@ export default function GalleryPage() {
         <p>Arsip foto identitas penyewa dan foto fisik armada. Klik gambar untuk tampilan penuh, atau adjust sebelum simpan.</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-4 mb-6" style={{ borderBottom: '1px solid var(--bg-border)', paddingBottom: '12px' }}>
+      {/* Scrollable Tabs Chips / Pills Bar */}
+      <div className="scrollable-tabs-bar">
         <button
-          className={`btn ${activeTab === 'customers' ? 'btn-primary' : 'btn-secondary'}`}
+          type="button"
+          className={`scrollable-tab-btn ${activeTab === 'customers' ? 'active' : ''}`}
           onClick={() => setActiveTab('customers')}
         >
-          <i className="fa-solid fa-id-card" style={{ marginRight: '6px' }}></i>
+          <i className="fa-solid fa-id-card"></i>
           Foto Identitas Customer ({hasPhotoCustomers}/{customerPhotos.length})
         </button>
         <button
-          className={`btn ${activeTab === 'vehicles' ? 'btn-primary' : 'btn-secondary'}`}
+          type="button"
+          className={`scrollable-tab-btn ${activeTab === 'vehicles' ? 'active' : ''}`}
           onClick={() => setActiveTab('vehicles')}
         >
-          <i className="fa-solid fa-motorcycle" style={{ marginRight: '6px' }}></i>
+          <i className="fa-solid fa-motorcycle"></i>
           Foto Fisik Motor ({hasPhotoVehicles}/{vehiclePhotos.length})
         </button>
       </div>

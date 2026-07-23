@@ -2348,6 +2348,53 @@ button, a, input, select, textarea {
   transition: width 0.8s ease;
 }
 
+/* Horizontal Scrollable Tabs / Chips & Pills Layout System */
+.scrollable-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--bg-border);
+  scrollbar-width: none;
+}
+
+.scrollable-tabs-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollable-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--bg-border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.scrollable-tab-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.scrollable-tab-btn.active {
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+  color: #ffffff;
+  border-color: var(--brand-primary);
+  box-shadow: 0 4px 16px rgba(232, 93, 4, 0.3);
+}
+
 /* Mobile Responsive Breakpoints for Bento Grid */
 @media (max-width: 992px) {
   .bento-grid-container {
@@ -2366,6 +2413,7 @@ button, a, input, select, textarea {
     display: none;
   }
 }
+
 
 
 

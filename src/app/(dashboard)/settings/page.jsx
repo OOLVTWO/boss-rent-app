@@ -700,29 +700,26 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Sub-tab Selector */}
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid var(--bg-border)', paddingBottom: '12px', flexWrap: 'wrap' }}>
+            {/* Sub-tab Selector Chips / Pills Bar */}
+            <div className="scrollable-tabs-bar">
               <button
                 type="button"
-                className={`btn btn-${waSubTab === 'invoice' ? 'primary' : 'secondary'} btn-sm`}
+                className={`scrollable-tab-btn ${waSubTab === 'invoice' ? 'active' : ''}`}
                 onClick={() => setWaSubTab('invoice')}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
               >
                 <i className="fa-solid fa-file-invoice"></i> 1. Template Invoice WA
               </button>
               <button
                 type="button"
-                className={`btn btn-${waSubTab === 'reminder' ? 'primary' : 'secondary'} btn-sm`}
+                className={`scrollable-tab-btn ${waSubTab === 'reminder' ? 'active' : ''}`}
                 onClick={() => setWaSubTab('reminder')}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
               >
                 <i className="fa-solid fa-bell"></i> 2. Template Reminder WA (Pengingat)
               </button>
               <button
                 type="button"
-                className={`btn btn-${waSubTab === 'gateway' ? 'primary' : 'secondary'} btn-sm`}
+                className={`scrollable-tab-btn ${waSubTab === 'gateway' ? 'active' : ''}`}
                 onClick={() => setWaSubTab('gateway')}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
               >
                 <i className="fa-solid fa-robot"></i> 3. 🤖 WhatsApp Gateway API Config
               </button>
