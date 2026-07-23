@@ -1759,11 +1759,11 @@ export default function SettingsPage() {
                       <i className="fa-solid fa-circle-info"></i> Konsep Galeri Foto Landing Page (Drag & Drop Urutan Foto)
                     </div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                      💡 <strong>Petunjuk Adjust Urutan:</strong> Klik & Tahan ikon grip <i className="fa-solid fa-grip-vertical"></i> lalu <strong>Drag & Drop dengan kursor</strong> untuk menggeser urutan foto! Atau gunakan tombol panah <i className="fa-solid fa-arrow-up"></i> / <i className="fa-solid fa-arrow-down"></i>. <strong>Foto #1 s/d #5</strong> akan tampil secara default di halaman depan.
+                      💡 <strong>Petunjuk Adjust Urutan:</strong> Klik & Tahan ikon grip <i className="fa-solid fa-grip-vertical"></i> lalu <strong>Drag & Drop dengan kursor</strong> untuk menggeser urutan foto! Atau gunakan tombol panah <i className="fa-solid fa-arrow-up"></i> / <i className="fa-solid fa-arrow-down"></i>. <strong>Foto #1 s/d #6</strong> akan tampil secara default di halaman depan (Grid 3x2 Desktop).
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
                     <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--brand-primary-light)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <i className="fa-solid fa-images"></i> Daftar Foto Showcase Landing Page ({bizForm.galleryPhotos?.length || 0} Foto Total)
                     </h4>
@@ -1780,11 +1780,12 @@ export default function SettingsPage() {
                         onDragStart={(e) => handleDragStart(e, idx)}
                         onDragOver={(e) => handleDragOver(e, idx)}
                         onDrop={(e) => handleDrop(e, idx)}
+                        className="gallery-item-responsive-card"
                         style={{
                           background: 'var(--bg-elevated)',
                           padding: '14px 16px',
                           borderRadius: '12px',
-                          border: idx < 5 ? '2px solid var(--brand-primary)' : '1px solid var(--bg-border)',
+                          border: idx < 6 ? '2px solid var(--brand-primary)' : '1px solid var(--bg-border)',
                           display: 'grid',
                           gridTemplateColumns: '32px 90px 1fr auto',
                           gap: '14px',
@@ -1811,9 +1812,9 @@ export default function SettingsPage() {
                         {/* Photo Form Inputs */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            {idx < 5 ? (
+                            {idx < 6 ? (
                               <span style={{ fontSize: '10px', background: '#22C55E', color: '#FFF', padding: '3px 8px', fontWeight: 800, borderRadius: '4px' }}>
-                                📌 [1-5] Tampil Default Halaman Utama
+                                📌 [1-6] Tampil Default Halaman Utama (Grid 3x2)
                               </span>
                             ) : (
                               <span style={{ fontSize: '10px', background: '#3B82F6', color: '#FFF', padding: '3px 8px', fontWeight: 800, borderRadius: '4px' }}>

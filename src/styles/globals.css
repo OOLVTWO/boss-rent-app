@@ -2549,4 +2549,114 @@ button, a, input, select, textarea {
     padding: 6px 12px !important;
     font-size: 11px !important;
   }
+}
+
+/* =========================================
+   COMPREHENSIVE MOBILE UI & RESPONSIVE FIXES
+   ========================================= */
+@media (max-width: 768px) {
+  /* Prevent text and elements from overflowing card boundaries */
+  h1, h2, h3, h4, h5, h6, p, span, div, label, td, th {
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+  }
+
+  .page-content {
+    padding: 12px !important;
+    padding-top: calc(var(--header-height) + 12px) !important;
+    overflow-x: hidden !important;
+  }
+
+  .card {
+    padding: 14px !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+
+  .page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  .page-header h2 {
+    font-size: 18px !important;
+    line-height: 1.3 !important;
+  }
+
+  .page-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: 12px !important;
+  }
+
+  .filter-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+
+  .search-bar,
+  .search-bar .form-control,
+  .filter-bar select,
+  .filter-bar input,
+  .filter-bar button {
+    width: 100% !important;
+  }
+
+  .form-row.cols-2,
+  .form-row.cols-3 {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .grid-2,
+  .grid-3,
+  .grid-4 {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .table-wrapper {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    display: block !important;
+  }
+
+  .table {
+    min-width: 540px !important;
+  }
+
+  .modal {
+    width: 94% !important;
+    max-width: 94% !important;
+    padding: 16px 14px !important;
+    margin: 0 auto !important;
+    max-height: 88vh !important;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse !important;
+    gap: 8px !important;
+  }
+
+  .modal-footer button {
+    width: 100% !important;
+  }
+
+  .gallery-item-responsive-card {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .scrollable-tabs-bar {
+    padding-bottom: 8px !important;
+    margin-bottom: 14px !important;
+  }
+}
 
