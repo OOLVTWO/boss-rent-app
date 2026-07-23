@@ -1994,5 +1994,292 @@ button, a, input, select, textarea {
   }
 }
 
+/* =========================================
+   BENTO GRID & GLASSMORPHISM DESIGN SYSTEM
+   ========================================= */
+
+.bento-grid-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-5);
+  align-items: stretch;
+}
+
+.bento-card {
+  background: rgba(18, 18, 26, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-base);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.bento-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(232, 93, 4, 0.3);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 24px rgba(232, 93, 4, 0.15);
+}
+
+/* Bento Hero Card */
+.bento-hero-card {
+  background: linear-gradient(135deg, rgba(232, 93, 4, 0.12), rgba(18, 18, 26, 0.85));
+  border: 1px solid rgba(232, 93, 4, 0.3);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.bento-card-bg-glow {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232, 93, 4, 0.25), transparent 70%);
+  pointer-events: none;
+}
+
+.bento-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brand-primary-light);
+  background: rgba(232, 93, 4, 0.15);
+  border: 1px solid rgba(232, 93, 4, 0.3);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-3);
+  width: fit-content;
+}
+
+.bento-hero-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.bento-hero-value {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  margin: var(--space-2) 0 var(--space-5);
+}
+
+.bento-hero-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  background: rgba(10, 10, 15, 0.5);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--bg-border);
+}
+
+.bento-stat-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bento-stat-sub .sub-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bento-stat-sub .sub-val {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.bento-stat-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--bg-border);
+}
+
+/* Bento Deposit Card */
+.bento-deposit-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.bento-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+}
+
+.bento-deposit-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.deposit-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-elevated);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--bg-border);
+}
+
+.deposit-item .dep-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.deposit-item .dep-val {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Bento Alert Card */
+.bento-alert-card {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+}
+
+.bento-alert-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.2);
+  color: #F59E0B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+/* Bento Table Card */
+.bento-table-card {
+  padding: var(--space-6);
+}
+
+/* =========================================
+   VOICE USER INTERFACE (VUI) ASSISTANT
+   ========================================= */
+.vui-voice-container {
+  position: relative;
+}
+
+.vui-voice-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, rgba(232, 93, 4, 0.15), rgba(250, 163, 7, 0.15));
+  border: 1px solid rgba(232, 93, 4, 0.4);
+  color: var(--brand-primary-light);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.vui-voice-btn:hover {
+  background: var(--brand-primary);
+  color: #ffffff;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 16px rgba(232, 93, 4, 0.4);
+}
+
+.vui-voice-btn.listening {
+  background: #EF4444;
+  color: #ffffff;
+  border-color: #EF4444;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+}
+
+.vui-voice-popover {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  width: 240px;
+  background: #1A1A26;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  z-index: 999;
+  animation: fadeIn 0.2s ease forwards;
+}
+
+.vui-status-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--brand-primary-light);
+  margin-bottom: 6px;
+}
+
+.vui-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22C55E;
+  box-shadow: 0 0 8px #22C55E;
+}
+
+.vui-transcript {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-style: italic;
+}
+
+.vui-feedback {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* Mobile Responsive Breakpoints for Bento Grid */
+@media (max-width: 992px) {
+  .bento-grid-container {
+    grid-template-columns: 1fr !important;
+    gap: var(--space-4);
+  }
+  .bento-hero-value {
+    font-size: 26px;
+  }
+  .bento-alert-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+  .vui-btn-label {
+    display: none;
+  }
+}
+
+
 
 

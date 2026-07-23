@@ -16,9 +16,9 @@ function formatRupiah(amount) {
 
 const statusBadge = (status) => {
   const map = {
-    active: <span className="badge badge-info"><i className="fa-solid fa-spinner" style={{ marginRight: '4px' }}></i> Aktif</span>,
-    completed: <span className="badge badge-success"><i className="fa-solid fa-check" style={{ marginRight: '4px' }}></i> Selesai</span>,
-    cancelled: <span className="badge badge-danger"><i className="fa-solid fa-xmark" style={{ marginRight: '4px' }}></i> Dibatalkan</span>,
+    active: <span className="badge badge-info"><i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '4px' }}></i> Aktif</span>,
+    completed: <span className="badge badge-success"><i className="fa-solid fa-circle-check" style={{ marginRight: '4px' }}></i> Selesai</span>,
+    cancelled: <span className="badge badge-danger"><i className="fa-solid fa-circle-xmark" style={{ marginRight: '4px' }}></i> Dibatalkan</span>,
   };
   return map[status] || <span className="badge badge-muted">{status}</span>;
 };
@@ -63,22 +63,23 @@ export default function DashboardClient({ transactions, vehicles }) {
   }, 0);
 
   return (
-    <div className="fade-in">
-      <div className="page-header">
-        <h2><i className="fa-solid fa-gauge" style={{ marginRight: '8px' }}></i> Dashboard</h2>
-        <p>Selamat datang di Boss Rent Pererenan — Admin Panel</p>
+    <div className="bento-dashboard-wrapper fade-in">
+      {/* Bento Header */}
+      <div className="page-header mb-6">
+        <h2><i className="fa-solid fa-border-all" style={{ marginRight: '8px', color: 'var(--brand-primary)' }}></i> Dashboard Bento Analytics</h2>
+        <p>Ringkasan performa finansial, status armada, dan ketersediaan sewa motor Boss Rent Pererenan</p>
       </div>
 
-      {/* AI Diagnostic Warning Banner */}
+      {/* AI Diagnostic Warning Bento Alert */}
       {urgentVehicles.length > 0 && (
-        <div className="alert alert-warning mb-6" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '12px', padding: '16px 20px' }}>
+        <div className="bento-card bento-alert-card mb-6">
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(245, 158, 11, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F59E0B', fontSize: '20px' }}>
-              <i className="fa-solid fa-robot"></i>
+            <div className="bento-alert-icon">
+              <i className="fa-solid fa-robot fa-bounce"></i>
             </div>
             <div>
-              <div style={{ fontWeight: 700, fontSize: '15px', color: '#F59E0B' }}>
-                <i className="fa-solid fa-robot" style={{ marginRight: '6px' }}></i> AI Maintenance Alert: {urgentVehicles.length} Motor Membutuhkan Perhatian / Servis!
+              <div style={{ fontWeight: 800, fontSize: '15px', color: '#F59E0B' }}>
+                AI Maintenance Alert: {urgentVehicles.length} Unit Motor Perlu Perhatian!
               </div>
               <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
                 {urgentVehicles.map(v => `${v.vehicleName} (${v.plateNumber})`).join(', ')}
@@ -86,100 +87,76 @@ export default function DashboardClient({ transactions, vehicles }) {
             </div>
           </div>
           <Link href="/maintenance" className="btn btn-warning btn-sm">
-            Cek Diagnosa AI <i className="fa-solid fa-arrow-right" style={{ marginLeft: '4px' }}></i>
+            Diagnosa AI <i className="fa-solid fa-arrow-right" style={{ marginLeft: '4px' }}></i>
           </Link>
         </div>
       )}
 
-      {/* Financial Overview */}
-      <div className="grid-3 mb-6">
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#22C55E' }}>
-            <i className="fa-solid fa-sack-dollar"></i>
-          </div>
-          <div className="stat-info">
-            <div className="stat-label">Total Pemasukan (Sewa)</div>
-            <div className="stat-value" style={{ color: '#22C55E' }}>{formatRupiah(totalRevenue)}</div>
-            <div className="stat-change">Dari transaksi selesai</div>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444' }}>
-            <i className="fa-solid fa-money-bill-transfer"></i>
-          </div>
-          <div className="stat-info">
-            <div className="stat-label">Total Pengeluaran Operasional</div>
-            <div className="stat-value" style={{ color: '#EF4444' }}>{formatRupiah(totalExpenses)}</div>
-            <div className="stat-change">Servis, BBM, Sparepart</div>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6' }}>
-            <i className="fa-solid fa-chart-line"></i>
-          </div>
-          <div className="stat-info">
-            <div className="stat-label">Laba Bersih (Net Profit)</div>
-            <div className="stat-value" style={{ color: netProfit >= 0 ? '#3B82F6' : '#EF4444' }}>
+      {/* ── BENTO GRID LAYOUT ── */}
+      <div className="bento-grid-container mb-6">
+        {/* 1. Hero Bento Card: Financial Summary (Large Span) */}
+        <div className="bento-card bento-hero-card">
+          <div className="bento-card-bg-glow"></div>
+          <div className="bento-hero-content">
+            <div className="bento-hero-badge">
+              <i className="fa-solid fa-sparkles"></i> Financial Intelligence
+            </div>
+            <div className="bento-hero-label">Laba Bersih (Net Profit)</div>
+            <div className="bento-hero-value" style={{ color: netProfit >= 0 ? '#22C55E' : '#EF4444' }}>
               {formatRupiah(netProfit)}
             </div>
-            <div className="stat-change">Pemasukan dikurangi pengeluaran</div>
+            <div className="bento-hero-stats">
+              <div className="bento-stat-sub">
+                <span className="sub-label"><i className="fa-solid fa-arrow-down-left" style={{ color: '#22C55E' }}></i> Pemasukan</span>
+                <span className="sub-val" style={{ color: '#22C55E' }}>{formatRupiah(totalRevenue)}</span>
+              </div>
+              <div className="bento-stat-divider"></div>
+              <div className="bento-stat-sub">
+                <span className="sub-label"><i className="fa-solid fa-arrow-up-right" style={{ color: '#EF4444' }}></i> Pengeluaran</span>
+                <span className="sub-val" style={{ color: '#EF4444' }}>{formatRupiah(totalExpenses)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Deposit Overview Bento Card */}
+        <div className="bento-card bento-deposit-card">
+          <div className="bento-card-title">
+            <i className="fa-solid fa-vault" style={{ color: '#FAA307' }}></i>
+            <span>Deposit Jaminan</span>
+          </div>
+          <div className="bento-deposit-list">
+            <div className="deposit-item">
+              <span className="dep-label">Ditahan (Aktif)</span>
+              <span className="dep-val" style={{ color: '#FAA307' }}>{formatRupiah(totalDepositHeld)}</span>
+            </div>
+            <div className="deposit-item">
+              <span className="dep-label">Dipotong Denda</span>
+              <span className="dep-val" style={{ color: '#EF4444' }}>{formatRupiah(totalDepositDamage)}</span>
+            </div>
+            <div className="deposit-item">
+              <span className="dep-label">Dikembalikan</span>
+              <span className="dep-val" style={{ color: '#22C55E' }}>{formatRupiah(totalDepositReturned)}</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Deposit Overview */}
-      <div style={{ marginBottom: '8px' }}>
-        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>
-          <i className="fa-solid fa-vault" style={{ marginRight: '6px', color: 'var(--brand-primary)' }}></i>
-          Rekap Deposit Jaminan
-        </div>
-      </div>
-      <div className="grid-3 mb-6">
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(250, 163, 7, 0.15)', color: '#FAA307' }}>
-            <i className="fa-solid fa-vault"></i>
-          </div>
-          <div className="stat-info">
-            <div className="stat-label">Deposit Ditahan (Aktif)</div>
-            <div className="stat-value" style={{ color: '#FAA307' }}>{formatRupiah(totalDepositHeld)}</div>
-            <div className="stat-change">{activeTx.length} transaksi aktif sedang berjalan</div>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444' }}>
-            <i className="fa-solid fa-car-burst"></i>
-          </div>
-          <div className="stat-info">
-            <div className="stat-label">Deposit Dipotong (Denda)</div>
-            <div className="stat-value" style={{ color: '#EF4444' }}>{formatRupiah(totalDepositDamage)}</div>
-            <div className="stat-change">Total denda kerusakan dari penyewa</div>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#22C55E' }}>
-            <i className="fa-solid fa-money-bill-wave"></i>
-          </div>
-          <div className="stat-info">
-            <div className="stat-label">Deposit Dikembalikan</div>
-            <div className="stat-value" style={{ color: '#22C55E' }}>{formatRupiah(totalDepositReturned)}</div>
-            <div className="stat-change">Total deposit bersih ke penyewa</div>
-          </div>
-        </div>
-      </div>
-
+      {/* 3. Metrics Stat Bento Cards */}
       <StatCards transactions={safeTx} vehicles={safeVehicles} />
+
+      {/* 4. Analytics Bento Grid (Charts) */}
       <DashboardCharts transactions={safeTx} vehicles={safeVehicles} />
 
-      {/* Transaksi Terbaru */}
-      <div className="card">
-        <div className="card-header">
+      {/* 5. Recent Transactions Table Bento Card */}
+      <div className="bento-card bento-table-card">
+        <div className="card-header mb-4">
           <div>
-            <div className="card-title">Transaksi Terbaru</div>
-            <div className="card-subtitle">5 transaksi terakhir</div>
+            <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <i className="fa-solid fa-receipt" style={{ color: 'var(--brand-primary)' }}></i>
+              Transaksi Terbaru
+            </div>
+            <div className="card-subtitle">5 riwayat transaksi sewa motor terkini</div>
           </div>
           <Link href="/transactions" className="btn btn-secondary btn-sm">
             Lihat Semua <i className="fa-solid fa-arrow-right" style={{ marginLeft: '4px' }}></i>
@@ -187,12 +164,12 @@ export default function DashboardClient({ transactions, vehicles }) {
         </div>
 
         {recentTx.length === 0 ? (
-          <div className="table-empty">
+          <div className="table-empty" style={{ padding: '40px 16px' }}>
             <div className="table-empty-icon"><i className="fa-solid fa-receipt"></i></div>
-            <p>Belum ada transaksi. <Link href="/transactions">Catat transaksi pertama</Link></p>
+            <p>Belum ada transaksi terdaftar. <Link href="/transactions">Catat transaksi pertama</Link></p>
           </div>
         ) : (
-          <div className="table-wrapper">
+          <div className="table-responsive">
             <table className="table">
               <thead>
                 <tr>
@@ -208,11 +185,11 @@ export default function DashboardClient({ transactions, vehicles }) {
                 {recentTx.map((tx) => (
                   <tr key={tx.id}>
                     <td>
-                      <strong>{tx.renter_name}</strong>
+                      <strong style={{ color: 'var(--text-primary)' }}>{tx.renter_name}</strong>
                       <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{tx.renter_phone}</div>
                     </td>
                     <td>
-                      <span>{tx.vehicles?.name || '-'}</span>
+                      <span style={{ fontWeight: 600 }}>{tx.vehicles?.name || '-'}</span>
                       <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{tx.vehicles?.plate_number}</div>
                     </td>
                     <td>{new Date(tx.start_date).toLocaleDateString('id-ID')}</td>

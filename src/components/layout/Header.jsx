@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import VuiVoiceControl from '@/components/dashboard/VuiVoiceControl';
 
 const pageMeta = {
   '/dashboard': { title: 'Dashboard', subtitle: 'Ringkasan statistik usaha rental' },
@@ -47,6 +48,7 @@ export default function Header({ onToggleMobile }) {
       </div>
 
       <div className="header-right-wrap">
+        <VuiVoiceControl />
         <img
           src="/images/logoCompany.png"
           alt="Boss Rent Pererenan"
