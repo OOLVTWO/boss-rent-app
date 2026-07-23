@@ -53,10 +53,13 @@ export default function SharpSquareBusinessWebsitePage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
+  // Bento gallery show more state (limit initial display to 5 photos)
+  const [showAllPhotos, setShowAllPhotos] = useState(false);
+
   // Business information from Google Maps profile
   const biz = {
     name: 'BOSS RENT PERERENAN',
-    tagline: 'Available Scooter For Rent • Best Service • Best Price • Free Delivery & Pick Up • Clean & Good Scooters',
+    tagline: 'Available Scooter For Rent • Best Service • Best Price • Villa Delivery Available • Clean & Well-Maintained Scooters',
     address: 'Jl. Pantai Pererenan No.119, Pererenan, Kec. Mengwi, Kabupaten Badung, Bali 80351',
     phone: '+62 812-3710-9751',
     phoneRaw: '0812-3710-9751',
@@ -69,29 +72,29 @@ export default function SharpSquareBusinessWebsitePage() {
     mapsEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3944.402636541527!2d115.1226017!3d-8.6477169!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd23961f77d33d9%3A0xe543e0d8fa099307!2sJl.%20Pantai%20Pererenan%2C%20Pererenan%2C%20Mengwi%2C%20Badung%20Regency%2C%20Bali!5e0!3m2!1sen!2sid!4v1700000000000'
   };
 
-  // FAQ Accordion State
+  // FAQ Accordion State (100% English for Tourists)
   const [openFaq, setOpenFaq] = useState(null);
 
   const faqs = [
     {
-      q: 'Syarat apa saja yang diperlukan untuk menyewa motor di Boss Rent Pererenan?',
-      a: 'Syaratnya sangat mudah! Kakak cukup menunjukkan E-KTP / Paspor serta SIM C (atau International Driving Permit bagi wisatawan asing) yang masih berlaku. Proses verifikasi serah terima hanya 3 menit tanpa penahanan dokumen asli yang rumit.'
+      q: 'What documents are required to rent a scooter at Boss Rent Pererenan?',
+      a: 'It is very simple! You only need to present a valid ID / Passport and a Driver’s License (or International Driving Permit for overseas tourists). Verification takes only 3 minutes with no complicated original document holding.'
     },
     {
-      q: 'Apakah ada fasilitas antar-jemput gratis ke Villa atau Hotel di Pererenan & Canggu?',
-      a: 'Ya, GRATIS! Kami menyediakan layanan antar-jemput motor gratis langsung ke lokasi Villa, Hotel, atau Resort Anda di area Pererenan, Canggu, Batu Bolong, Echo Beach, dan Umalas.'
+      q: 'Is villa or hotel delivery service available in Pererenan & Canggu?',
+      a: 'Yes! We provide convenient scooter delivery & pickup service directly to your Villa, Hotel, or Resort in Pererenan, Canggu, Batu Bolong, Echo Beach, and Umalas areas upon request.'
     },
     {
-      q: 'Fasilitas & kelengkapan apa saja yang sudah termasuk dalam harga sewa?',
-      a: 'Setiap sewa motor sudah termasuk: 2 Helm SNI steril & bersih, 2 Jas Hujan kualitas premium, Holder HP stang untuk navigasi GPS Google Maps, serta kondisi motor yang bersih & BBM terisi siap pakai.'
+      q: 'What amenities are included with every scooter rental?',
+      a: 'Every scooter rental comes equipped with 2 clean sanitized helmets, 2 premium raincoats, a sturdy handlebar phone holder for GPS navigation, and a well-maintained scooter with fuel ready to ride.'
     },
     {
-      q: 'Bagaimana jika motor mengalami kendala atau ban bocor di jalan saat digunakan?',
-      a: 'Tenang saja! Tim Roadside Assistance 24/7 kami siap meluncur langsung ke lokasi Anda di Bali untuk memberikan bantuan penanganan atau mengganti unit motor cadangan secara GRATIS.'
+      q: 'What should I do if I experience a flat tire or mechanical issue during my rental?',
+      a: 'Don’t worry! Our 24/7 Roadside Assistance team is always ready to assist you anywhere in Bali to fix the issue or provide a swap scooter promptly.'
     },
     {
-      q: 'Bagaimana prosedur pengembalian deposit jaminan?',
-      a: 'Deposit jaminan akan dikembalikan 100% secara instan (Tunai/Transfer) sesaat setelah pengembalian unit motor dan pengecekan kondisi fisik kendaraan bersama selesai.'
+      q: 'How does the security deposit refund process work?',
+      a: 'The security deposit is refunded in full (Cash or Bank Transfer) immediately upon scooter return following a quick joint physical check.'
     }
   ];
 
@@ -471,16 +474,7 @@ export default function SharpSquareBusinessWebsitePage() {
               style={{ background: '#F8FAFC', color: '#1E293B', padding: '9px 16px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
             >
               <i className="fa-solid fa-map-location-dot" style={{ color: '#4285F4' }}></i>
-              <span>Lokasi Maps</span>
-            </a>
-
-            <a
-              href="/dashboard"
-              className="btn sharp-btn"
-              style={{ background: '#0F172A', color: '#FFFFFF', padding: '9px 18px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
-            >
-              <i className="fa-solid fa-user-lock" style={{ color: '#E85D04' }}></i>
-              <span>Admin Login</span>
+              <span>Google Maps Location</span>
             </a>
           </div>
         </div>
@@ -587,9 +581,9 @@ export default function SharpSquareBusinessWebsitePage() {
           </div>
         </div>
 
-        {/* TIGHT 9-CARD BENTO GRID MATRIX (No Empty Space Gaps) */}
+        {/* TIGHT 5-CARD BENTO GRID MATRIX WITH SEE MORE TOGGLE */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
-          {bentoPhotos.map((photo, idx) => (
+          {(showAllPhotos ? bentoPhotos : bentoPhotos.slice(0, 5)).map((photo, idx) => (
             <div
               key={idx}
               className="bento-card-sharp"
@@ -608,6 +602,29 @@ export default function SharpSquareBusinessWebsitePage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* SEE MORE / SHOW LESS BUTTON */}
+        <div style={{ textAlign: 'center', marginTop: '24px' }}>
+          <button
+            type="button"
+            onClick={() => setShowAllPhotos(!showAllPhotos)}
+            className="sharp-btn"
+            style={{
+              background: '#0F172A',
+              color: '#FFFFFF',
+              padding: '12px 28px',
+              fontSize: '13px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <span>{showAllPhotos ? 'Show Less Photos' : `See More Photos (${bentoPhotos.length - 5} More)`}</span>
+            <i className={`fa-solid ${showAllPhotos ? 'fa-chevron-up' : 'fa-chevron-down'}`} style={{ color: '#E85D04' }}></i>
+          </button>
         </div>
       </section>
 
@@ -869,11 +886,11 @@ export default function SharpSquareBusinessWebsitePage() {
               FREQUENTLY ASKED QUESTIONS
             </div>
             <h2 style={{ fontSize: '28px', fontWeight: 900, color: '#0F172A', margin: '4px 0 8px 0', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-              <span>Pertanyaan Umum Sewa Motor (FAQ)</span>
+              <span>Frequently Asked Questions (FAQ)</span>
               <i className="fa-solid fa-circle-question" style={{ color: '#E85D04' }}></i>
             </h2>
             <div style={{ fontSize: '14px', color: '#64748B' }}>
-              Informasi lengkap seputar syarat, fasilitas, layanan antar-jemput, dan garansi sewa di Boss Rent Pererenan
+              Everything you need to know about rental requirements, amenities, delivery services, and security deposit policies
             </div>
           </div>
 
