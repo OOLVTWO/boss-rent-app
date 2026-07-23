@@ -285,27 +285,46 @@ a:hover { color: var(--brand-primary-light); }
   left: var(--sidebar-width);
   right: 0;
   height: var(--header-height);
-  background: rgba(10, 10, 15, 0.85);
+  background: rgba(10, 10, 15, 0.92);
   backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--bg-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--space-6);
-  z-index: 90;
+  z-index: 900;
+  transition: left var(--transition-base);
 }
 
-.header-left h2 {
+.header-left-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.header-title-box h2 {
   font-size: 18px;
   font-weight: 700;
+  line-height: 1.2;
 }
 
-.header-left p {
+.header-subtitle {
   font-size: 12px;
   color: var(--text-muted);
 }
 
-.header-right { display: flex; align-items: center; gap: var(--space-3); }
+.header-right-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.header-logo-img {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+}
 
 .header-date {
   font-size: 12px;

@@ -30,8 +30,7 @@ export default function Header({ onToggleMobile }) {
 
   return (
     <header className="header">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        {/* Mobile & Tablet Hamburger Navigation Button */}
+      <div className="header-left-wrap">
         <button
           type="button"
           className="mobile-hamburger-btn"
@@ -41,17 +40,17 @@ export default function Header({ onToggleMobile }) {
           <i className="fa-solid fa-bars"></i>
         </button>
 
-        <div className="header-left">
+        <div className="header-title-box">
           <h2>{meta.title}</h2>
-          <p>{meta.subtitle}</p>
+          <p className="header-subtitle">{meta.subtitle}</p>
         </div>
       </div>
 
-      <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div className="header-right-wrap">
         <img
           src="/images/logoCompany.png"
           alt="Boss Rent Pererenan"
-          style={{ height: '32px', width: 'auto', objectFit: 'contain' }}
+          className="header-logo-img"
         />
         <div className="header-date">
           <i className="fa-regular fa-calendar-days" style={{ marginRight: '6px' }}></i>
