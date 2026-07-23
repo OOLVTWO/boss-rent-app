@@ -509,6 +509,7 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
     renter_name: '',
     renter_phone: '',
     renter_id_number: '',
+    renter_address: '',
     start_date: '',
     end_date: '',
     deposit: '',
@@ -536,6 +537,7 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
           renter_name: editData.renter_name || '',
           renter_phone: editData.renter_phone || '',
           renter_id_number: editData.renter_id_number || '',
+          renter_address: editData.renter_address || '',
           start_date: editData.start_date || '',
           end_date: editData.end_date || '',
           deposit: editData.deposit || '',
@@ -742,6 +744,22 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Customer Address Input Field */}
+          <div className="form-group">
+            <label className="form-label" htmlFor="tx-address">
+              <i className="fa-solid fa-location-dot" style={{ marginRight: '6px', color: 'var(--brand-primary)' }}></i> Alamat Customer / Lokasi Villa / Hotel Delivery
+            </label>
+            <input
+              id="tx-address"
+              name="renter_address"
+              type="text"
+              className="form-control"
+              placeholder="e.g. Villa Bamboo, Jl. Pantai Pererenan No. 88, Canggu, Bali"
+              value={form.renter_address || ''}
+              onChange={handleChange}
+            />
           </div>
 
           <div className="form-row cols-2">
@@ -1019,6 +1037,11 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
                   <div style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', fontWeight: 700 }}>Penyewa / Renter</div>
                   <div style={{ fontWeight: 700, fontSize: '15px', marginTop: '2px' }}>{tx.renter_name}</div>
                   <div style={{ fontSize: '12px', color: '#CBD5E1' }}>{tx.renter_phone}</div>
+                  {tx.renter_address && (
+                    <div style={{ fontSize: '11.5px', color: 'var(--brand-primary-light)', marginTop: '4px' }}>
+                      <i className="fa-solid fa-location-dot" style={{ marginRight: '4px' }}></i> {tx.renter_address}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <div style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', fontWeight: 700 }}>Motor / Vehicle</div>
@@ -1465,6 +1488,12 @@ export default function TransactionsPage() {
                               </span>
                             )}
                           </div>
+                          {tx.renter_address && (
+                            <div style={{ fontSize: '10.5px', color: 'var(--brand-primary-light)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px' }} title={tx.renter_address}>
+                              <i className="fa-solid fa-location-dot" style={{ marginRight: '3px' }}></i>
+                              {tx.renter_address}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>

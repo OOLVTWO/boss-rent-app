@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   renter_name VARCHAR(100) NOT NULL,
   renter_phone VARCHAR(20) NOT NULL,
   renter_id_number VARCHAR(50),
+  renter_address TEXT,
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
   duration_days INTEGER NOT NULL DEFAULT 1,
