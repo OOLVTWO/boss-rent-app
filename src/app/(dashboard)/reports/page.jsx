@@ -71,16 +71,30 @@ export default function ReportsPage() {
   const safeTx = Array.isArray(transactions) ? transactions : [];
   const safeExp = Array.isArray(expenses) ? expenses : [];
 
+  const checkIsInc = (e) => {
+    if (!e) return false;
+    if (e.type === 'income') return true;
+    if (typeof e.category === 'string' && (e.category.startsWith('income_') || e.category.includes('income'))) return true;
+    return false;
+  };
+
+  const realExpenses = safeExp.filter(e => !checkIsInc(e));
+  const financialIncomes = safeExp.filter(e => checkIsInc(e));
+
   const completedTx = safeTx.filter(t => t.status === 'completed');
-  const totalRevenue = completedTx.reduce((s, t) => s + Number(t.total_price || 0), 0);
-  const totalExpenses = safeExp.reduce((s, e) => s + Number(e.amount || 0), 0);
+  const rentalRevenue = completedTx.reduce((s, t) => s + Number(t.total_price || 0), 0);
+  const depositClaimIncome = completedTx.reduce((s, t) => s + Number(t.damage_fee || 0), 0);
+  const addOnRevenue = financialIncomes.reduce((s, e) => s + Number(e.amount || 0), 0);
+
+  const totalRevenue = rentalRevenue + depositClaimIncome + addOnRevenue;
+  const totalExpenses = realExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
   const netProfit = totalRevenue - totalExpenses;
 
   const handleExport = () => {
     setExporting(true);
     const dateRange = `${startDate}-sd-${endDate}`;
     if (activeReportTab === 'expenses') {
-      exportExpensesToExcel(safeExp, `laporan-pengeluaran-${dateRange}`);
+      exportExpensesToExcel(realExpenses, `laporan-pengeluaran-${dateRange}`);
     } else {
       exportTransactionsToExcel(safeTx, `laporan-pemasukan-${dateRange}`);
     }
@@ -236,64 +250,84 @@ export default function ReportsPage() {
                     <th>Penyewa</th>
                     <th>Motor</th>
                     <th>Durasi</th>
-                    <th>Total Harga</th>
+                    <th>Tarif Sewa</th>
+                    <th>Klaim Denda Kerusakan</th>
+                    <th>Total Pemasukan</th>
                     <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {safeTx.map((tx, idx) => (
-                    <tr key={tx.id}>
-                      <td style={{ fontWeight: 700, color: 'var(--text-muted)' }}>{idx + 1}</td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-                          <i className="fa-solid fa-calendar-day" style={{ color: 'var(--brand-primary-light)', fontSize: '11px' }}></i>
-                          {new Date(tx.created_at || tx.start_date).toLocaleDateString('id-ID')}
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                          <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)' }}>{tx.renter_name}</strong>
-                          {tx.renter_phone && (
-                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                              <i className="fa-solid fa-phone" style={{ marginRight: '4px', fontSize: '10px' }}></i>{tx.renter_phone}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', minWidth: '180px' }}>
-                          <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)', lineHeight: 1.35 }}>{tx.vehicles?.name || '-'}</strong>
-                          {tx.vehicles?.plate_number && (
+                  {safeTx.map((tx, idx) => {
+                    const damageFee = Number(tx.damage_fee || 0);
+                    const totalPrice = Number(tx.total_price || 0);
+                    const grandTotalIncome = totalPrice + (tx.status === 'completed' ? damageFee : 0);
+
+                    return (
+                      <tr key={tx.id}>
+                        <td style={{ fontWeight: 700, color: 'var(--text-muted)' }}>{idx + 1}</td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                            <i className="fa-solid fa-calendar-day" style={{ color: 'var(--brand-primary-light)', fontSize: '11px' }}></i>
+                            {new Date(tx.created_at || tx.start_date).toLocaleDateString('id-ID')}
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)' }}>{tx.renter_name}</strong>
+                            {tx.renter_phone && (
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                <i className="fa-solid fa-phone" style={{ marginRight: '4px', fontSize: '10px' }}></i>{tx.renter_phone}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', minWidth: '180px' }}>
+                            <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)', lineHeight: 1.35 }}>{tx.vehicles?.name || '-'}</strong>
+                            {tx.vehicles?.plate_number && (
+                              <div>
+                                <span className="tx-info-pill" style={{ color: 'var(--brand-primary-light)', borderColor: 'rgba(232, 93, 4, 0.35)', background: 'rgba(232, 93, 4, 0.12)', padding: '4px 10px' }}>
+                                  <i className="fa-solid fa-motorcycle" style={{ fontSize: '11px', marginRight: '6px' }}></i>
+                                  {tx.vehicles.plate_number}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '120px' }}>
                             <div>
-                              <span className="tx-info-pill" style={{ color: 'var(--brand-primary-light)', borderColor: 'rgba(232, 93, 4, 0.35)', background: 'rgba(232, 93, 4, 0.12)', padding: '4px 10px' }}>
-                                <i className="fa-solid fa-motorcycle" style={{ fontSize: '11px', marginRight: '6px' }}></i>
-                                {tx.vehicles.plate_number}
+                              <span className="tx-info-pill" style={{ color: '#60A5FA', borderColor: 'rgba(59, 130, 246, 0.35)', background: 'rgba(59, 130, 246, 0.15)', padding: '5px 12px', fontWeight: 700, fontSize: '11.5px', borderRadius: '50px' }}>
+                                <i className="fa-solid fa-clock" style={{ fontSize: '11px', marginRight: '6px' }}></i>
+                                {tx.duration_days} Hari
                               </span>
                             </div>
-                          )}
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '130px' }}>
-                          <div>
-                            <span className="tx-info-pill" style={{ color: '#60A5FA', borderColor: 'rgba(59, 130, 246, 0.35)', background: 'rgba(59, 130, 246, 0.15)', padding: '5px 12px', fontWeight: 700, fontSize: '11.5px', borderRadius: '50px' }}>
-                              <i className="fa-solid fa-clock" style={{ fontSize: '11px', marginRight: '6px' }}></i>
-                              {tx.duration_days} Hari
-                            </span>
+                            {tx.start_date && tx.end_date && (
+                              <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                                {new Date(tx.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} — {new Date(tx.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                              </div>
+                            )}
                           </div>
-                          {tx.start_date && tx.end_date && (
-                            <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                              {new Date(tx.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} — {new Date(tx.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                            </div>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '13.5px', color: 'var(--text-primary)', fontWeight: 600 }}>{formatRupiah(totalPrice)}</span>
+                        </td>
+                        <td>
+                          {tx.status === 'completed' && damageFee > 0 ? (
+                            <span style={{ color: '#22C55E', fontWeight: 700, fontSize: '13px' }}>
+                              +{formatRupiah(damageFee)}
+                            </span>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>-</span>
                           )}
-                        </div>
-                      </td>
-                      <td>
-                        <strong style={{ fontSize: '14px', color: '#22C55E' }}>{formatRupiah(tx.total_price)}</strong>
-                      </td>
-                      <td style={{ verticalAlign: 'middle' }}>{statusBadge(tx.status)}</td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td>
+                          <strong style={{ fontSize: '14px', color: '#22C55E' }}>{formatRupiah(grandTotalIncome)}</strong>
+                        </td>
+                        <td style={{ verticalAlign: 'middle' }}>{statusBadge(tx.status)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
@@ -307,12 +341,12 @@ export default function ReportsPage() {
           <div className="card-header" style={{ padding: '20px 24px', borderBottom: '1px solid var(--bg-border)' }}>
             <div>
               <div className="card-title">Detail Pengeluaran Operasional</div>
-              <div className="card-subtitle">{safeExp.length} item pengeluaran ditemukan</div>
+              <div className="card-subtitle">{realExpenses.length} item pengeluaran ditemukan</div>
             </div>
             <button
               className="btn btn-primary"
               onClick={handleExport}
-              disabled={exporting || loading || safeExp.length === 0}
+              disabled={exporting || loading || realExpenses.length === 0}
             >
               {exporting ? <><i className="fa-solid fa-spinner fa-spin"></i> Mengexport...</> : <><i className="fa-solid fa-file-excel"></i> Download Excel Pengeluaran</>}
             </button>
@@ -321,7 +355,7 @@ export default function ReportsPage() {
           <div className="table-wrapper">
             {loading ? (
               <div className="table-empty"><i className="fa-solid fa-spinner fa-spin"></i> Memuat pengeluaran...</div>
-            ) : safeExp.length === 0 ? (
+            ) : realExpenses.length === 0 ? (
               <div className="table-empty"><p>Tidak ada pengeluaran untuk periode ini</p></div>
             ) : (
               <table className="table">
@@ -335,7 +369,7 @@ export default function ReportsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {safeExp.map((exp, idx) => (
+                  {realExpenses.map((exp, idx) => (
                     <tr key={exp.id}>
                       <td>{idx + 1}</td>
                       <td>{new Date(exp.expense_date).toLocaleDateString('id-ID')}</td>

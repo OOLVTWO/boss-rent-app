@@ -25,12 +25,13 @@ async function runMigration() {
     { name: 'issues_reported', type: 'TEXT' }
   ];
 
-  // Check existing columns by selecting 1 row
-  const { data: vRow } = await admin.from('vehicles').select('*').limit(1);
-  console.log('Current vehicle columns:', vRow ? Object.keys(vRow[0] || {}) : 'empty table');
+  // 3. Add columns to expenses table
+  const expenseColumns = [
+    { name: 'type', type: "VARCHAR(20) DEFAULT 'expense'" }
+  ];
 
-  const { data: tRow } = await admin.from('transactions').select('*').limit(1);
-  console.log('Current transaction columns:', tRow ? Object.keys(tRow[0] || {}) : 'empty table');
+  const { data: eRow } = await admin.from('expenses').select('*').limit(1);
+  console.log('Current expense columns:', eRow ? Object.keys(eRow[0] || {}) : 'empty table');
 
   console.log('✅ Migration check finished!');
 }

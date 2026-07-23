@@ -7,11 +7,13 @@ import Link from 'next/link';
 import { analyzeVehicleHealth } from '@/lib/aiDiagnostic';
 
 function formatRupiah(amount) {
+  const cleanAmount = Math.round(Number(amount || 0));
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
     minimumFractionDigits: 0,
-  }).format(amount || 0);
+    maximumFractionDigits: 0,
+  }).format(cleanAmount);
 }
 
 const statusBadge = (status) => {
@@ -59,8 +61,18 @@ export default function DashboardClient({ transactions, vehicles }) {
   const urgentVehicles = diagnostics.filter(d => d.healthScore < 60 || d.recentIssues.length > 0);
 
   // Financial calculations
-  const totalRevenue = safeTx.filter(t => t.status === 'completed').reduce((s, t) => s + Number(t.total_price || 0), 0);
-  const totalExpenses = safeExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+  const checkIsIncome = (e) => {
+    if (!e) return false;
+    if (e.type === 'income') return true;
+    if (typeof e.category === 'string' && (e.category.startsWith('income_') || e.category.includes('income'))) return true;
+    return false;
+  };
+
+  const rentalRevenue = safeTx.filter(t => t.status === 'completed').reduce((s, t) => s + Number(t.total_price || 0), 0);
+  const depositClaimIncome = safeTx.filter(t => t.status === 'completed').reduce((s, t) => s + Number(t.damage_fee || 0), 0);
+  const financialIncome = safeExpenses.filter(e => checkIsIncome(e)).reduce((s, e) => s + Number(e.amount || 0), 0);
+  const totalRevenue = rentalRevenue + depositClaimIncome + financialIncome;
+  const totalExpenses = safeExpenses.filter(e => !checkIsIncome(e)).reduce((s, e) => s + Number(e.amount || 0), 0);
   const netProfit = totalRevenue - totalExpenses;
 
   // Deposit calculations
@@ -142,7 +154,7 @@ export default function DashboardClient({ transactions, vehicles }) {
                 <div className="sub-icon income-icon">
                   <i className="fa-solid fa-arrow-down-left"></i>
                 </div>
-                <span>Pemasukan Kotor (Sewa)</span>
+                <span>Pemasukan Kotor</span>
               </div>
               <div className="sub-val income-val">{formatRupiah(totalRevenue)}</div>
             </div>
@@ -167,36 +179,48 @@ export default function DashboardClient({ transactions, vehicles }) {
             </div>
             <div>
               <div className="bento-card-title">Rekap Deposit Jaminan</div>
-              <div className="bento-card-subtitle">Monitoring garansi & denda kerusakan</div>
+              <div className="bento-card-subtitle">Monitoring garansi & klaim denda kerusakan</div>
             </div>
           </div>
 
           <div className="bento-deposit-grid">
             <div className="bento-deposit-box held">
               <div className="dep-box-top">
-                <i className="fa-solid fa-lock-keyhole" style={{ color: '#FAA307' }}></i>
+                <i className="fa-solid fa-vault" style={{ color: '#F59E0B' }}></i>
                 <span>Deposit Ditahan (Aktif)</span>
               </div>
-              <div className="dep-box-val" style={{ color: '#FAA307' }}>{formatRupiah(totalDepositHeld)}</div>
-              <div className="dep-box-sub">{activeTx.length} transaksi aktif berjalan</div>
+              <div className="dep-box-val" style={{ color: '#F59E0B' }}>{formatRupiah(totalDepositHeld)}</div>
+              <div className="dep-box-sub">
+                <span style={{ color: '#F59E0B', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <i className="fa-solid fa-clock-rotate-left"></i> {activeTx.length} Transaksi Aktif Berjalan
+                </span>
+              </div>
             </div>
 
             <div className="bento-deposit-box damage">
               <div className="dep-box-top">
-                <i className="fa-solid fa-triangle-exclamation" style={{ color: '#EF4444' }}></i>
-                <span>Dipotong Denda</span>
+                <i className="fa-solid fa-shield-halved" style={{ color: '#A855F7' }}></i>
+                <span>Klaim Denda Ganti Rugi</span>
               </div>
-              <div className="dep-box-val" style={{ color: '#EF4444' }}>{formatRupiah(totalDepositDamage)}</div>
-              <div className="dep-box-sub">Klaim ganti rugi fisik</div>
+              <div className="dep-box-val" style={{ color: '#A855F7' }}>+{formatRupiah(totalDepositDamage)}</div>
+              <div className="dep-box-sub">
+                <span style={{ color: '#A855F7', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <i className="fa-solid fa-circle-plus"></i> Masuk Pemasukan & Laba
+                </span>
+              </div>
             </div>
 
             <div className="bento-deposit-box returned">
               <div className="dep-box-top">
-                <i className="fa-solid fa-circle-check" style={{ color: '#22C55E' }}></i>
+                <i className="fa-solid fa-hand-holding-dollar" style={{ color: '#3B82F6' }}></i>
                 <span>Deposit Dikembalikan</span>
               </div>
-              <div className="dep-box-val" style={{ color: '#22C55E' }}>{formatRupiah(totalDepositReturned)}</div>
-              <div className="dep-box-sub">Telah ditransfer ke customer</div>
+              <div className="dep-box-val" style={{ color: '#3B82F6' }}>{formatRupiah(totalDepositReturned)}</div>
+              <div className="dep-box-sub">
+                <span style={{ color: '#3B82F6', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <i className="fa-solid fa-arrow-rotate-left"></i> Pengembalian Kas ke Customer
+                </span>
+              </div>
             </div>
           </div>
         </div>

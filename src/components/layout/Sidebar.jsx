@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect, @next/next/no-img-element */
 'use client';
 
 import Link from 'next/link';
@@ -11,7 +12,7 @@ const navItems = [
   { href: '/vehicles', iconClass: 'fa-solid fa-motorcycle', label: 'Data Motor' },
   { href: '/tracking', iconClass: 'fa-solid fa-clock-rotate-left', label: 'Tracking Sewa', badge: 'tracking' },
   { href: '/availability', iconClass: 'fa-solid fa-circle-half-stroke', label: 'Ketersediaan', badge: 'availability' },
-  { href: '/expenses', iconClass: 'fa-solid fa-money-bill-transfer', label: 'Pengeluaran' },
+  { href: '/expenses', iconClass: 'fa-solid fa-wallet', label: 'Keuangan' },
   { href: '/maintenance', iconClass: 'fa-solid fa-robot', label: 'AI Diagnostic' },
   { href: '/gallery', iconClass: 'fa-solid fa-images', label: 'Galeri Foto' },
   { href: '/reports', iconClass: 'fa-solid fa-chart-line', label: 'Laporan' },

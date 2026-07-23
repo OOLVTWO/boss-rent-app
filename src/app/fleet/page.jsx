@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { getWhatsAppShareUrl, getWaGatewayConfig, sendWhatsAppGateway } from '@/lib/countryCodes';
+import { updateFavicon } from '@/lib/favicon';
 
 function formatRupiah(amount) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount || 0);
@@ -263,6 +264,9 @@ export default function SharpSquareBusinessWebsitePage() {
       const savedBiz = localStorage.getItem('boss_rent_biz_settings');
       if (savedBiz) {
         const parsed = JSON.parse(savedBiz);
+        if (parsed.logoUrl) {
+          updateFavicon(parsed.logoUrl);
+        }
         setBiz(prev => ({
           ...prev,
           name: parsed.name || prev.name,

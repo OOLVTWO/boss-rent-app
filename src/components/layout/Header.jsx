@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect, @next/next/no-img-element */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,7 +11,7 @@ const pageMeta = {
   '/vehicles': { title: 'Data Motor', subtitle: 'Manajemen armada kendaraan' },
   '/tracking': { title: 'Tracking Sewa', subtitle: 'Monitoring durasi sewa & pengingat WA' },
   '/availability': { title: 'Ketersediaan', subtitle: 'Ketersediaan armada motor real-time' },
-  '/expenses': { title: 'Pengeluaran', subtitle: 'Catat biaya servis, bahan bakar & gaji' },
+  '/expenses': { title: 'Keuangan', subtitle: 'Catat pemasukan, pengeluaran & saldo bersih' },
   '/maintenance': { title: 'AI Diagnostic', subtitle: 'Deteksi dini kesehatan motor' },
   '/gallery': { title: 'Galeri Foto', subtitle: 'Arsip foto identitas & kendaraan' },
   '/reports': { title: 'Laporan', subtitle: 'Export dan analisis pendapatan' },

@@ -14,6 +14,7 @@ import {
   saveWaGatewayConfig,
   sendWhatsAppGateway
 } from '@/lib/countryCodes';
+import { updateFavicon } from '@/lib/favicon';
 
 function formatRupiah(amount) {
   return new Intl.NumberFormat('id-ID', {
@@ -194,9 +195,10 @@ export default function SettingsPage() {
           uploadedStoragePhotos: [newStorageItem, ...(p.uploadedStoragePhotos || [])]
         };
         localStorage.setItem('boss_rent_biz_settings', JSON.stringify(updated));
+        updateFavicon(base64Url);
         return updated;
       });
-      showAlert('🖼️ Logo brand baru berhasil di-upload dan otomatis tersimpan di Repositori Storage (Opsi #5)!');
+      showAlert('🖼️ Logo brand baru berhasil di-upload! Tampilan logo & icon browser (favicon) telah di-sinkronkan.');
     };
     reader.readAsDataURL(file);
   };
@@ -765,7 +767,10 @@ export default function SettingsPage() {
   const handleSaveBizSettings = (e) => {
     e.preventDefault();
     localStorage.setItem('boss_rent_biz_settings', JSON.stringify(bizForm));
-    showAlert('✅ Pengaturan Operasional & CMS Web Publik Berhasil Diperbarui! Tampilan Halaman Utama Pelanggan Telah Di-Sinkronkan secara Live.');
+    if (bizForm.logoUrl) {
+      updateFavicon(bizForm.logoUrl);
+    }
+    showAlert('✅ Pengaturan Operasional, Logo Brand & Favicon Browser Berhasil Diperbarui! Tampilan Web & Tab Browser Telah Di-Sinkronkan.');
   };
 
   return (

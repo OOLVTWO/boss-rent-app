@@ -1,13 +1,30 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
+import { updateFavicon } from '@/lib/favicon';
 
 export default function DashboardShell({ user, children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+
+  // Sync favicon dynamically from saved brand logo settings
+  useEffect(() => {
+    try {
+      const savedBiz = localStorage.getItem('boss_rent_biz_settings');
+      if (savedBiz) {
+        const parsed = JSON.parse(savedBiz);
+        if (parsed.logoUrl) {
+          updateFavicon(parsed.logoUrl);
+        }
+      }
+    } catch (e) {
+      console.error('Favicon sync error:', e);
+    }
+  }, []);
 
   // Close mobile navigation drawer automatically on route change
   useEffect(() => {
