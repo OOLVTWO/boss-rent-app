@@ -877,7 +877,32 @@ export default function VehiclesPage() {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [ownershipFilter, setOwnershipFilter] = useState('all'); // 'all', 'internal', 'investor', 'investor_recap'
+  const [showModal, setShowModal] = useState(false);
+  const [editData, setEditData] = useState(null);
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: null, name: '', historyError: false });
+  const [alert, setAlert] = useState(null);
+
+  const showAlert = (message, type = 'success') => {
+    setAlert({ message, type });
+    setTimeout(() => setAlert(null), 4000);
+  };
+
+  const fetchVehicles = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/vehicles');
+      const data = await res.json();
+      setVehicles(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Fetch vehicles error:', err);
+      setVehicles([]);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchVehicles(); }, [fetchVehicles]);
 
   const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
 
