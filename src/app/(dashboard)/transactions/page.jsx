@@ -515,6 +515,7 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
     deposit: '',
     discount: '',
     customer_image_url: '',
+    handover_image_url: '',
     km_start: '',
     payment_method: 'cash',
     status: 'active',
@@ -543,6 +544,7 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
           deposit: editData.deposit || '',
           discount: editData.discount || '',
           customer_image_url: editData.customer_image_url || '',
+          handover_image_url: editData.handover_image_url || '',
           km_start: editData.km_start || '',
           payment_method: editData.payment_method || 'cash',
           status: editData.status || 'active',
@@ -649,13 +651,13 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleImageFile = async (e) => {
+  const handleImageFile = async (e, fieldName = 'customer_image_url') => {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
     try {
       const compressedDataUrl = await compressImage(file, { maxWidth: 1000, maxHeight: 1000, quality: 0.82 });
-      setForm(prev => ({ ...prev, customer_image_url: compressedDataUrl }));
+      setForm(prev => ({ ...prev, [fieldName]: compressedDataUrl }));
     } catch (err) {
       alert(err.message || 'Gagal memproses gambar.');
     } finally {
@@ -720,7 +722,7 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
               <label className="form-label" htmlFor="tx-phone">
                 <i className="fa-solid fa-globe" style={{ marginRight: '6px' }}></i> No. WhatsApp (Kode Negara) <span className="required">*</span>
               </label>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap' }}>
                 <CountryCodePicker
                   value={countryCode}
                   onChange={(newCode) => {
@@ -733,6 +735,7 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
                   name="phone_number"
                   type="tel"
                   className="form-control"
+                  style={{ flex: 1, minWidth: 0 }}
                   placeholder="812345678"
                   value={phoneNumber}
                   onChange={e => {
@@ -746,75 +749,153 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
             </div>
           </div>
 
-          {/* Customer Address Input Field */}
-          <div className="form-group">
-            <label className="form-label" htmlFor="tx-address">
-              <i className="fa-solid fa-location-dot" style={{ marginRight: '6px', color: 'var(--brand-primary)' }}></i> Alamat Customer / Lokasi Villa / Hotel Delivery
-            </label>
-            <input
-              id="tx-address"
-              name="renter_address"
-              type="text"
-              className="form-control"
-              placeholder="e.g. Villa Bamboo, Jl. Pantai Pererenan No. 88, Canggu, Bali"
-              value={form.renter_address || ''}
-              onChange={handleChange}
-            />
-          </div>
-
           <div className="form-row cols-2">
+            {/* Customer Address Input Field */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="tx-address">
+                <i className="fa-solid fa-location-dot" style={{ marginRight: '6px', color: 'var(--brand-primary)' }}></i> Alamat Customer / Villa / Hotel
+              </label>
+              <input
+                id="tx-address"
+                name="renter_address"
+                type="text"
+                className="form-control"
+                placeholder="e.g. Villa Bamboo, Jl. Pererenan"
+                value={form.renter_address || ''}
+                onChange={handleChange}
+              />
+            </div>
+
             <div className="form-group">
               <label className="form-label" htmlFor="tx-id-num">
                 <i className="fa-solid fa-id-card" style={{ marginRight: '6px' }}></i> No. KTP / Paspor / SIM
               </label>
               <input id="tx-id-num" name="renter_id_number" type="text" className="form-control" placeholder="Nomor identitas" value={form.renter_id_number} onChange={handleChange} />
             </div>
-            <div className="form-group">
-              <label className="form-label">
-                <i className="fa-solid fa-camera" style={{ marginRight: '6px' }}></i> Foto Penyewa / Dokumen KTP
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageFile}
-                  id="tx-custom-file"
-                  style={{ display: 'none' }}
-                />
-                <label
-                  htmlFor="tx-custom-file"
-                  className="btn btn-secondary"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    padding: '9px 16px',
-                    borderRadius: '8px',
-                    background: 'var(--bg-elevated)',
-                    border: '1px dashed var(--brand-primary)',
-                    color: 'var(--brand-primary-light)',
-                    fontWeight: 600,
-                    width: '100%'
-                  }}
-                >
-                  <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '15px' }}></i>
-                  <span>Pilih & Upload Foto KTP</span>
-                </label>
-              </div>
-              {uploading && <div style={{ fontSize: '11px', color: 'var(--brand-primary-light)', marginTop: '4px' }}><i className="fa-solid fa-spinner fa-spin"></i> Mengompresi gambar...</div>}
-              {form.customer_image_url && !uploading && (
-                <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <img src={form.customer_image_url} alt="Preview KTP" style={{ width: '36px', height: '36px', borderRadius: '6px', objectFit: 'cover' }} />
-                  <span style={{ fontSize: '11px', color: '#22C55E', fontWeight: 600 }}>
-                    <i className="fa-solid fa-circle-check" style={{ marginRight: '4px' }}></i> Foto Berhasil Dimuat
-                  </span>
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => setForm(p => ({ ...p, customer_image_url: '' }))}>Hapus</button>
-                </div>
-              )}
+          </div>
+
+          {/* DUAL PHOTO UPLOADS: FOTO 1 (IDENTITAS) & FOTO 2 (SERAH TERIMA MOTOR) */}
+          <div style={{ background: 'var(--bg-elevated)', padding: '16px', borderRadius: '14px', border: '1px solid var(--bg-border)', marginBottom: '20px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--brand-primary-light)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <i className="fa-solid fa-camera-retro"></i> Upload Dokumentasi Foto Transaksi (2 Foto Penting)
             </div>
+
+            <div className="form-row cols-2" style={{ gap: '14px' }}>
+              {/* FOTO 1: KTP / PASPOR / SIM */}
+              <div className="form-group mb-0">
+                <label className="form-label" htmlFor="tx-id-photo-input" style={{ fontSize: '12px' }}>
+                  <i className="fa-solid fa-id-card" style={{ marginRight: '6px', color: 'var(--brand-primary)' }}></i> 1. Foto KTP / Paspor / SIM
+                </label>
+
+                {form.customer_image_url ? (
+                  <div style={{ position: 'relative', width: '100%', height: '135px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #22C55E' }}>
+                    <img src={form.customer_image_url} alt="KTP / Paspor" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, customer_image_url: '' }))}
+                      style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(239,68,68,0.9)', color: '#FFF', border: 'none', borderRadius: '50%', width: '26px', height: '26px', cursor: 'pointer', fontWeight: 800, fontSize: '12px' }}
+                      title="Hapus Foto Identitas"
+                    >
+                      ✕
+                    </button>
+                    <span style={{ position: 'absolute', bottom: '6px', left: '6px', background: 'rgba(15,23,42,0.9)', color: '#22C55E', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 800 }}>
+                      ✓ Foto Identitas Dimuat
+                    </span>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="tx-id-photo-input"
+                      onChange={(e) => handleImageFile(e, 'customer_image_url')}
+                      style={{ display: 'none' }}
+                    />
+                    <label
+                      htmlFor="tx-id-photo-input"
+                      className="custom-file-btn"
+                      style={{
+                        height: '110px',
+                        flexDirection: 'column',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '2px dashed var(--brand-primary)',
+                        borderRadius: '10px',
+                        background: 'rgba(255,255,255,0.02)',
+                        cursor: 'pointer',
+                        padding: '12px',
+                        textAlign: 'center'
+                      }}
+                    >
+                      <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '24px', color: 'var(--brand-primary)' }}></i>
+                      <span style={{ fontSize: '12px', fontWeight: 800, marginTop: '6px' }}>Upload Foto KTP / Paspor</span>
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Klik / Ambil dari Kamera</span>
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              {/* FOTO 2: CUSTOMER DENGAN MOTOR (HANDOVER) */}
+              <div className="form-group mb-0">
+                <label className="form-label" htmlFor="tx-handover-photo-input" style={{ fontSize: '12px' }}>
+                  <i className="fa-solid fa-motorcycle" style={{ marginRight: '6px', color: '#3B82F6' }}></i> 2. Foto Orang + Motor (Handover)
+                </label>
+
+                {form.handover_image_url ? (
+                  <div style={{ position: 'relative', width: '100%', height: '135px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #3B82F6' }}>
+                    <img src={form.handover_image_url} alt="Customer dengan Motor" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, handover_image_url: '' }))}
+                      style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(239,68,68,0.9)', color: '#FFF', border: 'none', borderRadius: '50%', width: '26px', height: '26px', cursor: 'pointer', fontWeight: 800, fontSize: '12px' }}
+                      title="Hapus Foto Serah Terima"
+                    >
+                      ✕
+                    </button>
+                    <span style={{ position: 'absolute', bottom: '6px', left: '6px', background: 'rgba(15,23,42,0.9)', color: '#3B82F6', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 800 }}>
+                      ✓ Foto Serah Terima Dimuat
+                    </span>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="tx-handover-photo-input"
+                      onChange={(e) => handleImageFile(e, 'handover_image_url')}
+                      style={{ display: 'none' }}
+                    />
+                    <label
+                      htmlFor="tx-handover-photo-input"
+                      className="custom-file-btn"
+                      style={{
+                        height: '110px',
+                        flexDirection: 'column',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '2px dashed #3B82F6',
+                        borderRadius: '10px',
+                        background: 'rgba(255,255,255,0.02)',
+                        cursor: 'pointer',
+                        padding: '12px',
+                        textAlign: 'center'
+                      }}
+                    >
+                      <i className="fa-solid fa-camera" style={{ fontSize: '24px', color: '#3B82F6' }}></i>
+                      <span style={{ fontSize: '12px', fontWeight: 800, marginTop: '6px' }}>Upload Foto Orang + Motor</span>
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Dokumentasi Serah Terima</span>
+                    </label>
+                  </div>
+                )}
+              </div>
+            </div>
+            {uploading && (
+              <div style={{ fontSize: '11px', color: 'var(--brand-primary-light)', marginTop: '8px', textAlign: 'center' }}>
+                <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '4px' }}></i> Mengompresi gambar foto...
+              </div>
+            )}
           </div>
 
           <div className="form-row cols-3">
@@ -1049,6 +1130,29 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
                   <div style={{ fontSize: '12px', color: '#CBD5E1' }}>Plat: <strong>{vehicle?.plate_number}</strong></div>
                 </div>
               </div>
+
+              {/* Documentation Photos on Invoice Card */}
+              {(tx.customer_image_url || tx.handover_image_url) && (
+                <div style={{ marginBottom: '20px', background: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 800, textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <i className="fa-solid fa-camera" style={{ color: 'var(--brand-primary)' }}></i> Dokumentasi Foto Transaksi
+                  </div>
+                  <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+                    {tx.customer_image_url && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <img src={tx.customer_image_url} alt="KTP / SIM" style={{ width: '110px', height: '76px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)' }} />
+                        <span style={{ fontSize: '10px', color: '#22C55E', fontWeight: 800 }}>✓ Foto Identitas KTP/SIM</span>
+                      </div>
+                    )}
+                    {tx.handover_image_url && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <img src={tx.handover_image_url} alt="Serah Terima" style={{ width: '110px', height: '76px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)' }} />
+                        <span style={{ fontSize: '10px', color: '#3B82F6', fontWeight: 800 }}>✓ Foto Orang + Motor</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Dates & Pricing Table */}
               <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse', marginBottom: '20px' }}>
@@ -1470,11 +1574,18 @@ export default function TransactionsPage() {
                     <td>{idx + 1}</td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--bg-card-hover)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {tx.customer_image_url ? (
-                            <img src={tx.customer_image_url} alt={tx.renter_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
-                          ) : (
-                            <i className="fa-solid fa-motorcycle" style={{ fontSize: '14px', color: 'var(--brand-primary)' }}></i>
+                        <div style={{ display: 'flex', position: 'relative' }}>
+                          <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--bg-card-hover)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--bg-border)' }}>
+                            {tx.customer_image_url ? (
+                              <img src={tx.customer_image_url} alt={tx.renter_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} title="Foto KTP/SIM Penyewa" />
+                            ) : (
+                              <i className="fa-solid fa-user" style={{ fontSize: '15px', color: 'var(--brand-primary)' }}></i>
+                            )}
+                          </div>
+                          {tx.handover_image_url && (
+                            <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#3B82F6', overflow: 'hidden', position: 'absolute', bottom: '-2px', right: '-4px', border: '2px solid #0F172A' }} title="Foto Serah Terima Motor">
+                              <img src={tx.handover_image_url} alt="Serah Terima" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </div>
                           )}
                         </div>
                         <div>

@@ -51,7 +51,7 @@ export async function POST(request) {
   // Smart Fallback jika kolom baru belum di-migrate di database Supabase
   if (error && (error.message.includes('Could not find the') || error.message.includes('schema cache'))) {
     console.warn('Fallback insertion without unmigrated columns due to Supabase schema cache:', error.message);
-    const { customer_image_url, renter_address: _ra, discount: _d, damage_fee: _df, km_start: _ks, km_end: _ke, issues_reported: _ir, ...fallbackPayload } = payload;
+    const { customer_image_url, handover_image_url: _hou, renter_address: _ra, discount: _d, damage_fee: _df, km_start: _ks, km_end: _ke, issues_reported: _ir, ...fallbackPayload } = payload;
 
     const retry = await supabase
       .from('transactions')

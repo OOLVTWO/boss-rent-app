@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   deposit DECIMAL(12,2) DEFAULT 0,
   damage_fee DECIMAL(12,2) DEFAULT 0,
   customer_image_url TEXT,
+  handover_image_url TEXT,
   km_start INTEGER DEFAULT 0,
   km_end INTEGER DEFAULT 0,
   issues_reported TEXT,
