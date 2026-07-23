@@ -92,15 +92,28 @@ export default function SettingsPage() {
       { url: '/images/boss_rent_bento_3.png', title: 'Easy Key Handover Service', tag: 'Express Pickup', icon: 'fa-solid fa-key' }
     ],
     uploadedStoragePhotos: [
-      { id: '1', title: 'Customer Bali Scooter', url: '/images/boss_rent_customer_bali.png', date: 'Default Preset' },
-      { id: '2', title: 'Mint Green Vespa Fleet', url: '/images/boss_rent_bento_1.png', date: 'Default Preset' },
-      { id: '3', title: 'Fleet Lineup Serviced', url: '/images/boss_rent_fleet_lineup.png', date: 'Default Preset' },
-      { id: '4', title: 'Pererenan Beach Exploring', url: '/images/boss_rent_bento_2.png', date: 'Default Preset' },
-      { id: '5', title: 'Key Handover Service', url: '/images/boss_rent_bento_3.png', date: 'Default Preset' },
-      { id: '6', title: 'Red Honda Scoopy Sunset', url: '/images/boss_rent_bento_8.png', date: 'Default Preset' },
-      { id: '7', title: 'Sanitized Clean Helmets', url: '/images/boss_rent_bento_6.png', date: 'Default Preset' },
-      { id: '8', title: 'Helmet Handover Villa', url: '/images/boss_rent_helmet_handover.png', date: 'Default Preset' },
-      { id: '9', title: 'Scenic Countryside Cruise', url: '/images/boss_rent_bento_5.png', date: 'Default Preset' },
+      { id: 'logo-company', title: 'Company Official Logo (logoCompany.png)', url: '/images/logoCompany.png', date: 'System Asset' },
+      { id: 'logo-brand', title: 'Brand Logo Badge (logo.png)', url: '/images/logo.png', date: 'System Asset' },
+      { id: '1', title: 'Customer Bali Scooter', url: '/images/boss_rent_customer_bali.png', date: 'Bento Asset' },
+      { id: '2', title: 'Mint Green Vespa Sprint Fleet', url: '/images/boss_rent_bento_1.png', date: 'Bento Asset' },
+      { id: '3', title: 'Fleet Lineup Serviced & Clean', url: '/images/boss_rent_fleet_lineup.png', date: 'Bento Asset' },
+      { id: '4', title: 'Pererenan Beach Ride & Sunset', url: '/images/boss_rent_bento_2.png', date: 'Bento Asset' },
+      { id: '5', title: 'Key Handover & Villa Delivery', url: '/images/boss_rent_bento_3.png', date: 'Bento Asset' },
+      { id: '6', title: 'Canggu Coastal Road Exploring', url: '/images/boss_rent_bento_4.png', date: 'Bento Asset' },
+      { id: '7', title: 'Scenic Countryside Rice Paddies', url: '/images/boss_rent_bento_5.png', date: 'Bento Asset' },
+      { id: '8', title: 'Sanitized Clean Helmets Service', url: '/images/boss_rent_bento_6.png', date: 'Bento Asset' },
+      { id: '9', title: '24/7 Roadside Assistance Bali', url: '/images/boss_rent_bento_7.png', date: 'Bento Asset' },
+      { id: '10', title: 'Red Honda Scoopy Sunset Edition', url: '/images/boss_rent_bento_8.png', date: 'Bento Asset' },
+      { id: '11', title: 'Yamaha NMAX 155 Maxi Scooter', url: '/images/boss_rent_bento_9.png', date: 'Bento Asset' },
+      { id: '12', title: 'Honda PCX 160 Touring Edition', url: '/images/boss_rent_bento_10.png', date: 'Bento Asset' },
+      { id: '13', title: 'Yamaha Aerox Cyber City Sport', url: '/images/boss_rent_bento_11.png', date: 'Bento Asset' },
+      { id: '14', title: 'Helmet Handover Villa Delivery', url: '/images/boss_rent_helmet_handover.png', date: 'Bento Asset' },
+      { id: 'v-vespa', title: 'Vehicle Model: Vespa Sprint 150', url: '/images/vehicle_vespa.png', date: 'Fleet Model Asset' },
+      { id: 'v-nmax', title: 'Vehicle Model: Yamaha NMAX 155', url: '/images/vehicle_nmax.png', date: 'Fleet Model Asset' },
+      { id: 'v-pcx', title: 'Vehicle Model: Honda PCX 160', url: '/images/vehicle_pcx.png', date: 'Fleet Model Asset' },
+      { id: 'v-scoopy', title: 'Vehicle Model: Honda Scoopy 110', url: '/images/vehicle_scoopy.png', date: 'Fleet Model Asset' },
+      { id: 'v-vario', title: 'Vehicle Model: Honda Vario 160', url: '/images/vehicle_vario.png', date: 'Fleet Model Asset' },
+      { id: 'v-aerox', title: 'Vehicle Model: Yamaha Aerox 155', url: '/images/vehicle_aerox.png', date: 'Fleet Model Asset' },
     ],
     faqs: [
       {
@@ -142,10 +155,15 @@ export default function SettingsPage() {
           date: new Date().toLocaleDateString('id-ID')
         };
 
-        setBizForm(prev => ({
-          ...prev,
-          uploadedStoragePhotos: [newPhotoItem, ...(prev.uploadedStoragePhotos || [])]
-        }));
+        setBizForm(prev => {
+          const updated = {
+            ...prev,
+            uploadedStoragePhotos: [newPhotoItem, ...(prev.uploadedStoragePhotos || [])]
+          };
+          localStorage.setItem('boss_rent_biz_settings', JSON.stringify(updated));
+          return updated;
+        });
+        showAlert('📁 Foto baru berhasil di-upload dan tersimpan di Repositori Storage (Opsi #5)!');
       };
       reader.readAsDataURL(file);
     });
@@ -157,8 +175,25 @@ export default function SettingsPage() {
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      setBizForm(p => ({ ...p, logoUrl: event.target.result }));
-      showAlert('🖼️ Logo brand berhasil di-upload! Tekan tombol Simpan Pengaturan di bawah untuk meng-update logo di seluruh aplikasi.');
+      const base64Url = event.target.result;
+      const logoTitle = `Logo Brand — ${file.name.replace(/\.[^/.]+$/, "")}`;
+      const newStorageItem = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+        title: logoTitle,
+        url: base64Url,
+        date: new Date().toLocaleDateString('id-ID')
+      };
+
+      setBizForm(p => {
+        const updated = {
+          ...p,
+          logoUrl: base64Url,
+          uploadedStoragePhotos: [newStorageItem, ...(p.uploadedStoragePhotos || [])]
+        };
+        localStorage.setItem('boss_rent_biz_settings', JSON.stringify(updated));
+        return updated;
+      });
+      showAlert('🖼️ Logo brand baru berhasil di-upload dan otomatis tersimpan di Repositori Storage (Opsi #5)!');
     };
     reader.readAsDataURL(file);
   };
