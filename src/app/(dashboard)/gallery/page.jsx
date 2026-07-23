@@ -337,12 +337,14 @@ export default function GalleryPage() {
   const [transactions, setTransactions] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('customers');
+  const [activeTab, setActiveTab] = useState('id_cards'); // 'id_cards' | 'handover' | 'vehicles'
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+
+  // Image Adjuster State
   const [adjusterOpen, setAdjusterOpen] = useState(false);
   const [adjusterSrc, setAdjusterSrc] = useState(null);
-  const [adjusterTarget, setAdjusterTarget] = useState(null); // { type: 'customer'|'vehicle', id, field }
+  const [adjusterTarget, setAdjusterTarget] = useState(null); // { type: 'customer' | 'vehicle', field: string, id: string }
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -359,12 +361,13 @@ export default function GalleryPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const removeCustomerPhoto = async (txId) => {
-    if (!confirm('Hapus foto identitas customer ini dari galeri?')) return;
+  const removeTransactionPhoto = async (txId, fieldName = 'customer_image_url') => {
+    const label = fieldName === 'customer_image_url' ? 'foto identitas customer' : 'foto serah terima orang + motor';
+    if (!confirm(`Hapus ${label} ini dari galeri?`)) return;
     const res = await fetch(`/api/transactions/${txId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ customer_image_url: null }),
+      body: JSON.stringify({ [fieldName]: null }),
     });
     if (res.ok) fetchData();
   };
@@ -389,13 +392,13 @@ export default function GalleryPage() {
   const handleAdjusterConfirm = async (adjustedDataUrl) => {
     setAdjusterOpen(false);
     if (!adjusterTarget) return;
-    const { type, id } = adjusterTarget;
+    const { type, field, id } = adjusterTarget;
 
     if (type === 'customer') {
       await fetch(`/api/transactions/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customer_image_url: adjustedDataUrl }),
+        body: JSON.stringify({ [field || 'customer_image_url']: adjustedDataUrl }),
       });
     } else {
       await fetch(`/api/vehicles/${id}`, {
@@ -407,41 +410,49 @@ export default function GalleryPage() {
     fetchData();
   };
 
-  const customerPhotos = Array.isArray(transactions) ? transactions.filter(t => t.renter_name) : [];
-  const vehiclePhotos = Array.isArray(vehicles) ? vehicles : [];
+  const allTransactions = Array.isArray(transactions) ? transactions : [];
+  const allVehicles = Array.isArray(vehicles) ? vehicles : [];
 
-  const filteredCustomers = customerPhotos.filter(t =>
-    !searchQuery ||
-    t.renter_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.renter_phone?.includes(searchQuery) ||
-    t.vehicles?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  const idCardTransactions = allTransactions.filter(t =>
+    t.customer_image_url || (!searchQuery ? false : (t.renter_name?.toLowerCase().includes(searchQuery.toLowerCase()) || t.renter_phone?.includes(searchQuery)))
   );
 
-  const filteredVehicles = vehiclePhotos.filter(v =>
-    !searchQuery ||
-    v.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    v.plate_number?.toLowerCase().includes(searchQuery.toLowerCase())
+  const handoverTransactions = allTransactions.filter(t =>
+    t.handover_image_url || (!searchQuery ? false : (t.renter_name?.toLowerCase().includes(searchQuery.toLowerCase()) || t.renter_phone?.includes(searchQuery)))
   );
 
-  const hasPhotoCustomers = customerPhotos.filter(t => t.customer_image_url).length;
-  const hasPhotoVehicles = vehiclePhotos.filter(v => v.image_url).length;
+  const filteredVehicles = allVehicles.filter(v =>
+    v.image_url || (!searchQuery ? false : (v.name?.toLowerCase().includes(searchQuery.toLowerCase()) || v.plate_number?.toLowerCase().includes(searchQuery.toLowerCase())))
+  );
+
+  const hasPhotoIdCards = allTransactions.filter(t => t.customer_image_url).length;
+  const hasPhotoHandover = allTransactions.filter(t => t.handover_image_url).length;
+  const hasPhotoVehicles = allVehicles.filter(v => v.image_url).length;
 
   return (
     <div className="fade-in">
       <div className="page-header">
-        <h2><i className="fa-solid fa-images" style={{ marginRight: '8px', color: 'var(--brand-primary-light)' }}></i> Galeri Foto Identitas & Motor</h2>
-        <p>Arsip foto identitas penyewa dan foto fisik armada. Klik gambar untuk tampilan penuh, atau adjust sebelum simpan.</p>
+        <h2><i className="fa-solid fa-images" style={{ marginRight: '8px', color: 'var(--brand-primary-light)' }}></i> Galeri Foto Transaksi & Armada Motor</h2>
+        <p>Arsip terpilah 3 kategori foto: Foto Identitas Customer (KTP/Paspor), Foto Serah Terima (Orang + Motor), dan Foto Fisik Armada.</p>
       </div>
 
-      {/* Scrollable Tabs Chips / Pills Bar */}
+      {/* 3-Tab Filter Category Pills */}
       <div className="scrollable-tabs-bar">
         <button
           type="button"
-          className={`scrollable-tab-btn ${activeTab === 'customers' ? 'active' : ''}`}
-          onClick={() => setActiveTab('customers')}
+          className={`scrollable-tab-btn ${activeTab === 'id_cards' ? 'active' : ''}`}
+          onClick={() => setActiveTab('id_cards')}
         >
           <i className="fa-solid fa-id-card"></i>
-          Foto Identitas Customer ({hasPhotoCustomers}/{customerPhotos.length})
+          1. Foto Identitas Customer ({hasPhotoIdCards})
+        </button>
+        <button
+          type="button"
+          className={`scrollable-tab-btn ${activeTab === 'handover' ? 'active' : ''}`}
+          onClick={() => setActiveTab('handover')}
+        >
+          <i className="fa-solid fa-camera"></i>
+          2. Foto Orang + Motor ({hasPhotoHandover})
         </button>
         <button
           type="button"
@@ -449,7 +460,7 @@ export default function GalleryPage() {
           onClick={() => setActiveTab('vehicles')}
         >
           <i className="fa-solid fa-motorcycle"></i>
-          Foto Fisik Motor ({hasPhotoVehicles}/{vehiclePhotos.length})
+          3. Foto Fisik Motor ({hasPhotoVehicles})
         </button>
       </div>
 
@@ -461,7 +472,7 @@ export default function GalleryPage() {
             <input
               type="text"
               className="form-control"
-              placeholder={activeTab === 'customers' ? 'Cari nama customer, HP, motor...' : 'Cari nama motor, plat nomor...'}
+              placeholder="Cari nama customer, HP, motor, atau plat nomor..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />
@@ -472,19 +483,19 @@ export default function GalleryPage() {
       {/* Loading */}
       {loading ? (
         <div className="card table-empty">
-          <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '8px' }}></i> Memuat galeri foto...
+          <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '8px' }}></i> Memuat galeri foto terpilah...
         </div>
-      ) : activeTab === 'customers' ? (
-        /* CUSTOMER PHOTOS GRID */
-        filteredCustomers.length === 0 ? (
+      ) : activeTab === 'id_cards' ? (
+        /* TAB 1: CUSTOMER ID CARD PHOTOS (KTP/PASPOR/SIM) */
+        idCardTransactions.length === 0 ? (
           <div className="card table-empty">
-            <div className="table-empty-icon"><i className="fa-solid fa-image"></i></div>
-            <p>Belum ada data penyewa. Tambahkan transaksi terlebih dahulu.</p>
+            <div className="table-empty-icon"><i className="fa-solid fa-id-card"></i></div>
+            <p>Belum ada foto identitas customer (KTP/Paspor/SIM). Upload saat membuat transaksi baru.</p>
           </div>
         ) : (
           <div className="grid-3">
-            {filteredCustomers.map(tx => (
-              <div key={tx.id} className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            {idCardTransactions.map(tx => (
+              <div key={tx.id} className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', border: '1px solid var(--bg-border)' }}>
                 <div
                   style={{
                     height: '180px',
@@ -505,19 +516,22 @@ export default function GalleryPage() {
                     />
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
-                      <i className="fa-solid fa-motorcycle" style={{ fontSize: '48px', color: 'var(--brand-primary)', opacity: 0.4 }}></i>
-                      <span style={{ fontSize: '11px' }}>Belum Ada Foto</span>
+                      <i className="fa-solid fa-id-card" style={{ fontSize: '48px', color: 'var(--brand-primary)', opacity: 0.4 }}></i>
+                      <span style={{ fontSize: '11px' }}>Belum Upload Foto KTP</span>
                     </div>
                   )}
 
-                  {/* Adjust overlay button on hover */}
+                  <span style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(15,23,42,0.9)', color: '#22C55E', fontSize: '10px', padding: '3px 8px', fontWeight: 800, borderRadius: '4px', border: '1px solid #22C55E' }}>
+                    🪪 Foto Identitas
+                  </span>
+
                   {tx.customer_image_url && (
                     <button
-                      onClick={e => { e.stopPropagation(); openAdjuster(tx.customer_image_url, { type: 'customer', id: tx.id }); }}
+                      onClick={e => { e.stopPropagation(); openAdjuster(tx.customer_image_url, { type: 'customer', field: 'customer_image_url', id: tx.id }); }}
                       title="Sesuaikan gambar"
                       style={{
                         position: 'absolute', top: '8px', right: '8px',
-                        background: 'rgba(0,0,0,0.6)', color: '#fff',
+                        background: 'rgba(0,0,0,0.7)', color: '#fff',
                         border: 'none', borderRadius: '6px',
                         width: '32px', height: '32px',
                         cursor: 'pointer', fontSize: '13px',
@@ -538,11 +552,16 @@ export default function GalleryPage() {
                   </div>
                   {tx.renter_id_number && (
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                      <i className="fa-solid fa-id-card" style={{ marginRight: '6px' }}></i>{tx.renter_id_number}
+                      <i className="fa-solid fa-id-card" style={{ marginRight: '6px' }}></i>No. ID: {tx.renter_id_number}
                     </div>
                   )}
-                  <div style={{ fontSize: '12px', color: 'var(--brand-primary-light)', fontWeight: 600, marginTop: '4px' }}>
-                    <i className="fa-solid fa-motorcycle" style={{ marginRight: '6px' }}></i>{tx.vehicles?.name || 'Motor'} ({tx.vehicles?.plate_number})
+                  {tx.renter_address && (
+                    <div style={{ fontSize: '11.5px', color: 'var(--brand-primary-light)' }}>
+                      <i className="fa-solid fa-location-dot" style={{ marginRight: '6px' }}></i>{tx.renter_address}
+                    </div>
+                  )}
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '2px' }}>
+                    <i className="fa-solid fa-motorcycle" style={{ marginRight: '6px', color: 'var(--brand-primary)' }}></i>{tx.vehicles?.name || 'Motor'} ({tx.vehicles?.plate_number})
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                     Sewa: {new Date(tx.start_date).toLocaleDateString('id-ID')} — {new Date(tx.end_date).toLocaleDateString('id-ID')}
@@ -552,14 +571,113 @@ export default function GalleryPage() {
                       <button
                         className="btn btn-secondary btn-sm"
                         style={{ fontSize: '11px', flex: 1 }}
-                        onClick={() => openAdjuster(tx.customer_image_url, { type: 'customer', id: tx.id })}
+                        onClick={() => openAdjuster(tx.customer_image_url, { type: 'customer', field: 'customer_image_url', id: tx.id })}
                       >
                         <i className="fa-solid fa-sliders" style={{ marginRight: '4px' }}></i> Adjust
                       </button>
                       <button
                         className="btn btn-danger btn-sm"
                         style={{ fontSize: '11px', flex: 1 }}
-                        onClick={e => { e.stopPropagation(); removeCustomerPhoto(tx.id); }}
+                        onClick={e => { e.stopPropagation(); removeTransactionPhoto(tx.id, 'customer_image_url'); }}
+                      >
+                        <i className="fa-solid fa-trash-can" style={{ marginRight: '4px' }}></i> Hapus
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      ) : activeTab === 'handover' ? (
+        /* TAB 2: HANDOVER PHOTOS (ORANG + MOTOR) */
+        handoverTransactions.length === 0 ? (
+          <div className="card table-empty">
+            <div className="table-empty-icon"><i className="fa-solid fa-camera"></i></div>
+            <p>Belum ada foto serah terima orang + motor. Upload di Form Transaksi pada saat penyerahan unit.</p>
+          </div>
+        ) : (
+          <div className="grid-3">
+            {handoverTransactions.map(tx => (
+              <div key={tx.id} className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', border: '1px solid var(--bg-border)' }}>
+                <div
+                  style={{
+                    height: '180px',
+                    background: 'var(--bg-elevated)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    cursor: tx.handover_image_url ? 'pointer' : 'default'
+                  }}
+                  onClick={() => tx.handover_image_url && setSelectedImage(tx.handover_image_url)}
+                >
+                  {tx.handover_image_url ? (
+                    <img
+                      src={tx.handover_image_url}
+                      alt={`Serah Terima ${tx.renter_name}`}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
+                      <i className="fa-solid fa-camera" style={{ fontSize: '48px', color: '#3B82F6', opacity: 0.4 }}></i>
+                      <span style={{ fontSize: '11px' }}>Belum Upload Foto Serah Terima</span>
+                    </div>
+                  )}
+
+                  <span style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(15,23,42,0.9)', color: '#3B82F6', fontSize: '10px', padding: '3px 8px', fontWeight: 800, borderRadius: '4px', border: '1px solid #3B82F6' }}>
+                    🛵 Foto Orang + Motor
+                  </span>
+
+                  {tx.handover_image_url && (
+                    <button
+                      onClick={e => { e.stopPropagation(); openAdjuster(tx.handover_image_url, { type: 'customer', field: 'handover_image_url', id: tx.id }); }}
+                      title="Sesuaikan gambar"
+                      style={{
+                        position: 'absolute', top: '8px', right: '8px',
+                        background: 'rgba(0,0,0,0.7)', color: '#fff',
+                        border: 'none', borderRadius: '6px',
+                        width: '32px', height: '32px',
+                        cursor: 'pointer', fontSize: '13px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}
+                    >
+                      <i className="fa-solid fa-sliders"></i>
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: '5px', flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>
+                    {tx.renter_name}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                    <i className="fa-solid fa-phone" style={{ marginRight: '6px' }}></i>{tx.renter_phone}
+                  </div>
+                  {tx.renter_address && (
+                    <div style={{ fontSize: '11.5px', color: 'var(--brand-primary-light)' }}>
+                      <i className="fa-solid fa-location-dot" style={{ marginRight: '6px' }}></i>{tx.renter_address}
+                    </div>
+                  )}
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '2px' }}>
+                    <i className="fa-solid fa-motorcycle" style={{ marginRight: '6px', color: '#3B82F6' }}></i>{tx.vehicles?.name || 'Motor'} ({tx.vehicles?.plate_number})
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Sewa: {new Date(tx.start_date).toLocaleDateString('id-ID')} — {new Date(tx.end_date).toLocaleDateString('id-ID')}
+                  </div>
+                  {tx.handover_image_url && (
+                    <div className="flex gap-2" style={{ marginTop: '8px' }}>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        style={{ fontSize: '11px', flex: 1 }}
+                        onClick={() => openAdjuster(tx.handover_image_url, { type: 'customer', field: 'handover_image_url', id: tx.id })}
+                      >
+                        <i className="fa-solid fa-sliders" style={{ marginRight: '4px' }}></i> Adjust
+                      </button>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        style={{ fontSize: '11px', flex: 1 }}
+                        onClick={e => { e.stopPropagation(); removeTransactionPhoto(tx.id, 'handover_image_url'); }}
                       >
                         <i className="fa-solid fa-trash-can" style={{ marginRight: '4px' }}></i> Hapus
                       </button>
@@ -571,11 +689,11 @@ export default function GalleryPage() {
           </div>
         )
       ) : (
-        /* VEHICLE PHOTOS GRID */
+        /* TAB 3: VEHICLE PHYSICAL PHOTOS */
         filteredVehicles.length === 0 ? (
           <div className="card table-empty">
             <div className="table-empty-icon"><i className="fa-solid fa-motorcycle"></i></div>
-            <p>Belum ada data kendaraan</p>
+            <p>Belum ada data foto fisik kendaraan.</p>
           </div>
         ) : (
           <div className="grid-3">
@@ -606,13 +724,17 @@ export default function GalleryPage() {
                     </div>
                   )}
 
+                  <span style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(15,23,42,0.9)', color: 'var(--brand-primary-light)', fontSize: '10px', padding: '3px 8px', fontWeight: 800, borderRadius: '4px', border: '1px solid var(--brand-primary)' }}>
+                    🏍️ Foto Fisik Armada
+                  </span>
+
                   {v.image_url && (
                     <button
                       onClick={e => { e.stopPropagation(); openAdjuster(v.image_url, { type: 'vehicle', id: v.id }); }}
                       title="Sesuaikan gambar"
                       style={{
                         position: 'absolute', top: '8px', right: '8px',
-                        background: 'rgba(0,0,0,0.6)', color: '#fff',
+                        background: 'rgba(0,0,0,0.7)', color: '#fff',
                         border: 'none', borderRadius: '6px',
                         width: '32px', height: '32px',
                         cursor: 'pointer', fontSize: '13px',
