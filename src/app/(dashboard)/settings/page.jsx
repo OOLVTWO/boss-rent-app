@@ -139,22 +139,102 @@ export default function SettingsPage() {
     }));
   };
 
+  // Add Photo Modal State
+  const [showAddPhotoModal, setShowAddPhotoModal] = useState(false);
+  const [newPhotoForm, setNewPhotoForm] = useState({
+    title: '',
+    tag: 'Premium Fleet',
+    url: '/images/boss_rent_bento_1.png',
+    icon: 'fa-solid fa-motorcycle'
+  });
+  const [draggedPhotoIdx, setDraggedPhotoIdx] = useState(null);
+
+  // Preset photos options for quick selection in modal
+  const PHOTO_PRESETS = [
+    { label: 'Customer Bali Scooter', url: '/images/boss_rent_customer_bali.png' },
+    { label: 'Mint Green Vespa Fleet', url: '/images/boss_rent_bento_1.png' },
+    { label: 'Fleet Lineup Serviced', url: '/images/boss_rent_fleet_lineup.png' },
+    { label: 'Pererenan Beach Exploring', url: '/images/boss_rent_bento_2.png' },
+    { label: 'Key Handover Service', url: '/images/boss_rent_bento_3.png' },
+    { label: 'Red Honda Scoopy Sunset', url: '/images/boss_rent_bento_8.png' },
+    { label: 'Sanitized Clean Helmets', url: '/images/boss_rent_bento_6.png' },
+    { label: 'Helmet Handover Villa', url: '/images/boss_rent_helmet_handover.png' },
+    { label: 'Scenic Countryside Cruise', url: '/images/boss_rent_bento_5.png' },
+  ];
+
+  // Drag & Drop Reorder Handlers
+  const handleDragStart = (e, index) => {
+    setDraggedPhotoIdx(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault();
+    if (draggedPhotoIdx === null || draggedPhotoIdx === targetIndex) return;
+
+    setBizForm(prev => {
+      const photos = [...(prev.galleryPhotos || [])];
+      const [draggedItem] = photos.splice(draggedPhotoIdx, 1);
+      photos.splice(targetIndex, 0, draggedItem);
+      return { ...prev, galleryPhotos: photos };
+    });
+    setDraggedPhotoIdx(null);
+  };
+
+  const handleMovePhotoUp = (index) => {
+    if (index === 0) return;
+    setBizForm(prev => {
+      const photos = [...(prev.galleryPhotos || [])];
+      const temp = photos[index - 1];
+      photos[index - 1] = photos[index];
+      photos[index] = temp;
+      return { ...prev, galleryPhotos: photos };
+    });
+  };
+
+  const handleMovePhotoDown = (index) => {
+    setBizForm(prev => {
+      const photos = [...(prev.galleryPhotos || [])];
+      if (index >= photos.length - 1) return prev;
+      const temp = photos[index + 1];
+      photos[index + 1] = photos[index];
+      photos[index] = temp;
+      return { ...prev, galleryPhotos: photos };
+    });
+  };
+
+  const handleSaveNewPhotoModal = (e) => {
+    e.preventDefault();
+    if (!newPhotoForm.title || !newPhotoForm.url) return;
+
+    setBizForm(prev => ({
+      ...prev,
+      galleryPhotos: [
+        ...(prev.galleryPhotos || []),
+        { ...newPhotoForm }
+      ]
+    }));
+
+    setShowAddPhotoModal(false);
+    setNewPhotoForm({
+      title: '',
+      tag: 'Premium Fleet',
+      url: '/images/boss_rent_bento_1.png',
+      icon: 'fa-solid fa-motorcycle'
+    });
+  };
+
   const handleUpdateGalleryPhoto = (index, field, value) => {
     setBizForm(prev => {
       const newPhotos = [...(prev.galleryPhotos || [])];
       newPhotos[index] = { ...newPhotos[index], [field]: value };
       return { ...prev, galleryPhotos: newPhotos };
     });
-  };
-
-  const handleAddGalleryPhoto = () => {
-    setBizForm(prev => ({
-      ...prev,
-      galleryPhotos: [
-        ...(prev.galleryPhotos || []),
-        { url: '/images/boss_rent_bento_5.png', title: 'New Customer Scooter Photo', tag: 'Bali Trip', icon: 'fa-solid fa-camera' }
-      ]
-    }));
   };
 
   const handleDeleteGalleryPhoto = (index) => {
@@ -1395,10 +1475,10 @@ export default function SettingsPage() {
                 <div>
                   <div style={{ background: 'var(--bg-elevated)', padding: '14px 18px', borderRadius: '10px', border: '1px solid var(--bg-border)', marginBottom: '16px' }}>
                     <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--brand-primary-light)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <i className="fa-solid fa-circle-info"></i> Konsep Galeri Foto Landing Page (5 Foto Default + See More)
+                      <i className="fa-solid fa-circle-info"></i> Konsep Galeri Foto Landing Page (Drag & Drop Urutan Foto)
                     </div>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                      Sistem menampilkan <strong>5 foto teratas (Foto #1 s/d #5)</strong> secara default pada halaman utama agar tampilan mobile tetap ringkas dan bebas lag. Jika pelanggan menekan tombol <strong>"See More Photos"</strong>, seluruh foto selebihnya (Foto #6 dst.) akan langsung terbuka secara otomatis.
+                      💡 <strong>Petunjuk Adjust Urutan:</strong> Klik & Tahan ikon grip <i className="fa-solid fa-grip-vertical"></i> lalu <strong>Drag & Drop dengan kursor</strong> untuk menggeser urutan foto! Atau gunakan tombol panah <i className="fa-solid fa-arrow-up"></i> / <i className="fa-solid fa-arrow-down"></i>. <strong>Foto #1 s/d #5</strong> akan tampil secara default di halaman depan.
                     </div>
                   </div>
 
@@ -1406,21 +1486,48 @@ export default function SettingsPage() {
                     <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--brand-primary-light)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <i className="fa-solid fa-images"></i> Daftar Foto Showcase Landing Page ({bizForm.galleryPhotos?.length || 0} Foto Total)
                     </h4>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={handleAddGalleryPhoto}>
-                      <i className="fa-solid fa-plus" style={{ marginRight: '4px' }}></i> Tambah Foto Baru
+                    <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowAddPhotoModal(true)}>
+                      <i className="fa-solid fa-plus" style={{ marginRight: '4px' }}></i> Form Tambah Foto Baru
                     </button>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {(bizForm.galleryPhotos || []).map((photo, idx) => (
-                      <div key={idx} style={{ background: 'var(--bg-elevated)', padding: '16px', borderRadius: '12px', border: idx < 5 ? '1px solid var(--brand-primary)' : '1px solid var(--bg-border)', display: 'grid', gridTemplateColumns: '90px 1fr auto', gap: '16px', alignItems: 'center' }}>
+                      <div
+                        key={idx}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, idx)}
+                        onDragOver={(e) => handleDragOver(e, idx)}
+                        onDrop={(e) => handleDrop(e, idx)}
+                        style={{
+                          background: 'var(--bg-elevated)',
+                          padding: '14px 16px',
+                          borderRadius: '12px',
+                          border: idx < 5 ? '2px solid var(--brand-primary)' : '1px solid var(--bg-border)',
+                          display: 'grid',
+                          gridTemplateColumns: '32px 90px 1fr auto',
+                          gap: '14px',
+                          alignItems: 'center',
+                          cursor: 'grab',
+                          opacity: draggedPhotoIdx === idx ? 0.4 : 1,
+                          boxShadow: draggedPhotoIdx === idx ? '0 0 10px rgba(232, 93, 4, 0.4)' : 'none',
+                          transition: 'transform 0.15s ease, border 0.15s ease'
+                        }}
+                      >
+                        {/* Drag Handle Grip */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '16px' }} title="Geser (Drag & Drop) untuk ubah urutan">
+                          <i className="fa-solid fa-grip-vertical" style={{ cursor: 'grab' }}></i>
+                        </div>
+
+                        {/* Thumbnail Image */}
                         <div style={{ position: 'relative' }}>
                           <img src={photo.url} alt={photo.title} style={{ width: '90px', height: '68px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--bg-border)' }} />
-                          <span style={{ position: 'absolute', bottom: '4px', left: '4px', background: 'rgba(15,23,42,0.85)', color: '#FFF', fontSize: '10px', padding: '2px 6px', fontWeight: 800, borderRadius: '4px' }}>
+                          <span style={{ position: 'absolute', bottom: '4px', left: '4px', background: 'rgba(15,23,42,0.88)', color: '#FFF', fontSize: '10px', padding: '2px 6px', fontWeight: 800, borderRadius: '4px' }}>
                             #{idx + 1}
                           </span>
                         </div>
 
+                        {/* Photo Form Inputs */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             {idx < 5 ? (
@@ -1454,14 +1561,40 @@ export default function SettingsPage() {
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteGalleryPhoto(idx)}
-                          style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#EF4444', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}
-                          title="Hapus Foto Ini"
-                        >
-                          <i className="fa-solid fa-trash-can"></i>
-                        </button>
+                        {/* Reorder Up/Down & Delete Actions */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleMovePhotoUp(idx)}
+                              disabled={idx === 0}
+                              className="btn btn-secondary btn-sm"
+                              style={{ padding: '4px 8px', fontSize: '11px', opacity: idx === 0 ? 0.4 : 1 }}
+                              title="Naikkan Urutan (Up)"
+                            >
+                              <i className="fa-solid fa-arrow-up"></i>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMovePhotoDown(idx)}
+                              disabled={idx === (bizForm.galleryPhotos?.length || 1) - 1}
+                              className="btn btn-secondary btn-sm"
+                              style={{ padding: '4px 8px', fontSize: '11px', opacity: idx === (bizForm.galleryPhotos?.length || 1) - 1 ? 0.4 : 1 }}
+                              title="Turunkan Urutan (Down)"
+                            >
+                              <i className="fa-solid fa-arrow-down"></i>
+                            </button>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteGalleryPhoto(idx)}
+                            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#EF4444', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 700, width: '100%' }}
+                            title="Hapus Foto Ini"
+                          >
+                            <i className="fa-solid fa-trash-can"></i> Hapus
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1668,6 +1801,117 @@ export default function SettingsPage() {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL FORM TAMBAH FOTO SHOWCASE GALERI WEB */}
+      {showAddPhotoModal && (
+        <div className="modal-overlay" onClick={() => setShowAddPhotoModal(false)}>
+          <div className="modal modal-md" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">
+                <i className="fa-solid fa-camera-retro" style={{ marginRight: '6px', color: 'var(--brand-primary-light)' }}></i>
+                Tambah Foto Showcase Galeri Web Pelanggan
+              </div>
+              <button className="modal-close" onClick={() => setShowAddPhotoModal(false)}>✕</button>
+            </div>
+
+            <form onSubmit={handleSaveNewPhotoModal}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="photo-title">
+                  <i className="fa-solid fa-heading" style={{ marginRight: '6px' }}></i> Judul Foto Showcase <span className="required">*</span>
+                </label>
+                <input
+                  id="photo-title"
+                  type="text"
+                  className="form-control"
+                  placeholder="e.g. Mint Green Vespa in Canggu Beach"
+                  value={newPhotoForm.title}
+                  onChange={e => setNewPhotoForm(p => ({ ...p, title: e.target.value }))}
+                  required
+                />
+              </div>
+
+              <div className="form-row cols-2">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="photo-tag">
+                    <i className="fa-solid fa-tag" style={{ marginRight: '6px' }}></i> Kategori / Pill Badge Tag
+                  </label>
+                  <input
+                    id="photo-tag"
+                    type="text"
+                    className="form-control"
+                    placeholder="e.g. Stylish Scooters, Free Delivery"
+                    value={newPhotoForm.tag}
+                    onChange={e => setNewPhotoForm(p => ({ ...p, tag: e.target.value }))}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="photo-icon">
+                    <i className="fa-solid fa-icons" style={{ marginRight: '6px' }}></i> Ikon FontAwesome
+                  </label>
+                  <input
+                    id="photo-icon"
+                    type="text"
+                    className="form-control"
+                    placeholder="fa-solid fa-motorcycle"
+                    value={newPhotoForm.icon}
+                    onChange={e => setNewPhotoForm(p => ({ ...p, icon: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              {/* Quick Preset Selector */}
+              <div className="form-group">
+                <label className="form-label">
+                  <i className="fa-solid fa-images" style={{ marginRight: '6px' }}></i> Pilih Dari Preset Galeri Boss Rent
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxHeight: '160px', overflowY: 'auto', padding: '6px', background: 'var(--bg-elevated)', borderRadius: '8px', border: '1px solid var(--bg-border)' }}>
+                  {PHOTO_PRESETS.map((preset, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => setNewPhotoForm(p => ({ ...p, url: preset.url, title: p.title || preset.label }))}
+                      style={{
+                        padding: '6px',
+                        borderRadius: '6px',
+                        border: newPhotoForm.url === preset.url ? '2px solid var(--brand-primary)' : '1px solid var(--bg-border)',
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                        background: 'var(--bg-card)'
+                      }}
+                    >
+                      <img src={preset.url} alt={preset.label} style={{ width: '100%', height: '50px', objectFit: 'cover', borderRadius: '4px', marginBottom: '4px' }} />
+                      <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {preset.label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="photo-url">
+                  <i className="fa-solid fa-link" style={{ marginRight: '6px' }}></i> URL / Path Foto <span className="required">*</span>
+                </label>
+                <input
+                  id="photo-url"
+                  type="text"
+                  className="form-control"
+                  placeholder="/images/boss_rent_bento_1.png atau https://..."
+                  value={newPhotoForm.url}
+                  onChange={e => setNewPhotoForm(p => ({ ...p, url: e.target.value }))}
+                  required
+                />
+              </div>
+
+              <div className="modal-footer" style={{ padding: '16px 0 0 0' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowAddPhotoModal(false)}>Batal</button>
+                <button type="submit" className="btn btn-primary">
+                  <i className="fa-solid fa-floppy-disk" style={{ marginRight: '6px' }}></i> Simpan Foto Ke Galeri
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
