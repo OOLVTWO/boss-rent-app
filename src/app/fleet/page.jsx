@@ -56,8 +56,8 @@ export default function SharpSquareBusinessWebsitePage() {
   // Bento gallery show more state (limit initial display to 5 photos)
   const [showAllPhotos, setShowAllPhotos] = useState(false);
 
-  // Business information from Google Maps profile
-  const biz = {
+  // Business information state (loads from admin panel settings or defaults)
+  const [biz, setBiz] = useState({
     name: 'BOSS RENT PERERENAN',
     tagline: 'Available Scooter For Rent • Best Service • Best Price • Villa Delivery Available • Clean & Well-Maintained Scooters',
     address: 'Jl. Pantai Pererenan No.119, Pererenan, Kec. Mengwi, Kabupaten Badung, Bali 80351',
@@ -69,8 +69,8 @@ export default function SharpSquareBusinessWebsitePage() {
     instagramUrl: 'https://www.instagram.com/bossrentpererenan?igsh=MWFxZzE3eWI2dWlqZA==',
     instagramHandle: '@bossrentpererenan',
     mapsUrl: 'https://maps.app.goo.gl/SdqrCREMRtkanUGd6',
-    mapsEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3944.402636541527!2d115.1226017!3d-8.6477169!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd23961f77d33d9%3A0xe543e0d8fa099307!2sJl.%20Pantai%20Pererenan%2C%20Pererenan%2C%20Mengwi%2C%20Badung%20Regency%2C%20Bali!5e0!3m2!1sen!2sid!4v1700000000000'
-  };
+    mapsEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=115.1180%2C-8.6520%2C115.1270%2C-8.6430&layer=mapnik&marker=-8.6477169%2C115.1226017'
+  });
 
   // FAQ Accordion State (100% English for Tourists)
   const [openFaq, setOpenFaq] = useState(null);
@@ -253,6 +253,26 @@ export default function SharpSquareBusinessWebsitePage() {
 
     setStartDate(today.toISOString().split('T')[0]);
     setEndDate(threeDaysLater.toISOString().split('T')[0]);
+
+    // Load admin business settings from localStorage if available
+    try {
+      const savedBiz = localStorage.getItem('boss_rent_biz_settings');
+      if (savedBiz) {
+        const parsed = JSON.parse(savedBiz);
+        setBiz(prev => ({
+          ...prev,
+          name: parsed.name || prev.name,
+          phone: parsed.phone || prev.phone,
+          phoneRaw: parsed.phone || prev.phoneRaw,
+          address: parsed.address || prev.address,
+          tagline: parsed.tagline || prev.tagline,
+          instagramUrl: parsed.instagramUrl || prev.instagramUrl,
+          instagramHandle: parsed.instagramHandle || prev.instagramHandle,
+        }));
+      }
+    } catch {
+      // ignore
+    }
 
     async function fetchVehicles() {
       setLoading(true);
@@ -1039,32 +1059,54 @@ export default function SharpSquareBusinessWebsitePage() {
         </div>
       </section>
 
-      {/* ── SHARP SQUARE FLOATING WHATSAPP BUTTON ── */}
-      <a
-        href={`https://wa.me/${biz.phone.replace(/[^0-9]/g, '')}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{
-          position: 'fixed',
-          bottom: '24px',
-          right: '24px',
-          background: '#25D366',
-          color: '#FFF',
-          width: '58px',
-          height: '58px',
-          borderRadius: '0px !important',
-          border: '2px solid #0F172A',
-          boxShadow: '4px 4px 0px #0F172A',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '28px',
-          zIndex: 9999
-        }}
-        title="Chat with Boss Rent Pererenan"
-      >
-        <i className="fa-brands fa-whatsapp"></i>
-      </a>
+      {/* ── FLOATING ACTION BUTTONS STACK (INSTAGRAM & WHATSAPP) ── */}
+      <div style={{ position: 'fixed', bottom: '24px', right: '24px', display: 'flex', flexDirection: 'column', gap: '12px', zIndex: 9999 }}>
+        <a
+          href={biz.instagramUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            background: 'linear-gradient(135deg, #833AB4, #FD1D1D, #FCB045)',
+            color: '#FFF',
+            width: '54px',
+            height: '54px',
+            borderRadius: '0px !important',
+            border: '2px solid #0F172A',
+            boxShadow: '4px 4px 0px #0F172A',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '26px',
+            transition: 'all 0.15s ease'
+          }}
+          title="Follow Boss Rent Pererenan on Instagram"
+        >
+          <i className="fa-brands fa-instagram"></i>
+        </a>
+
+        <a
+          href={`https://wa.me/${biz.phone.replace(/[^0-9]/g, '')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            background: '#25D366',
+            color: '#FFF',
+            width: '54px',
+            height: '54px',
+            borderRadius: '0px !important',
+            border: '2px solid #0F172A',
+            boxShadow: '4px 4px 0px #0F172A',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '28px',
+            transition: 'all 0.15s ease'
+          }}
+          title="Chat with Boss Rent Pererenan on WhatsApp"
+        >
+          <i className="fa-brands fa-whatsapp"></i>
+        </a>
+      </div>
 
       {/* ── FOOTER ── */}
       <footer style={{ background: '#F8FAFC', borderTop: '2px solid #0F172A', padding: '28px 24px', textAlign: 'center', fontSize: '12.5px', color: '#64748B' }}>

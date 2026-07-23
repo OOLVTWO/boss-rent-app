@@ -65,9 +65,12 @@ export default function SettingsPage() {
 
   // Business Settings State
   const [bizForm, setBizForm] = useState({
-    name: 'Boss Rent Pererenan',
-    location: 'Jl. Pantai Pererenan, Canggu, Badung, Bali',
-    phone: '+62 812-3456-7890',
+    name: 'BOSS RENT PERERENAN',
+    location: 'Jl. Pantai Pererenan No.119, Pererenan, Kec. Mengwi, Kabupaten Badung, Bali 80351',
+    phone: '+62 812-3710-9751',
+    instagramUrl: 'https://www.instagram.com/bossrentpererenan?igsh=MWFxZzE3eWI2dWlqZA==',
+    instagramHandle: '@bossrentpererenan',
+    tagline: 'Available Scooter For Rent • Best Service • Best Price • Villa Delivery Available • Clean & Well-Maintained Scooters',
     defaultDeposit: 500000,
     oilInterval: 2000,
     cvtInterval: 6000,
@@ -1088,7 +1091,7 @@ export default function SettingsPage() {
 
               <div className="form-group">
                 <label className="form-label" htmlFor="biz-location">
-                  <i className="fa-solid fa-location-dot" style={{ marginRight: '6px' }}></i> Lokasi Rental
+                  <i className="fa-solid fa-location-dot" style={{ marginRight: '6px' }}></i> Lokasi Alamat Store
                 </label>
                 <input
                   id="biz-location"
@@ -1096,6 +1099,48 @@ export default function SettingsPage() {
                   className="form-control"
                   value={bizForm.location}
                   onChange={e => setBizForm(p => ({ ...p, location: e.target.value }))}
+                />
+              </div>
+
+              <div className="form-row cols-2">
+                <div className="form-group">
+                  <label className="form-label" htmlFor="biz-ig-handle">
+                    <i className="fa-brands fa-instagram" style={{ marginRight: '6px', color: '#E1306C' }}></i> Instagram Handle
+                  </label>
+                  <input
+                    id="biz-ig-handle"
+                    type="text"
+                    className="form-control"
+                    placeholder="@bossrentpererenan"
+                    value={bizForm.instagramHandle}
+                    onChange={e => setBizForm(p => ({ ...p, instagramHandle: e.target.value }))}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="biz-ig-url">
+                    <i className="fa-solid fa-link" style={{ marginRight: '6px' }}></i> Instagram Profile Link
+                  </label>
+                  <input
+                    id="biz-ig-url"
+                    type="text"
+                    className="form-control"
+                    placeholder="https://instagram.com/..."
+                    value={bizForm.instagramUrl}
+                    onChange={e => setBizForm(p => ({ ...p, instagramUrl: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="biz-tagline">
+                  <i className="fa-solid fa-bullhorn" style={{ marginRight: '6px', color: '#E85D04' }}></i> Tagline Running Announcement Web Publik
+                </label>
+                <input
+                  id="biz-tagline"
+                  type="text"
+                  className="form-control"
+                  value={bizForm.tagline}
+                  onChange={e => setBizForm(p => ({ ...p, tagline: e.target.value }))}
                 />
               </div>
 
@@ -1128,7 +1173,7 @@ export default function SettingsPage() {
 
               <div style={{ marginTop: '20px' }}>
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-                  <i className="fa-solid fa-floppy-disk" style={{ marginRight: '6px' }}></i> Simpan Konfigurasi Operasional
+                  <i className="fa-solid fa-floppy-disk" style={{ marginRight: '6px' }}></i> Simpan Konfigurasi Operasional & Web Publik
                 </button>
               </div>
             </form>
