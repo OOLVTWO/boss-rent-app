@@ -298,7 +298,8 @@ export default function TrackingPage() {
         .order('end_date', { ascending: true }),
       supabase.from('vehicles').select('*'),
     ]);
-    setTransactions(txData || []);
+    const validTxData = (txData || []).filter(tx => tx.vehicles && tx.vehicles.id);
+    setTransactions(validTxData);
     setVehicles(vData || []);
     setLastRefresh(new Date());
     setLoading(false);

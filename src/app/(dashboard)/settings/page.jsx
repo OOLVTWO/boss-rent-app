@@ -701,7 +701,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Sub-tab Selector */}
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid var(--bg-border)', paddingBottom: '12px' }}>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid var(--bg-border)', paddingBottom: '12px', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 className={`btn btn-${waSubTab === 'invoice' ? 'primary' : 'secondary'} btn-sm`}
@@ -709,6 +709,14 @@ export default function SettingsPage() {
                 style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
               >
                 <i className="fa-solid fa-file-invoice"></i> 1. Template Invoice WA
+              </button>
+              <button
+                type="button"
+                className={`btn btn-${waSubTab === 'reminder' ? 'primary' : 'secondary'} btn-sm`}
+                onClick={() => setWaSubTab('reminder')}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
+              >
+                <i className="fa-solid fa-bell"></i> 2. Template Reminder WA (Pengingat)
               </button>
               <button
                 type="button"
