@@ -94,49 +94,94 @@ export default function DashboardClient({ transactions, vehicles }) {
 
       {/* ── BENTO GRID LAYOUT ── */}
       <div className="bento-grid-container mb-6">
-        {/* 1. Hero Bento Card: Financial Summary (Large Span) */}
+        {/* 1. Hero Bento Card: Financial Intelligence (Ultra Modern Holographic Glass) */}
         <div className="bento-card bento-hero-card">
           <div className="bento-card-bg-glow"></div>
           <div className="bento-hero-content">
-            <div className="bento-hero-badge">
-              <i className="fa-solid fa-sparkles"></i> Financial Intelligence
-            </div>
-            <div className="bento-hero-label">Laba Bersih (Net Profit)</div>
-            <div className="bento-hero-value" style={{ color: netProfit >= 0 ? '#22C55E' : '#EF4444' }}>
-              {formatRupiah(netProfit)}
-            </div>
-            <div className="bento-hero-stats">
-              <div className="bento-stat-sub">
-                <span className="sub-label"><i className="fa-solid fa-arrow-down-left" style={{ color: '#22C55E' }}></i> Pemasukan</span>
-                <span className="sub-val" style={{ color: '#22C55E' }}>{formatRupiah(totalRevenue)}</span>
+            <div className="bento-hero-top">
+              <div className="bento-hero-badge">
+                <span className="bento-live-pulse"></span>
+                <i className="fa-solid fa-wand-magic-sparkles"></i> AI Financial Intelligence
               </div>
+              <div className="bento-profit-tag">
+                <i className="fa-solid fa-chart-line"></i> Laba Operasional
+              </div>
+            </div>
+
+            <div className="bento-hero-main">
+              <div className="bento-hero-label">Laba Bersih (Net Profit)</div>
+              <div className="bento-hero-value-wrap">
+                <span className="bento-hero-value" style={{ color: netProfit >= 0 ? '#22C55E' : '#EF4444' }}>
+                  {formatRupiah(netProfit)}
+                </span>
+                {totalRevenue > 0 && (
+                  <span className="bento-margin-chip">
+                    <i className="fa-solid fa-arrow-trend-up"></i> Margin {Math.round((netProfit / totalRevenue) * 100)}%
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="bento-hero-stats">
+              <div className="bento-stat-sub income">
+                <div className="sub-head">
+                  <div className="sub-icon"><i className="fa-solid fa-arrow-down-left"></i></div>
+                  <span>Pemasukan Kotor (Sewa)</span>
+                </div>
+                <div className="sub-val">{formatRupiah(totalRevenue)}</div>
+              </div>
+
               <div className="bento-stat-divider"></div>
-              <div className="bento-stat-sub">
-                <span className="sub-label"><i className="fa-solid fa-arrow-up-right" style={{ color: '#EF4444' }}></i> Pengeluaran</span>
-                <span className="sub-val" style={{ color: '#EF4444' }}>{formatRupiah(totalExpenses)}</span>
+
+              <div className="bento-stat-sub expense">
+                <div className="sub-head">
+                  <div className="sub-icon"><i className="fa-solid fa-arrow-up-right"></i></div>
+                  <span>Pengeluaran Operasional</span>
+                </div>
+                <div className="sub-val">{formatRupiah(totalExpenses)}</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 2. Deposit Overview Bento Card */}
+        {/* 2. Deposit Overview Bento Card (3D Vault Glass Aesthetics) */}
         <div className="bento-card bento-deposit-card">
-          <div className="bento-card-title">
-            <i className="fa-solid fa-vault" style={{ color: '#FAA307' }}></i>
-            <span>Deposit Jaminan</span>
+          <div className="bento-vault-header">
+            <div className="bento-vault-badge">
+              <i className="fa-solid fa-vault"></i>
+            </div>
+            <div>
+              <div className="bento-card-title">Rekap Deposit Jaminan</div>
+              <div className="bento-card-subtitle">Monitoring garansi & denda kerusakan</div>
+            </div>
           </div>
-          <div className="bento-deposit-list">
-            <div className="deposit-item">
-              <span className="dep-label">Ditahan (Aktif)</span>
-              <span className="dep-val" style={{ color: '#FAA307' }}>{formatRupiah(totalDepositHeld)}</span>
+
+          <div className="bento-deposit-grid">
+            <div className="bento-deposit-box held">
+              <div className="dep-box-top">
+                <i className="fa-solid fa-lock-keyhole" style={{ color: '#FAA307' }}></i>
+                <span>Deposit Ditahan (Aktif)</span>
+              </div>
+              <div className="dep-box-val" style={{ color: '#FAA307' }}>{formatRupiah(totalDepositHeld)}</div>
+              <div className="dep-box-sub">{activeTx.length} transaksi aktif berjalan</div>
             </div>
-            <div className="deposit-item">
-              <span className="dep-label">Dipotong Denda</span>
-              <span className="dep-val" style={{ color: '#EF4444' }}>{formatRupiah(totalDepositDamage)}</span>
+
+            <div className="bento-deposit-box damage">
+              <div className="dep-box-top">
+                <i className="fa-solid fa-triangle-exclamation" style={{ color: '#EF4444' }}></i>
+                <span>Dipotong Denda</span>
+              </div>
+              <div className="dep-box-val" style={{ color: '#EF4444' }}>{formatRupiah(totalDepositDamage)}</div>
+              <div className="dep-box-sub">Klaim ganti rugi fisik</div>
             </div>
-            <div className="deposit-item">
-              <span className="dep-label">Dikembalikan</span>
-              <span className="dep-val" style={{ color: '#22C55E' }}>{formatRupiah(totalDepositReturned)}</span>
+
+            <div className="bento-deposit-box returned">
+              <div className="dep-box-top">
+                <i className="fa-solid fa-circle-check" style={{ color: '#22C55E' }}></i>
+                <span>Deposit Dikembalikan</span>
+              </div>
+              <div className="dep-box-val" style={{ color: '#22C55E' }}>{formatRupiah(totalDepositReturned)}</div>
+              <div className="dep-box-sub">Telah ditransfer ke customer</div>
             </div>
           </div>
         </div>

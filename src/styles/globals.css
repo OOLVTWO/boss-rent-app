@@ -2395,6 +2395,128 @@ button, a, input, select, textarea {
   box-shadow: 0 4px 16px rgba(232, 93, 4, 0.3);
 }
 
+/* Enhanced Hero Bento Card Aesthetics */
+.bento-hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.bento-live-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22C55E;
+  box-shadow: 0 0 10px #22C55E;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.bento-profit-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-border);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+.bento-hero-value-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bento-margin-chip {
+  font-size: 12px;
+  font-weight: 700;
+  color: #22C55E;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+/* Enhanced 3D Vault Deposit Card Aesthetics */
+.bento-vault-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.bento-vault-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(250, 163, 7, 0.2), rgba(232, 93, 4, 0.15));
+  border: 1px solid rgba(250, 163, 7, 0.35);
+  color: #FAA307;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(250, 163, 7, 0.2);
+}
+
+.bento-card-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.bento-deposit-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bento-deposit-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: all var(--transition-fast);
+}
+
+.bento-deposit-box:hover {
+  background: var(--bg-elevated);
+  transform: translateX(4px);
+}
+
+.bento-deposit-box.held { border-left: 3px solid #FAA307; }
+.bento-deposit-box.damage { border-left: 3px solid #EF4444; }
+.bento-deposit-box.returned { border-left: 3px solid #22C55E; }
+
+.dep-box-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.dep-box-val {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.dep-box-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
 /* Mobile Responsive Breakpoints for Bento Grid */
 @media (max-width: 992px) {
   .bento-grid-container {
@@ -2412,6 +2534,7 @@ button, a, input, select, textarea {
   .vui-btn-label {
     display: none;
   }
+}
 @media (max-width: 600px) {
   .bento-chart-full-card .card-header {
     flex-direction: column !important;
@@ -2426,11 +2549,4 @@ button, a, input, select, textarea {
     padding: 6px 12px !important;
     font-size: 11px !important;
   }
-}
-
-
-
-
-
-
 
