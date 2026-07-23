@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { exportTransactionsToExcel, exportExpensesToExcel, formatRupiah } from '@/lib/excel';
+import { exportTransactionsToExcel, exportExpensesToExcel, exportInvestorReportToExcel, formatRupiah } from '@/lib/excel';
 
 const statusBadge = (status) => {
   const map = {
@@ -25,9 +25,11 @@ const statusBadge = (status) => {
 };
 
 export default function ReportsPage() {
-  const [activeReportTab, setActiveReportTab] = useState('income'); // 'income' | 'expenses' | 'profit_loss'
+  const [activeReportTab, setActiveReportTab] = useState('income'); // 'income' | 'expenses' | 'profit_loss' | 'investor'
   const [transactions, setTransactions] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [selectedInvestor, setSelectedInvestor] = useState('all');
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
@@ -46,20 +48,24 @@ export default function ReportsPage() {
     const expParams = new URLSearchParams({ start_date: startDate, end_date: endDate });
 
     try {
-      const [txRes, expRes] = await Promise.all([
+      const [txRes, expRes, vehRes] = await Promise.all([
         fetch(`/api/transactions?${txParams}`),
-        fetch(`/api/expenses?${expParams}`)
+        fetch(`/api/expenses?${expParams}`),
+        fetch('/api/vehicles')
       ]);
 
       const txData = await txRes.json();
       const expData = await expRes.json();
+      const vehData = await vehRes.json();
 
       setTransactions(Array.isArray(txData) ? txData : []);
       setExpenses(Array.isArray(expData) ? expData : []);
+      setVehicles(Array.isArray(vehData) ? vehData : []);
     } catch (err) {
       console.error('Fetch report error:', err);
       setTransactions([]);
       setExpenses([]);
+      setVehicles([]);
     } finally {
       setLoading(false);
     }
@@ -90,11 +96,70 @@ export default function ReportsPage() {
   const totalExpenses = realExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
   const netProfit = totalRevenue - totalExpenses;
 
+  // ── INVESTOR REPORT ENGINE ──
+  const safeVeh = Array.isArray(vehicles) ? vehicles : [];
+  const allInvestorVehicles = safeVeh.filter(v => v.owner_type === 'investor' || (v.owner_name && v.owner_name.trim() !== ''));
+  const uniqueInvestorNames = Array.from(new Set(allInvestorVehicles.map(v => v.owner_name?.trim()).filter(Boolean)));
+
+  const targetInvestorVehicles = selectedInvestor === 'all'
+    ? allInvestorVehicles
+    : allInvestorVehicles.filter(v => v.owner_name?.trim() === selectedInvestor);
+
+  const targetVehicleIds = targetInvestorVehicles.map(v => v.id);
+
+  // Transactions for investor vehicles
+  const targetInvestorTx = safeTx.filter(t => targetVehicleIds.includes(t.vehicle_id) || targetVehicleIds.includes(t.vehicles?.id));
+  const targetCompletedTx = targetInvestorTx.filter(t => t.status === 'completed');
+
+  const invRentalRev = targetCompletedTx.reduce((s, t) => s + Number(t.total_price || 0), 0);
+  const invDamageRev = targetCompletedTx.reduce((s, t) => s + Number(t.damage_fee || 0), 0);
+  const invTotalRevenue = invRentalRev + invDamageRev;
+
+  // Expenses for investor vehicles
+  const targetInvestorExp = realExpenses.filter(e => targetVehicleIds.includes(e.vehicle_id) || (e.title && targetInvestorVehicles.some(v => e.title.toLowerCase().includes(v.name.toLowerCase()) || (v.plate_number && e.title.toLowerCase().includes(v.plate_number.toLowerCase())))));
+  const invTotalExpenses = targetInvestorExp.reduce((s, e) => s + Number(e.amount || 0), 0);
+  const invNetIncome = invTotalRevenue - invTotalExpenses;
+
+  // Share split calculation
+  const avgSharePct = targetInvestorVehicles.length > 0
+    ? (targetInvestorVehicles.reduce((s, v) => s + Number(v.revenue_share_percentage || 70), 0) / targetInvestorVehicles.length)
+    : 70;
+  const investorSharePct = selectedInvestor !== 'all' && targetInvestorVehicles[0]?.revenue_share_percentage
+    ? Number(targetInvestorVehicles[0].revenue_share_percentage)
+    : Math.round(avgSharePct);
+  const bossRentSharePct = 100 - investorSharePct;
+
+  const investorPayout = Math.round(invNetIncome * (investorSharePct / 100));
+  const bossRentShare = invNetIncome - investorPayout;
+
+  const handleExportInvestorExcel = () => {
+    setExporting(true);
+    const invName = selectedInvestor === 'all' ? 'Gabungan-Seluruh-Investor' : selectedInvestor;
+    const contact = selectedInvestor !== 'all' && targetInvestorVehicles[0]?.owner_contact ? targetInvestorVehicles[0].owner_contact : '-';
+
+    exportInvestorReportToExcel({
+      investorName: invName,
+      contact,
+      sharePct: investorSharePct,
+      vehicles: targetInvestorVehicles,
+      transactions: targetInvestorTx,
+      expenses: targetInvestorExp,
+      totalRevenue: invTotalRevenue,
+      totalExpenses: invTotalExpenses,
+      netIncome: invNetIncome,
+      investorPayout: investorPayout,
+      bossRentShare: bossRentShare
+    }, `laporan-bagi-hasil-investor-${invName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`);
+    setTimeout(() => setExporting(false), 1000);
+  };
+
   const handleExport = () => {
     setExporting(true);
     const dateRange = `${startDate}-sd-${endDate}`;
     if (activeReportTab === 'expenses') {
       exportExpensesToExcel(realExpenses, `laporan-pengeluaran-${dateRange}`);
+    } else if (activeReportTab === 'investor') {
+      handleExportInvestorExcel();
     } else {
       exportTransactionsToExcel(safeTx, `laporan-pemasukan-${dateRange}`);
     }
@@ -105,7 +170,7 @@ export default function ReportsPage() {
     <div className="fade-in">
       <div className="page-header">
         <h2><i className="fa-solid fa-chart-line" style={{ marginRight: '8px' }}></i> Laporan Keuangan & Laba Rugi</h2>
-        <p>Analisis terpisah antara Pemasukan, Pengeluaran, dan Laba Bersih Boss Rent</p>
+        <p>Analisis terpisah antara Pemasukan, Pengeluaran, Laba Bersih & Bagi Hasil Investor</p>
       </div>
 
       {/* Scrollable Tabs Chips / Pills Bar */}
@@ -130,6 +195,13 @@ export default function ReportsPage() {
           onClick={() => setActiveReportTab('profit_loss')}
         >
           <i className="fa-solid fa-calculator"></i> Ringkasan Laba Rugi
+        </button>
+        <button
+          type="button"
+          className={`scrollable-tab-btn ${activeReportTab === 'investor' ? 'active' : ''}`}
+          onClick={() => setActiveReportTab('investor')}
+        >
+          <i className="fa-solid fa-crown" style={{ color: '#A855F7' }}></i> 📊 Laporan Bagi Hasil Investor
         </button>
       </div>
 
@@ -177,6 +249,24 @@ export default function ReportsPage() {
                 <option value="active">Aktif</option>
                 <option value="completed">Selesai</option>
                 <option value="cancelled">Dibatalkan</option>
+              </select>
+            </div>
+          )}
+          {activeReportTab === 'investor' && (
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="report-investor">
+                <i className="fa-solid fa-crown" style={{ marginRight: '6px', color: '#A855F7' }}></i> Pilih Investor / Pemilik
+              </label>
+              <select
+                id="report-investor"
+                className="form-control"
+                value={selectedInvestor}
+                onChange={e => setSelectedInvestor(e.target.value)}
+              >
+                <option value="all">Semua Investor (Gabungan)</option>
+                {uniqueInvestorNames.map((name, i) => (
+                  <option key={i} value={name}>{name}</option>
+                ))}
               </select>
             </div>
           )}
@@ -407,6 +497,128 @@ export default function ReportsPage() {
               <strong style={{ color: netProfit >= 0 ? '#3B82F6' : '#EF4444', fontSize: '20px' }}>
                 {formatRupiah(netProfit)}
               </strong>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB CONTENT: INVESTOR REPORT */}
+      {activeReportTab === 'investor' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Investor KPI Summary Header Cards */}
+          <div className="grid-4 mb-6">
+            <div className="stat-card">
+              <div className="stat-icon" style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#22C55E' }}>
+                <i className="fa-solid fa-arrow-down-left"></i>
+              </div>
+              <div className="stat-info">
+                <div className="stat-label">Total Omset Motor (+)</div>
+                <div className="stat-value" style={{ color: '#22C55E' }}>{formatRupiah(invTotalRevenue)}</div>
+                <div className="stat-change">{targetCompletedTx.length} transaksi sewa selesai</div>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444' }}>
+                <i className="fa-solid fa-wrench"></i>
+              </div>
+              <div className="stat-info">
+                <div className="stat-label">Biaya Servis / Perawatan (-)</div>
+                <div className="stat-value" style={{ color: '#EF4444' }}>{formatRupiah(invTotalExpenses)}</div>
+                <div className="stat-change">{targetInvestorExp.length} item servis motor</div>
+              </div>
+            </div>
+
+            <div className="stat-card" style={{ border: '2px solid rgba(168, 85, 247, 0.4)', background: 'rgba(168, 85, 247, 0.06)' }}>
+              <div className="stat-icon" style={{ background: 'rgba(168, 85, 247, 0.2)', color: '#A855F7' }}>
+                <i className="fa-solid fa-crown"></i>
+              </div>
+              <div className="stat-info">
+                <div className="stat-label" style={{ color: '#A855F7', fontWeight: 800 }}>TRANSFER NET INVESTOR ({investorSharePct}%)</div>
+                <div className="stat-value" style={{ color: '#A855F7', fontSize: '20px', fontWeight: 900 }}>{formatRupiah(investorPayout)}</div>
+                <div className="stat-change" style={{ color: '#A855F7', fontWeight: 600 }}>Hak Bersih Investor ({selectedInvestor === 'all' ? 'Gabungan' : selectedInvestor})</div>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6' }}>
+                <i className="fa-solid fa-building"></i>
+              </div>
+              <div className="stat-info">
+                <div className="stat-label">Komisi Boss Rent ({bossRentSharePct}%)</div>
+                <div className="stat-value" style={{ color: '#3B82F6' }}>{formatRupiah(bossRentShare)}</div>
+                <div className="stat-change">Hak Pengelolaan Boss Rent</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Motor Performance Table */}
+          <div className="card" style={{ padding: 0 }}>
+            <div className="card-header" style={{ padding: '20px 24px', borderBottom: '1px solid var(--bg-border)' }}>
+              <div>
+                <div className="card-title">Rincian Performa Motor Investor ({selectedInvestor === 'all' ? 'Semua Investor' : selectedInvestor})</div>
+                <div className="card-subtitle">{targetInvestorVehicles.length} unit motor titipan ditemukan</div>
+              </div>
+              <button
+                className="btn btn-primary"
+                onClick={handleExportInvestorExcel}
+                disabled={exporting || loading || targetInvestorVehicles.length === 0}
+              >
+                {exporting ? <><i className="fa-solid fa-spinner fa-spin"></i> Mengexport...</> : <><i className="fa-solid fa-file-excel"></i> Download Excel Laporan Investor</>}
+              </button>
+            </div>
+
+            <div className="table-wrapper">
+              {targetInvestorVehicles.length === 0 ? (
+                <div className="table-empty"><p>Tidak ada motor investor ditemukan untuk filter ini.</p></div>
+              ) : (
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Motor & Plat</th>
+                      <th>Investor / Pemilik</th>
+                      <th>Kontak WA</th>
+                      <th>Bagi Hasil (%)</th>
+                      <th>Omset Sewa (+)</th>
+                      <th>Biaya Servis (-)</th>
+                      <th>Laba Bersih Motor</th>
+                      <th>Hak Investor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {targetInvestorVehicles.map((v, idx) => {
+                      const vTx = safeTx.filter(t => (t.vehicle_id === v.id || t.vehicles?.id === v.id) && t.status === 'completed');
+                      const vRev = vTx.reduce((s, t) => s + Number(t.total_price || 0) + Number(t.damage_fee || 0), 0);
+                      const vExp = realExpenses.filter(e => e.vehicle_id === v.id || (e.title && (e.title.toLowerCase().includes(v.name.toLowerCase()) || (v.plate_number && e.title.toLowerCase().includes(v.plate_number.toLowerCase()))))).reduce((s, e) => s + Number(e.amount || 0), 0);
+                      const vNet = vRev - vExp;
+                      const sharePct = Number(v.revenue_share_percentage || 70);
+                      const vPayout = Math.round(vNet * (sharePct / 100));
+
+                      return (
+                        <tr key={v.id}>
+                          <td style={{ fontWeight: 700, color: 'var(--text-muted)' }}>{idx + 1}</td>
+                          <td>
+                            <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)' }}>{v.name}</strong>
+                            <div style={{ fontSize: '11px', color: 'var(--brand-primary-light)', fontWeight: 600 }}>{v.plate_number}</div>
+                          </td>
+                          <td>
+                            <strong style={{ fontSize: '13px', color: '#A855F7' }}>{v.owner_name || 'Bagi Hasil'}</strong>
+                          </td>
+                          <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{v.owner_contact || '-'}</td>
+                          <td>
+                            <span className="badge badge-success" style={{ fontSize: '11px' }}>{sharePct}% / {100 - sharePct}%</span>
+                          </td>
+                          <td><strong style={{ color: '#22C55E' }}>+{formatRupiah(vRev)}</strong></td>
+                          <td><strong style={{ color: '#EF4444' }}>-{formatRupiah(vExp)}</strong></td>
+                          <td><strong style={{ color: 'var(--text-primary)' }}>{formatRupiah(vNet)}</strong></td>
+                          <td><strong style={{ color: '#A855F7', fontSize: '14px' }}>{formatRupiah(vPayout)}</strong></td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </div>

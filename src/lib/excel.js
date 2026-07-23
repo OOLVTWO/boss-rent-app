@@ -262,3 +262,96 @@ export function exportFinancesToExcel(records, mode = 'all', filename = '') {
   const outName = filename || `laporan-keuangan-lengkap-boss-rent-${dateStr}.xlsx`;
   XLSX.writeFile(workbook, outName.endsWith('.xlsx') ? outName : `${outName}.xlsx`);
 }
+
+/**
+ * Export Laporan Bagi Hasil Investor Resmi ke File Excel (.xlsx)
+ * @param {Object} investorData - { investorName, contact, sharePct, vehicles, transactions, expenses, totalRevenue, totalExpenses, netIncome, investorPayout, bossRentShare }
+ * @param {String} filename - Nama file
+ */
+export function exportInvestorReportToExcel(investorData, filename = '') {
+  const workbook = XLSX.utils.book_new();
+  const dateStr = new Date().toISOString().split('T')[0];
+
+  const invName = investorData.investorName || 'Investor';
+  const sharePct = Number(investorData.sharePct || 70);
+  const bossSharePct = 100 - sharePct;
+
+  // ── SHEET 1: RINGKASAN & KOP PERUSAHAAN (INVESTOR FINANCIAL STATEMENT) ──
+  const summaryAoa = [
+    ['BOSS RENT PERERENAN — LAPORAN RESMI BAGI HASIL INVESTOR'],
+    ['Tanggal Laporan', new Date().toLocaleDateString('id-ID')],
+    [''],
+    ['INFORMASI INVESTOR & SKEMA BAGI HASIL'],
+    ['Nama Investor / Pemilik', invName],
+    ['Kontak WA / HP', investorData.contact || '-'],
+    ['Jumlah Unit Motor Titipan', `${investorData.vehicles?.length || 0} Unit`],
+    ['Persentase Bagi Hasil', `${sharePct}% Investor / ${bossSharePct}% Boss Rent`],
+    [''],
+    ['PERHITUNGAN FINANSIAL & NET PAYOUT'],
+    ['Total Omset Kotor Sewa Motor (+)', formatRupiah(investorData.totalRevenue || 0)],
+    ['Total Potongan Biaya Servis/Perawatan (-)', formatRupiah(investorData.totalExpenses || 0)],
+    ['Laba Bersih Operasional Unit Motor', formatRupiah(investorData.netIncome || 0)],
+    [''],
+    ['TRANSFER NET PAYOUT KE INVESTOR (' + sharePct + '%)', formatRupiah(investorData.investorPayout || 0)],
+    ['BAGIAN KOMISI BOSS RENT (' + bossSharePct + '%)', formatRupiah(investorData.bossRentShare || 0)],
+    [''],
+    ['DAFTAR UNIT MOTOR TITIPAN INVESTOR'],
+    ['No', 'Nama Motor', 'Plat Nomor', 'Tahun', 'Tipe Kepemilikan', 'Harga Beli Unit (Modal)']
+  ];
+
+  if (Array.isArray(investorData.vehicles)) {
+    investorData.vehicles.forEach((v, idx) => {
+      summaryAoa.push([
+        idx + 1,
+        v.name,
+        v.plate_number,
+        v.year || '-',
+        'Titipan Investor (Bagi Hasil)',
+        formatRupiah(v.purchase_price || 0)
+      ]);
+    });
+  }
+
+  const summarySheet = XLSX.utils.aoa_to_sheet(summaryAoa);
+  summarySheet['!cols'] = [{ wch: 8 }, { wch: 32 }, { wch: 20 }, { wch: 12 }, { wch: 28 }, { wch: 24 }];
+  XLSX.utils.book_append_sheet(workbook, summarySheet, 'Ringkasan Bagi Hasil');
+
+  // ── SHEET 2: DETAIL TRANSAKSI SEWA MOTOR INVESTOR ──
+  const txRows = (investorData.transactions || []).map((t, idx) => ({
+    'No': idx + 1,
+    'Tgl Transaksi': new Date(t.created_at || t.start_date).toLocaleDateString('id-ID'),
+    'Penyewa': t.renter_name,
+    'No. HP': t.renter_phone || '-',
+    'Motor': t.vehicles?.name || '-',
+    'Plat Nomor': t.vehicles?.plate_number || '-',
+    'Durasi (Hari)': t.duration_days,
+    'Harga Sewa Pokok': formatRupiah(t.total_price || 0),
+    'Klaim Denda Kerusakan': Number(t.damage_fee || 0) > 0 ? formatRupiah(t.damage_fee) : '-',
+    'Total Omset Transaksi': formatRupiah(Number(t.total_price || 0) + Number(t.damage_fee || 0)),
+    'Status': t.status === 'completed' ? 'Selesai' : t.status === 'active' ? 'Aktif' : 'Batal'
+  }));
+
+  const txSheet = XLSX.utils.json_to_sheet(txRows.length ? txRows : [{'Keterangan': 'Belum ada data transaksi sewa'}]);
+  autoFitSheet(txSheet, txRows);
+  XLSX.utils.book_append_sheet(workbook, txSheet, 'Detail Transaksi Sewa');
+
+  // ── SHEET 3: DETAIL BIAYA PERAWATAN & SERVIS MOTOR ──
+  const expRows = (investorData.expenses || []).map((e, idx) => ({
+    'No': idx + 1,
+    'Tanggal Servis': new Date(e.expense_date).toLocaleDateString('id-ID'),
+    'Unit Motor': e.vehicle_name || e.vehicles?.name || 'Armada Investor',
+    'Plat Nomor': e.plate_number || e.vehicles?.plate_number || '-',
+    'Keterangan Servis': e.title,
+    'Kategori': e.category || 'Servis & Perawatan',
+    'Biaya Servis (-)': formatRupiah(e.amount || 0),
+    'Catatan': e.notes || '-'
+  }));
+
+  const expSheet = XLSX.utils.json_to_sheet(expRows.length ? expRows : [{'Keterangan': 'Belum ada data pengeluaran servis'}]);
+  autoFitSheet(expSheet, expRows);
+  XLSX.utils.book_append_sheet(workbook, expSheet, 'Detail Biaya Servis');
+
+  const cleanInvName = invName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  const outName = filename || `laporan-bagi-hasil-investor-${cleanInvName}-${dateStr}.xlsx`;
+  XLSX.writeFile(workbook, outName.endsWith('.xlsx') ? outName : `${outName}.xlsx`);
+}
