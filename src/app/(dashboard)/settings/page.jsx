@@ -114,7 +114,8 @@ export default function SettingsPage() {
       { url: '/images/boss_rent_bento_1.png', title: 'Mint Green Vespa Fleet', tag: 'Stylish Scooters', icon: 'fa-solid fa-motorcycle' },
       { url: '/images/boss_rent_fleet_lineup.png', title: 'Clean & Regularly Serviced Fleet', tag: '100% Maintained', icon: 'fa-solid fa-wrench' },
       { url: '/images/boss_rent_bento_2.png', title: 'Pererenan Beach Exploring', tag: 'Canggu Area', icon: 'fa-solid fa-umbrella-beach' },
-      { url: '/images/boss_rent_bento_3.png', title: 'Easy Key Handover Service', tag: 'Express Pickup', icon: 'fa-solid fa-key' }
+      { url: '/images/boss_rent_bento_3.png', title: 'Easy Key Handover Service', tag: 'Express Pickup', icon: 'fa-solid fa-key' },
+      { url: '/images/boss_rent_bento_6.png', title: 'Sanitized Clean Helmets Service', tag: 'Safety Standard', icon: 'fa-solid fa-shield-halved' }
     ],
     uploadedStoragePhotos: DEFAULT_STORAGE_PHOTOS,
     faqs: [

@@ -594,9 +594,9 @@ export default function SharpSquareBusinessWebsitePage() {
           </div>
         </div>
 
-        {/* CLEAN 5-CARD RESPONSIVE GRID MATRIX (No Overflow / No Stacking Gaps) */}
+        {/* CLEAN 6-CARD RESPONSIVE GRID MATRIX (Perfect 3x2 Grid on Desktop) */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', width: '100%', boxSizing: 'border-box' }}>
-          {(showAllPhotos ? bentoPhotos : bentoPhotos.slice(0, 5)).map((photo, idx) => (
+          {(showAllPhotos ? bentoPhotos : bentoPhotos.slice(0, 6)).map((photo, idx) => (
             <div
               key={idx}
               className="bento-card-sharp"
@@ -619,28 +619,30 @@ export default function SharpSquareBusinessWebsitePage() {
           ))}
         </div>
 
-        {/* SEE MORE / SHOW LESS BUTTON */}
-        <div style={{ textAlign: 'center', marginTop: '24px' }}>
-          <button
-            type="button"
-            onClick={() => setShowAllPhotos(!showAllPhotos)}
-            className="sharp-btn"
-            style={{
-              background: '#0F172A',
-              color: '#FFFFFF',
-              padding: '12px 28px',
-              fontSize: '13px',
-              fontWeight: 800,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <span>{showAllPhotos ? 'Show Less Photos' : `See More Photos (${bentoPhotos.length - 5} More)`}</span>
-            <i className={`fa-solid ${showAllPhotos ? 'fa-chevron-up' : 'fa-chevron-down'}`} style={{ color: '#E85D04' }}></i>
-          </button>
-        </div>
+        {/* SEE MORE / SHOW LESS BUTTON (Show More triggers when > 6 photos) */}
+        {bentoPhotos.length > 6 && (
+          <div style={{ textAlign: 'center', marginTop: '24px' }}>
+            <button
+              type="button"
+              onClick={() => setShowAllPhotos(!showAllPhotos)}
+              className="sharp-btn"
+              style={{
+                background: '#0F172A',
+                color: '#FFFFFF',
+                padding: '12px 28px',
+                fontSize: '13px',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <span>{showAllPhotos ? 'Show Less Photos' : `See More Photos (${bentoPhotos.length - 6} More)`}</span>
+              <i className={`fa-solid ${showAllPhotos ? 'fa-chevron-up' : 'fa-chevron-down'}`} style={{ color: '#E85D04' }}></i>
+            </button>
+          </div>
+        )}
       </section>
 
       {/* ── SHARP SCOOTER CATALOG GRID ── */}
