@@ -538,36 +538,39 @@ export default function MaintenancePage() {
         </div>
       </div>
 
-      {/* NAVIGATION TAB SWITCHER */}
-      <div className="page-actions mb-6" style={{ borderBottom: '1px solid var(--bg-border)', paddingBottom: '12px' }}>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button
-            className={`btn ${activeTab === 'diagnostics' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setActiveTab('diagnostics')}
-          >
-            <i className="fa-solid fa-robot" style={{ marginRight: '6px' }}></i>
-            AI Diagnostics & Skor Kesehatan ({diagnostics.length})
-          </button>
+      {/* NAVIGATION TAB SWITCHER — Scrollable Chips / Pills Layout */}
+      <div className="scrollable-tabs-bar" style={{ marginBottom: '16px' }}>
+        <button
+          type="button"
+          className={`scrollable-tab-btn ${activeTab === 'diagnostics' ? 'active' : ''}`}
+          onClick={() => setActiveTab('diagnostics')}
+        >
+          <i className="fa-solid fa-robot"></i>
+          AI Diagnostics & Skor Kesehatan ({diagnostics.length})
+        </button>
 
-          <button
-            className={`btn ${activeTab === 'history' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setActiveTab('history')}
-          >
-            <i className="fa-solid fa-clock-rotate-left" style={{ marginRight: '6px' }}></i>
-            📜 Riwayat & History Servis Motor ({serviceHistoryLogs.length})
-          </button>
+        <button
+          type="button"
+          className={`scrollable-tab-btn ${activeTab === 'history' ? 'active' : ''}`}
+          onClick={() => setActiveTab('history')}
+        >
+          <i className="fa-solid fa-clock-rotate-left"></i>
+          Riwayat & History Servis ({serviceHistoryLogs.length})
+        </button>
 
-          <button
-            className={`btn ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setActiveTab('reports')}
-          >
-            <i className="fa-solid fa-clipboard-list" style={{ marginRight: '6px' }}></i>
-            ⚠️ Keluhan Pelanggan ({recentReports.length})
-          </button>
-        </div>
+        <button
+          type="button"
+          className={`scrollable-tab-btn ${activeTab === 'reports' ? 'active' : ''}`}
+          onClick={() => setActiveTab('reports')}
+        >
+          <i className="fa-solid fa-clipboard-list"></i>
+          Keluhan Pelanggan ({recentReports.length})
+        </button>
+      </div>
 
-        <div className="filter-bar" style={{ marginTop: '12px' }}>
-          <div className="search-bar">
+      <div className="page-actions mb-6">
+        <div className="filter-bar" style={{ width: '100%' }}>
+          <div className="search-bar" style={{ flex: 1 }}>
             <span className="search-bar-icon"><i className="fa-solid fa-magnifying-glass"></i></span>
             <input
               type="text"
