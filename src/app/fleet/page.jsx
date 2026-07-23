@@ -43,7 +43,7 @@ function useCountUp(targetVal, durationMs = 1500, isDecimal = false) {
   return Math.floor(count);
 }
 
-export default function SharpSquareBusinessWebsitePage() {
+export default function EditorialFleetPage() {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -53,10 +53,10 @@ export default function SharpSquareBusinessWebsitePage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Bento gallery show more state (limit initial display to 5 photos)
+  // Bento gallery show more state
   const [showAllPhotos, setShowAllPhotos] = useState(false);
 
-  // Business & CMS Landing Page State (Loads dynamically from admin panel settings)
+  // Business & CMS Landing Page State
   const [biz, setBiz] = useState({
     name: 'BOSS RENT PERERENAN',
     tagline: 'Available Scooter For Rent • Best Service • Best Price • Villa Delivery Available • Clean & Well-Maintained Scooters',
@@ -76,7 +76,7 @@ export default function SharpSquareBusinessWebsitePage() {
     mapsEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=115.1180%2C-8.6520%2C115.1270%2C-8.6430&layer=mapnik&marker=-8.6477169%2C115.1226017'
   });
 
-  // FAQ Accordion State (100% English for Tourists)
+  // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState(null);
 
   const [faqs, setFaqs] = useState([
@@ -102,13 +102,13 @@ export default function SharpSquareBusinessWebsitePage() {
     }
   ]);
 
-  // Animated counters from dynamic CMS state
+  // Animated counters
   const animatedRating = useCountUp(biz.rating || 5.0, 1200, true);
   const animatedReviews = useCountUp(biz.reviewsCount || 24, 1500, false);
   const animatedSatisfaction = useCountUp(biz.satisfactionPercent || 100, 1600, false);
   const animatedFleet = useCountUp(biz.cleanScootersCount || 50, 1400, false);
 
-  // 10 Extended Google Reviews representing the 24 Google Reviews
+  // 10 Extended Reviews
   const reviews = [
     {
       name: 'Singgih Dwi Purnomo',
@@ -182,70 +182,43 @@ export default function SharpSquareBusinessWebsitePage() {
     }
   ];
 
-  // Bento showcase grid photos (Loads dynamically from admin panel CMS if present)
+  // Bento showcase grid photos
   const bentoPhotos = Array.isArray(biz.galleryPhotos) && biz.galleryPhotos.length > 0 ? biz.galleryPhotos : [
     {
       url: '/images/boss_rent_customer_bali.png',
       title: 'Scooter Rental in Pererenan',
       tag: 'Premium Fleet',
       icon: 'fa-solid fa-star',
-      span: 'wide'
     },
     {
       url: '/images/boss_rent_bento_1.png',
       title: 'Mint Green Vespa Fleet',
       tag: 'Stylish Scooters',
       icon: 'fa-solid fa-motorcycle',
-      span: 'normal'
     },
     {
       url: '/images/boss_rent_fleet_lineup.png',
       title: 'Clean & Regularly Serviced Fleet',
       tag: '100% Maintained',
       icon: 'fa-solid fa-wrench',
-      span: 'normal'
     },
     {
       url: '/images/boss_rent_bento_2.png',
       title: 'Pererenan Beach Exploring',
       tag: 'Canggu Area',
       icon: 'fa-solid fa-umbrella-beach',
-      span: 'normal'
     },
     {
       url: '/images/boss_rent_bento_3.png',
       title: 'Easy Key Handover Service',
       tag: 'Express Pickup',
       icon: 'fa-solid fa-key',
-      span: 'normal'
     },
     {
       url: '/images/boss_rent_bento_5.png',
       title: 'Scenic Countryside Cruising',
       tag: 'Bali Road Trips',
       icon: 'fa-solid fa-route',
-      span: 'wide'
-    },
-    {
-      url: '/images/boss_rent_bento_6.png',
-      title: 'Sanitized Clean Helmets',
-      tag: 'Safety Standard',
-      icon: 'fa-solid fa-shield-halved',
-      span: 'normal'
-    },
-    {
-      url: '/images/boss_rent_bento_8.png',
-      title: 'Red Honda Scoopy Lineup',
-      tag: 'Sunset Touring',
-      icon: 'fa-solid fa-sun',
-      span: 'normal'
-    },
-    {
-      url: '/images/boss_rent_helmet_handover.png',
-      title: 'Free Villa Delivery & Pickup',
-      tag: 'Free Delivery',
-      icon: 'fa-solid fa-truck-fast',
-      span: 'wide'
     }
   ];
 
@@ -258,7 +231,7 @@ export default function SharpSquareBusinessWebsitePage() {
     setStartDate(today.toISOString().split('T')[0]);
     setEndDate(threeDaysLater.toISOString().split('T')[0]);
 
-    // Load admin business settings & CMS landing page data from localStorage if available
+    // Load admin business settings from localStorage if available
     try {
       const savedBiz = localStorage.getItem('boss_rent_biz_settings');
       if (savedBiz) {
@@ -383,532 +356,419 @@ export default function SharpSquareBusinessWebsitePage() {
   });
 
   return (
-    <div style={{ background: '#FFFFFF', color: '#0F172A', minHeight: '100vh', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
-      {/* ── STYLES FOR SHARP EDGES UI (SQUARE 0px BORDER RADIUS) & MARQUEE ── */}
-      <style>{`
-        * {
-          border-radius: 0px !important;
-        }
-        @keyframes marqueeScroll {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .marquee-track {
-          display: flex;
-          gap: 20px;
-          width: max-content;
-          animation: marqueeScroll 40s linear infinite;
-        }
-        .marquee-track:hover {
-          animation-play-state: paused;
-        }
-        .bento-card-sharp {
-          position: relative;
-          border-radius: 0px !important;
-          overflow: hidden;
-          background: #F1F5F9;
-          border: 1px solid #0F172A;
-          box-shadow: 4px 4px 0px #0F172A;
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .bento-card-sharp:hover {
-          transform: translate(-2px, -2px);
-          box-shadow: 6px 6px 0px #E85D04;
-        }
-        .bento-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transition: transform 0.3s ease;
-        }
-        .bento-card-sharp:hover .bento-img {
-          transform: scale(1.03);
-        }
-        .bento-overlay {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.2) 60%, transparent 100%);
-          display: flex;
-          flex-direction: column;
-          justify-content: flex-end;
-          padding: 20px;
-          color: #FFF;
-        }
-        .sharp-card {
-          background: #FFFFFF;
-          border: 1px solid #0F172A;
-          box-shadow: 4px 4px 0px #0F172A;
-          border-radius: 0px !important;
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .sharp-card:hover {
-          transform: translate(-2px, -2px);
-          box-shadow: 6px 6px 0px #0F172A;
-        }
-        .sharp-btn {
-          border-radius: 0px !important;
-          border: 1px solid #0F172A;
-          box-shadow: 2px 2px 0px #0F172A;
-          font-weight: 800;
-          transition: all 0.15s ease;
-        }
-        .sharp-btn:hover {
-          transform: translate(-1px, -1px);
-          box-shadow: 4px 4px 0px #0F172A;
-        }
-      `}</style>
-
-      {/* ── TOP ANNOUNCEMENT BAR (Sharp Square Style) ── */}
-      <div style={{ background: '#0F172A', color: '#F8FAFC', textAlign: 'center', padding: '10px 16px', fontSize: '12px', fontWeight: 800, letterSpacing: '0.3px', borderBottom: '2px solid #E85D04', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-          <i className="fa-solid fa-motorcycle" style={{ color: '#E85D04' }}></i>
-          {biz.tagline}
+    <div style={{ background: '#0B0C10', color: '#F0F0F5', minHeight: '100vh', fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
+      
+      {/* ── STICKY TOP EDITORIAL JOURNAL BAR ── */}
+      <div style={{ background: '#07070A', borderBottom: '1px solid rgba(212, 175, 55, 0.25)', padding: '9px 16px', fontSize: '11px', textAlign: 'center', color: '#D4AF37', letterSpacing: '1px', textTransform: 'uppercase', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+        <span className="font-serif-editorial" style={{ fontStyle: 'italic', textTransform: 'none', fontSize: '13px', color: '#F5F5F0' }}>
+          The Pererenan Fleet Journal — Volume 2026 Edition
         </span>
-        <a href={biz.mapsUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#FFD700', textDecoration: 'underline', fontWeight: 900, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-          <i className="fa-solid fa-star" style={{ color: '#FFD700' }}></i>
-          {animatedRating} Google Rating ({animatedReviews} Reviews)
+        <span style={{ opacity: 0.4 }}>•</span>
+        <span><i className="fa-solid fa-shield-halved" style={{ marginRight: '5px' }}></i> Sanitized Helmets & Raincoats Included</span>
+        <span style={{ opacity: 0.4 }}>•</span>
+        <a href={biz.mapsUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#D4AF37', textDecoration: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+          <i className="fa-solid fa-star" style={{ color: '#F59E0B' }}></i> {animatedRating} Google Score ({animatedReviews} Reviews)
         </a>
       </div>
 
-      {/* ── STICKY NAVBAR HEADER (Sharp Square Flat Header) ── */}
-      <header style={{ background: '#FFFFFF', borderBottom: '2px solid #0F172A', position: 'sticky', top: 0, zIndex: 100, padding: '16px 28px' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+      {/* ── EDITORIAL HEADER NAVBAR ── */}
+      <header style={{ background: 'rgba(11, 12, 16, 0.95)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', position: 'sticky', top: 0, zIndex: 100, padding: '16px 32px' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <img
               src={biz.logoUrl || "/images/logoCompany.png"}
               alt="BOSS RENT PERERENAN Logo"
-              style={{ height: '48px', width: 'auto', objectFit: 'contain' }}
+              style={{ height: '46px', width: 'auto', objectFit: 'contain' }}
             />
             <div>
-              <div style={{ fontSize: '21px', fontWeight: 900, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '-0.5px' }}>
+              <div className="font-serif-editorial" style={{ fontSize: '22px', fontWeight: 800, color: '#F5F5F0', letterSpacing: '-0.3px' }}>
                 {biz.name}
               </div>
-              <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <i className="fa-solid fa-location-dot" style={{ color: '#E85D04' }}></i>
+              <div style={{ fontSize: '11px', color: '#9898B0', marginTop: '2px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <i className="fa-solid fa-location-dot" style={{ color: '#D4AF37' }}></i>
                 {biz.address}
               </div>
             </div>
           </div>
 
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <a
+              href={`https://wa.me/${biz.phoneRaw.replace(/[^0-9]/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="editorial-filter-btn active"
+              style={{ padding: '10px 22px', display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}
+            >
+              <i className="fa-brands fa-whatsapp" style={{ fontSize: '15px' }}></i>
+              <span>Book via Concierge</span>
+            </a>
+          </div>
         </div>
       </header>
 
-      {/* ── HERO BANNER & ANIMATED COUNTERS SECTION (Sharp Square Layout) ── */}
-      <section style={{ background: '#F8FAFC', borderBottom: '2px solid #0F172A', padding: '52px 24px 36px 24px', textAlign: 'center' }}>
-        <div style={{ maxWidth: '940px', margin: '0 auto' }}>
-          {/* Sharp Square Badge */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#FFFFFF', border: '1px solid #0F172A', color: '#0F172A', padding: '6px 18px', fontSize: '12px', fontWeight: 800, marginBottom: '20px', boxShadow: '2px 2px 0px #0F172A' }}>
-            <span style={{ color: '#F59E0B', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <i className="fa-solid fa-star"></i> {animatedRating}
-            </span>
-            <span>Google Verified Business ({animatedReviews} Google Reviews)</span>
+      {/* ── EDITORIAL MAGAZINE COVER HERO SECTION ── */}
+      <section style={{ position: 'relative', padding: '72px 24px 60px 24px', background: 'radial-gradient(circle at 50% 20%, rgba(212, 175, 55, 0.08) 0%, rgba(11, 12, 16, 1) 70%)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', textAlign: 'center' }}>
+          
+          <div className="editorial-issue-tag" style={{ marginBottom: '16px' }}>
+            — ISSUE N° 04 • BALI MOTORCYCLE COLLECTION —
           </div>
 
-          <h1 style={{ fontSize: '40px', fontWeight: 900, marginBottom: '14px', color: '#0F172A', lineHeight: 1.15, letterSpacing: '-0.8px' }}>
-            {biz.heroTitle}
-            <i className="fa-solid fa-location-dot" style={{ color: '#E85D04', marginLeft: '10px' }}></i>
+          <h1 className="font-serif-editorial" style={{ fontSize: '46px', fontWeight: 800, color: '#F5F5F0', lineHeight: 1.15, marginBottom: '20px', letterSpacing: '-0.5px' }}>
+            Quiet Luxury & Bespoke Scooter Rental in Pererenan
           </h1>
 
-          <p style={{ fontSize: '15px', color: '#334155', lineHeight: 1.6, marginBottom: '36px', maxWidth: '740px', margin: '0 auto 36px auto', fontWeight: 500 }}>
+          <p style={{ fontSize: '16px', color: '#A0A0B5', lineHeight: 1.7, maxWidth: '720px', margin: '0 auto 42px auto', fontWeight: 400 }}>
             {biz.heroSubtitle}
           </p>
 
-          {/* ── ANIMATED COUNTER GRID (Sharp Square Stat Cards) ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '36px' }}>
-            <div className="sharp-card" style={{ padding: '20px', textAlign: 'center' }}>
-              <div style={{ fontSize: '34px', fontWeight: 900, color: '#E85D04', letterSpacing: '-1px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                <span>{animatedRating}</span>
-                <i className="fa-solid fa-star" style={{ color: '#F59E0B', fontSize: '26px' }}></i>
+          {/* ── EDITORIAL HERO SHOWCASE FRAME ── */}
+          <div className="editorial-card" style={{ maxWidth: '1000px', margin: '0 auto 48px auto', border: '1px solid rgba(212, 175, 55, 0.3)' }}>
+            <div style={{ position: 'relative', width: '100%', height: '420px', overflow: 'hidden' }}>
+              <img
+                src="/images/boss_rent_fleet_lineup.png"
+                alt="The Pererenan Fleet Collection"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(11, 12, 16, 0.95) 0%, rgba(11, 12, 16, 0.3) 50%, transparent 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '32px 36px', textAlign: 'left' }}>
+                <div className="editorial-issue-tag" style={{ fontSize: '11px', marginBottom: '6px' }}>
+                  FEATURED SCOOTER LINEUP
+                </div>
+                <div className="font-serif-editorial" style={{ fontSize: '28px', color: '#FFF', fontWeight: 800 }}>
+                  Immaculate Maintenance & Villa Delivery in Canggu & Pererenan
+                </div>
+                <div style={{ fontSize: '13px', color: '#A0A0B5', marginTop: '6px' }}>
+                  24/7 Roadside Assistance • 2 Clean Helmets Included • Honest Transparent Pricing
+                </div>
               </div>
-              <div style={{ fontSize: '12px', fontWeight: 800, color: '#0F172A', marginTop: '4px' }}>Google Rating</div>
-              <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>5-Star Verified Score</div>
+            </div>
+          </div>
+
+          {/* ── EDITORIAL STATS STRIP ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', maxWidth: '960px', margin: '0 auto 48px auto' }}>
+            <div className="editorial-card" style={{ padding: '22px 18px', textAlign: 'center' }}>
+              <div className="font-serif-editorial editorial-gold-text" style={{ fontSize: '36px', fontWeight: 900 }}>
+                {animatedRating}★
+              </div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#F5F5F0', marginTop: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Google Verified Score
+              </div>
+              <div style={{ fontSize: '11px', color: '#8888A0', marginTop: '2px' }}>{animatedReviews} 5-Star Reviews</div>
             </div>
 
-            <div className="sharp-card" style={{ padding: '20px', textAlign: 'center' }}>
-              <div style={{ fontSize: '34px', fontWeight: 900, color: '#16A34A', letterSpacing: '-1px' }}>
-                {animatedReviews}
-              </div>
-              <div style={{ fontSize: '12px', fontWeight: 800, color: '#0F172A', marginTop: '4px' }}>Google Reviews</div>
-              <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>Real Happy Customers</div>
-            </div>
-
-            <div className="sharp-card" style={{ padding: '20px', textAlign: 'center' }}>
-              <div style={{ fontSize: '34px', fontWeight: 900, color: '#2563EB', letterSpacing: '-1px' }}>
+            <div className="editorial-card" style={{ padding: '22px 18px', textAlign: 'center' }}>
+              <div className="font-serif-editorial" style={{ fontSize: '36px', fontWeight: 900, color: '#22C55E' }}>
                 {animatedSatisfaction}%
               </div>
-              <div style={{ fontSize: '12px', fontWeight: 800, color: '#0F172A', marginTop: '4px' }}>Customer Satisfaction</div>
-              <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>Best Service Guarantee</div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#F5F5F0', marginTop: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Satisfaction Guarantee
+              </div>
+              <div style={{ fontSize: '11px', color: '#8888A0', marginTop: '2px' }}>Top-Rated Rental Service</div>
             </div>
 
-            <div className="sharp-card" style={{ padding: '20px', textAlign: 'center' }}>
-              <div style={{ fontSize: '34px', fontWeight: 900, color: '#D97706', letterSpacing: '-1px' }}>
+            <div className="editorial-card" style={{ padding: '22px 18px', textAlign: 'center' }}>
+              <div className="font-serif-editorial" style={{ fontSize: '36px', fontWeight: 900, color: '#3B82F6' }}>
                 {animatedFleet}+
               </div>
-              <div style={{ fontSize: '12px', fontWeight: 800, color: '#0F172A', marginTop: '4px' }}>Clean Scooters</div>
-              <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>Regularly Serviced</div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#F5F5F0', marginTop: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Clean Scooter Fleet
+              </div>
+              <div style={{ fontSize: '11px', color: '#8888A0', marginTop: '2px' }}>Serviced & Maintained</div>
+            </div>
+
+            <div className="editorial-card" style={{ padding: '22px 18px', textAlign: 'center' }}>
+              <div className="font-serif-editorial editorial-gold-text" style={{ fontSize: '36px', fontWeight: 900 }}>
+                0 Min
+              </div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#F5F5F0', marginTop: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Deposit Hassle
+              </div>
+              <div style={{ fontSize: '11px', color: '#8888A0', marginTop: '2px' }}>Instant Refund Upon Return</div>
             </div>
           </div>
 
-          {/* ── SHARP SQUARE DATE PICKER BAR ── */}
-          <div className="sharp-card" style={{ padding: '20px 24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', fontWeight: 900, color: '#0F172A', marginBottom: '6px', textAlign: 'left' }}>
-                <i className="fa-solid fa-calendar-plus" style={{ marginRight: '4px', color: '#E85D04' }}></i> Pickup Date
-              </label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={e => setStartDate(e.target.value)}
-                style={{ width: '100%', background: '#F8FAFC', border: '1px solid #0F172A', color: '#0F172A', padding: '10px 14px', fontSize: '13px', fontWeight: 700 }}
-              />
+          {/* ── EDITORIAL DATES & ESTIMATE SELECTOR ── */}
+          <div className="editorial-card" style={{ padding: '24px 30px', maxWidth: '800px', margin: '0 auto', border: '1px solid rgba(212, 175, 55, 0.35)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', fontSize: '12px', color: '#D4AF37', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+              <i className="fa-solid fa-calendar-days"></i> Select Rental Dates for Instant Rate Calculation
             </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', fontWeight: 900, color: '#0F172A', marginBottom: '6px', textAlign: 'left' }}>
-                <i className="fa-solid fa-calendar-check" style={{ marginRight: '4px', color: '#E85D04' }}></i> Return Date
-              </label>
-              <input
-                type="date"
-                min={startDate}
-                value={endDate}
-                onChange={e => setEndDate(e.target.value)}
-                style={{ width: '100%', background: '#F8FAFC', border: '1px solid #0F172A', color: '#0F172A', padding: '10px 14px', fontSize: '13px', fontWeight: 700 }}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── SHARP BENTO GRID CUSTOMER SHOWCASE GALLERY ── */}
-      <section style={{ padding: '52px 24px', maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ fontSize: '11px', color: '#E85D04', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
-            EXPLORE OUR FLEET & SERVICE
-          </div>
-          <h2 style={{ fontSize: '28px', fontWeight: 900, color: '#0F172A', margin: '4px 0 6px 0', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            <span>Premium Scooter Fleet & Service Gallery</span>
-            <i className="fa-solid fa-images" style={{ color: '#E85D04' }}></i>
-          </h2>
-          <div style={{ fontSize: '14px', color: '#64748B' }}>
-            Explore our clean scooters, equipment standards, and professional rental service in Pererenan & Canggu, Bali
-          </div>
-        </div>
-
-        {/* CLEAN 6-CARD RESPONSIVE GRID MATRIX (Perfect 3x2 Grid on Desktop) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', width: '100%', boxSizing: 'border-box' }}>
-          {(showAllPhotos ? bentoPhotos : bentoPhotos.slice(0, 6)).map((photo, idx) => (
-            <div
-              key={idx}
-              className="bento-card-sharp"
-              style={{
-                height: '240px',
-                width: '100%',
-                overflow: 'hidden',
-                boxSizing: 'border-box'
-              }}
-            >
-              <img src={photo.url} alt={photo.title} className="bento-img" onError={handleImgError} />
-              <div className="bento-overlay" style={{ boxSizing: 'border-box', padding: '16px', width: '100%' }}>
-                <span style={{ fontSize: '10px', background: '#0F172A', color: '#FFF', padding: '4px 10px', fontWeight: 800, width: 'fit-content', marginBottom: '6px', border: '1px solid rgba(255,255,255,0.3)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <i className={photo.icon} style={{ color: '#E85D04', fontSize: '11px' }}></i>
-                  <span>{photo.tag}</span>
-                </span>
-                <div style={{ fontSize: '15px', fontWeight: 900, lineHeight: 1.2, wordBreak: 'break-word' }}>{photo.title}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, color: '#A0A0B5', marginBottom: '6px', textAlign: 'left' }}>
+                  Pickup Date
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={e => setStartDate(e.target.value)}
+                  style={{ width: '100%', background: '#090A0E', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#F5F5F0', padding: '12px 16px', borderRadius: '10px', fontSize: '13.5px', outline: 'none' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, color: '#A0A0B5', marginBottom: '6px', textAlign: 'left' }}>
+                  Return Date
+                </label>
+                <input
+                  type="date"
+                  min={startDate}
+                  value={endDate}
+                  onChange={e => setEndDate(e.target.value)}
+                  style={{ width: '100%', background: '#090A0E', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#F5F5F0', padding: '12px 16px', borderRadius: '10px', fontSize: '13.5px', outline: 'none' }}
+                />
               </div>
             </div>
-          ))}
-        </div>
-
-        {/* SEE MORE / SHOW LESS BUTTON (Show More triggers when > 6 photos) */}
-        {bentoPhotos.length > 6 && (
-          <div style={{ textAlign: 'center', marginTop: '24px' }}>
-            <button
-              type="button"
-              onClick={() => setShowAllPhotos(!showAllPhotos)}
-              className="sharp-btn"
-              style={{
-                background: '#0F172A',
-                color: '#FFFFFF',
-                padding: '12px 28px',
-                fontSize: '13px',
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <span>{showAllPhotos ? 'Show Less Photos' : `See More Photos (${bentoPhotos.length - 6} More)`}</span>
-              <i className={`fa-solid ${showAllPhotos ? 'fa-chevron-up' : 'fa-chevron-down'}`} style={{ color: '#E85D04' }}></i>
-            </button>
           </div>
-        )}
+
+        </div>
       </section>
 
-      {/* ── SHARP SCOOTER CATALOG GRID ── */}
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px 24px 60px 24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
-          <div>
-            <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#0F172A', margin: 0, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-              <span>Available Fleet & Smart Pricing</span>
-              <i className="fa-solid fa-motorcycle" style={{ color: '#E85D04' }}></i>
-            </h2>
-            <div style={{ fontSize: '13px', color: '#64748B', marginTop: '4px' }}>
-              Daily, Weekly, & Monthly rate tiers automatically calculated for best savings.
-            </div>
+      {/* ── FLEET CATALOG COLLECTION SECTION ── */}
+      <section style={{ padding: '64px 32px', maxWidth: '1280px', margin: '0 auto' }}>
+        
+        {/* Editorial Section Header */}
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <div className="editorial-issue-tag" style={{ marginBottom: '8px' }}>
+            OUR CURATED CATALOG
           </div>
+          <h2 className="font-serif-editorial" style={{ fontSize: '36px', fontWeight: 800, color: '#F5F5F0', margin: '0 0 10px 0' }}>
+            The Motorcycle Collection
+          </h2>
+          <p style={{ fontSize: '14.5px', color: '#9898B0', maxWidth: '600px', margin: '0 auto' }}>
+            Explore our immaculate scooters maintained to safety standards for your smooth journey around Bali.
+          </p>
+        </div>
 
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-            {[
-              { id: 'all', label: 'All Scooters' },
-              { id: 'honda', label: 'Honda' },
-              { id: 'yamaha', label: 'Yamaha' },
-              { id: 'vespa', label: 'Vespa' },
-            ].map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className="sharp-btn"
-                style={{
-                  padding: '8px 18px',
-                  fontSize: '12px',
-                  background: selectedCategory === cat.id ? '#E85D04' : '#FFFFFF',
-                  color: selectedCategory === cat.id ? '#fff' : '#0F172A',
-                  cursor: 'pointer'
-                }}
-              >
-                {cat.label}
-              </button>
-            ))}
+        {/* Quiet Luxury Category Filter Chips */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '40px' }}>
+          <button
+            className={`editorial-filter-btn ${selectedCategory === 'all' ? 'active' : ''}`}
+            onClick={() => setSelectedCategory('all')}
+          >
+            All Collections
+          </button>
+          <button
+            className={`editorial-filter-btn ${selectedCategory === 'vespa' ? 'active' : ''}`}
+            onClick={() => setSelectedCategory('vespa')}
+          >
+            Vespa Series
+          </button>
+          <button
+            className={`editorial-filter-btn ${selectedCategory === 'maxi' ? 'active' : ''}`}
+            onClick={() => setSelectedCategory('maxi')}
+          >
+            Maxi Touring (NMAX/PCX)
+          </button>
+          <button
+            className={`editorial-filter-btn ${selectedCategory === 'urban' ? 'active' : ''}`}
+            onClick={() => setSelectedCategory('urban')}
+          >
+            Urban Classics (Scoopy/Vario)
+          </button>
+        </div>
 
+        {/* Search input */}
+        <div style={{ maxWidth: '450px', margin: '0 auto 48px auto' }}>
+          <div style={{ position: 'relative' }}>
+            <i className="fa-solid fa-magnifying-glass" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37', fontSize: '14px' }}></i>
             <input
               type="text"
-              placeholder="Search model..."
+              placeholder="Search by bike model (e.g. Vespa, NMAX, Scoopy)..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ width: '180px', background: '#FFFFFF', border: '1px solid #0F172A', color: '#0F172A', padding: '8px 14px', fontSize: '12px', fontWeight: 600 }}
+              style={{ width: '100%', background: '#111219', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#F5F5F0', padding: '12px 18px 12px 44px', borderRadius: '50px', fontSize: '13px', outline: 'none' }}
             />
           </div>
         </div>
 
-        {/* Loading / Cards Grid */}
+        {/* Fleet Grid */}
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748B' }}>
-            <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '32px', color: '#E85D04' }}></i>
-            <div style={{ marginTop: '12px', fontSize: '14px' }}>Loading Available Scooters...</div>
+          <div style={{ textAlign: 'center', padding: '60px 0', color: '#9898B0' }}>
+            <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '28px', color: '#D4AF37', marginBottom: '14px' }}></i>
+            <div className="font-serif-editorial" style={{ fontSize: '18px' }}>Loading Editorial Collection...</div>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="sharp-card" style={{ textAlign: 'center', padding: '60px 0', background: '#F8FAFC' }}>
-            <i className="fa-solid fa-motorcycle" style={{ fontSize: '40px', color: '#94A3B8', marginBottom: '12px' }}></i>
-            <div style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A' }}>No Scooters Available In This Category</div>
-            <div style={{ fontSize: '12px', color: '#64748B', marginTop: '4px' }}>Please select another brand category or clear search.</div>
+          <div className="editorial-card" style={{ textAlign: 'center', padding: '60px 24px', maxWidth: '600px', margin: '0 auto' }}>
+            <i className="fa-solid fa-motorcycle" style={{ fontSize: '40px', color: '#D4AF37', marginBottom: '14px' }}></i>
+            <div className="font-serif-editorial" style={{ fontSize: '22px', color: '#F5F5F0', marginBottom: '8px' }}>No bikes found</div>
+            <p style={{ fontSize: '13px', color: '#9898B0' }}>Try adjusting your search filter or category selection.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '28px' }}>
             {filtered.map(vehicle => {
               const estimate = calculateEstimate(vehicle);
               const isAvailable = vehicle.status === 'available';
 
               return (
-                <div key={vehicle.id} className="sharp-card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                  {/* Image */}
-                  <div style={{ height: '180px', width: '100%', background: '#F1F5F9', position: 'relative', overflow: 'hidden', borderBottom: '1px solid #0F172A' }}>
-                    {vehicle.image_url ? (
-                      <img src={vehicle.image_url} alt={vehicle.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={handleImgError} />
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94A3B8', fontSize: '48px' }}>
-                        <i className="fa-solid fa-motorcycle"></i>
+                <div key={vehicle.id} className="editorial-card">
+                  {/* Photo Showcase */}
+                  <div className="editorial-card-img-wrap">
+                    <img
+                      src={vehicle.image_url || '/images/boss_rent_fleet_lineup.png'}
+                      alt={vehicle.name}
+                      className="editorial-card-img"
+                      onError={handleImgError}
+                    />
+                    
+                    {/* Status Badge */}
+                    <div style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 2 }}>
+                      {isAvailable ? (
+                        <span style={{ background: 'rgba(34, 197, 94, 0.2)', border: '1px solid rgba(34, 197, 94, 0.4)', color: '#22C55E', padding: '5px 12px', borderRadius: '50px', fontSize: '11px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22C55E' }}></span>
+                          Available for Delivery
+                        </span>
+                      ) : (
+                        <span style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#EF4444', padding: '5px 12px', borderRadius: '50px', fontSize: '11px', fontWeight: 700 }}>
+                          Currently Rented
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Plate Tag */}
+                    {vehicle.plate_number && (
+                      <div style={{ position: 'absolute', bottom: '16px', right: '16px', zIndex: 2 }}>
+                        <span style={{ background: 'rgba(11, 12, 16, 0.85)', border: '1px solid rgba(212, 175, 55, 0.35)', color: '#D4AF37', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 700 }}>
+                          {vehicle.plate_number}
+                        </span>
                       </div>
                     )}
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: '12px',
-                        right: '12px',
-                        padding: '4px 12px',
-                        fontSize: '10px',
-                        fontWeight: 900,
-                        textTransform: 'uppercase',
-                        background: isAvailable ? '#22C55E' : '#3B82F6',
-                        color: '#FFF',
-                        border: '1px solid #0F172A',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '5px'
-                      }}
-                    >
-                      {isAvailable ? (
-                        <>
-                          <span>Available Now</span>
-                          <i className="fa-solid fa-circle-check"></i>
-                        </>
-                      ) : (
-                        <>
-                          <span>Rented</span>
-                          <i className="fa-solid fa-key"></i>
-                        </>
-                      )}
-                    </span>
                   </div>
 
-                  {/* Details */}
-                  <div style={{ padding: '18px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                    <div style={{ fontSize: '11px', color: '#E85D04', fontWeight: 900, textTransform: 'uppercase' }}>
-                      {vehicle.category ? vehicle.category.toUpperCase() : 'SCOOTER'} • {vehicle.year}
+                  {/* Card Content */}
+                  <div style={{ padding: '24px' }}>
+                    <div className="editorial-issue-tag" style={{ fontSize: '11px', marginBottom: '4px' }}>
+                      {vehicle.category ? vehicle.category.toUpperCase() : 'PREMIUM SCOOTER'}
                     </div>
-                    <div style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '2px 0 10px 0' }}>
+
+                    <h3 className="font-serif-editorial" style={{ fontSize: '22px', fontWeight: 800, color: '#F5F5F0', margin: '0 0 10px 0', lineHeight: 1.25 }}>
                       {vehicle.name}
+                    </h3>
+
+                    {/* Feature Specification Pills */}
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
+                      <span style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#A0A0B5', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600 }}>
+                        <i className="fa-solid fa-gauge-high" style={{ marginRight: '5px', color: '#D4AF37' }}></i>
+                        {vehicle.engine_cc ? `${vehicle.engine_cc} cc` : '150 cc'}
+                      </span>
+                      <span style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#A0A0B5', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600 }}>
+                        <i className="fa-solid fa-shield-halved" style={{ marginRight: '5px', color: '#D4AF37' }}></i>
+                        2 Helmets
+                      </span>
+                      <span style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#A0A0B5', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600 }}>
+                        <i className="fa-solid fa-truck-fast" style={{ marginRight: '5px', color: '#D4AF37' }}></i>
+                        Free Delivery
+                      </span>
                     </div>
 
-                    {/* Rate Tiers */}
-                    <div style={{ background: '#F8FAFC', padding: '10px 12px', display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '14px', border: '1px solid #0F172A' }}>
+                    {/* Price & Reserve Row */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '16px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
                       <div>
-                        <span style={{ color: '#64748B' }}>Daily:</span>
-                        <div style={{ fontWeight: 800, color: '#0F172A' }}>{formatRupiah(vehicle.rate_per_day)}</div>
-                      </div>
-                      {vehicle.rate_per_week > 0 && (
-                        <div>
-                          <span style={{ color: '#64748B' }}>Weekly:</span>
-                          <div style={{ fontWeight: 800, color: '#16A34A' }}>{formatRupiah(vehicle.rate_per_week)}</div>
+                        <div style={{ fontSize: '10.5px', color: '#8888A0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Daily Rate</div>
+                        <div className="font-serif-editorial editorial-gold-text" style={{ fontSize: '24px', fontWeight: 900 }}>
+                          {formatRupiah(vehicle.rate_per_day)}
+                          <span style={{ fontSize: '12px', color: '#8888A0', fontWeight: 400 }}> /day</span>
                         </div>
-                      )}
-                      {vehicle.rate_per_month > 0 && (
-                        <div>
-                          <span style={{ color: '#64748B' }}>Monthly:</span>
-                          <div style={{ fontWeight: 800, color: '#2563EB' }}>{formatRupiah(vehicle.rate_per_month)}</div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Smart Calculation Estimate */}
-                    {estimate && (
-                      <div style={{ background: 'rgba(232, 93, 4, 0.06)', border: '1px solid #0F172A', padding: '10px 12px', marginBottom: '14px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '11px', color: '#E85D04', fontWeight: 900 }}>
-                            <i className="fa-solid fa-wand-magic-sparkles" style={{ marginRight: '4px' }}></i> Estimated ({estimate.durationDays} Days):
-                          </span>
-                          <span style={{ fontSize: '15px', fontWeight: 900, color: '#0F172A' }}>{formatRupiah(estimate.total)}</span>
-                        </div>
-                        {estimate.savings > 0 && (
-                          <div style={{ fontSize: '10.5px', color: '#16A34A', fontWeight: 800, marginTop: '2px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                            <i className="fa-solid fa-tag"></i> Saves {formatRupiah(estimate.savings)} via {estimate.tierUsed}!
+                        {estimate && estimate.durationDays > 1 && (
+                          <div style={{ fontSize: '11px', color: '#22C55E', fontWeight: 700, marginTop: '2px' }}>
+                            Est. {estimate.durationDays} Days: {formatRupiah(estimate.total)}
                           </div>
                         )}
                       </div>
-                    )}
 
-                    {/* Booking Button */}
-                    <button
-                      type="button"
-                      className="btn sharp-btn"
-                      onClick={() => handleBookVehicle(vehicle)}
-                      style={{
-                        marginTop: 'auto',
-                        width: '100%',
-                        background: '#25D366',
-                        color: '#fff',
-                        fontSize: '13px',
-                        padding: '10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px'
-                      }}
-                    >
-                      <i className="fa-brands fa-whatsapp" style={{ fontSize: '18px' }}></i>
-                      <span>Book via WhatsApp</span>
-                    </button>
+                      <button
+                        type="button"
+                        className="editorial-filter-btn active"
+                        onClick={() => handleBookVehicle(vehicle)}
+                        style={{ padding: '10px 20px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                      >
+                        <span>Reserve</span>
+                        <i className="fa-solid fa-arrow-right" style={{ fontSize: '11px' }}></i>
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
         )}
-      </main>
+      </section>
 
-      {/* ── GOOGLE REVIEWS SECTION (Infinite Scroll Carousel Marquee) ── */}
-      <section style={{ background: '#F8FAFC', borderTop: '2px solid #0F172A', borderBottom: '2px solid #0F172A', padding: '54px 0', overflow: 'hidden', position: 'relative' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px', textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ fontSize: '11px', color: '#E85D04', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
-            REAL GOOGLE MAPS REVIEWS
+      {/* ── EDITORIAL STORY & KINFOLK ARTICLE SPREAD ── */}
+      <section style={{ background: '#0F1017', borderTop: '1px solid rgba(255, 255, 255, 0.08)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', padding: '80px 32px' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '48px', alignItems: 'center' }}>
+          <div>
+            <div className="editorial-issue-tag" style={{ marginBottom: '12px' }}>
+              OUR PHILOSOPHY & PROMISE
+            </div>
+            <h2 className="font-serif-editorial" style={{ fontSize: '38px', fontWeight: 800, color: '#F5F5F0', lineHeight: 1.2, marginBottom: '24px' }}>
+              The Art of Uncompromising Scooter Rental in Bali
+            </h2>
+            <div className="editorial-quote-block" style={{ marginBottom: '24px' }}>
+              “We believe exploring Bali’s coastal roads should be seamless, elegant, and entirely stress-free.”
+            </div>
+            <p style={{ fontSize: '14.5px', color: '#9898B0', lineHeight: 1.8, marginBottom: '28px' }}>
+              From sanitized helmets to free villa delivery in Canggu & Pererenan, Boss Rent ensures every machine in our collection is rigorously inspected before key handover.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', fontSize: '13px', color: '#F5F5F0', fontWeight: 600 }}>
+              <div><i className="fa-solid fa-check" style={{ color: '#D4AF37', marginRight: '8px' }}></i> Transparent Daily Rates</div>
+              <div><i className="fa-solid fa-check" style={{ color: '#D4AF37', marginRight: '8px' }}></i> 2 Sanitized Helmets Included</div>
+              <div><i className="fa-solid fa-check" style={{ color: '#D4AF37', marginRight: '8px' }}></i> Free Villa & Hotel Delivery</div>
+              <div><i className="fa-solid fa-check" style={{ color: '#D4AF37', marginRight: '8px' }}></i> 24/7 Bali Roadside Team</div>
+            </div>
           </div>
-          <h2 style={{ fontSize: '28px', fontWeight: 900, color: '#0F172A', margin: '4px 0 8px 0', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            <span>Google Reviews & Ratings</span>
-            <i className="fa-solid fa-star" style={{ color: '#F59E0B' }}></i>
-          </h2>
-          <div style={{ fontSize: '14px', color: '#64748B' }}>
-            5.0 Rating based on {biz.reviewsCount} Google Maps reviews for Boss Rent Pererenan (Hover to pause)
+
+          <div className="editorial-card" style={{ padding: '0', border: '1px solid rgba(212, 175, 55, 0.3)' }}>
+            <img
+              src="/images/boss_rent_customer_bali.png"
+              alt="Bespoke Villa Delivery Service"
+              style={{ width: '100%', height: '420px', objectFit: 'cover' }}
+            />
           </div>
-        </div>
-
-        {/* ── INFINITE MARQUEE CAROUSEL ── */}
-        <div style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '80px', background: 'linear-gradient(to right, #F8FAFC, transparent)', zIndex: 2, pointerEvents: 'none' }}></div>
-          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '80px', background: 'linear-gradient(to left, #F8FAFC, transparent)', zIndex: 2, pointerEvents: 'none' }}></div>
-
-          <div className="marquee-track">
-            {[...reviews, ...reviews].map((rev, i) => (
-              <div
-                key={i}
-                className="sharp-card"
-                style={{
-                  padding: '20px',
-                  width: '320px',
-                  flexShrink: 0,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px'
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ color: '#F59E0B', fontSize: '13px', display: 'flex', gap: '2px' }}>
-                    {[...Array(rev.rating)].map((_, sIdx) => (
-                      <i key={sIdx} className="fa-solid fa-star"></i>
-                    ))}
-                  </div>
-                  <span style={{ fontSize: '10px', color: '#0F172A', background: '#F1F5F9', border: '1px solid #0F172A', padding: '2px 8px', fontWeight: 800 }}>
-                    {rev.badge}
-                  </span>
-                </div>
-                <p style={{ fontSize: '13px', color: '#334155', lineHeight: 1.5, margin: 0, fontStyle: 'italic' }}>
-                  "{rev.comment}"
-                </p>
-                <div style={{ marginTop: 'auto', borderTop: '1px solid #0F172A', paddingTop: '10px', fontWeight: 900, fontSize: '12px', color: '#0F172A' }}>
-                  {rev.name}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ textAlign: 'center', marginTop: '36px' }}>
-          <a
-            href={biz.mapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn sharp-btn"
-            style={{ background: '#FFFFFF', color: '#1E293B', padding: '10px 24px', fontSize: '13px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-          >
-            <i className="fa-brands fa-google" style={{ color: '#4285F4' }}></i>
-            <span>View All 24 Reviews on Google Maps</span>
-          </a>
         </div>
       </section>
 
-      {/* ── FAQ SECTION (FREQUENTLY ASKED QUESTIONS) ── */}
-      <section style={{ padding: '56px 24px', background: '#F8FAFC', borderTop: '2px solid #0F172A', borderBottom: '2px solid #0F172A' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '36px' }}>
-            <div style={{ fontSize: '11px', color: '#E85D04', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
+      {/* ── REVIEWS MAGAZINE CAROUSEL ── */}
+      <section style={{ padding: '72px 32px', maxWidth: '1280px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '44px' }}>
+          <div className="editorial-issue-tag" style={{ marginBottom: '8px' }}>
+            GUEST TESTIMONIALS
+          </div>
+          <h2 className="font-serif-editorial" style={{ fontSize: '34px', fontWeight: 800, color: '#F5F5F0', margin: 0 }}>
+            What Our Renters Say
+          </h2>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
+          {reviews.map((rev, idx) => (
+            <div key={idx} className="editorial-card" style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <div className="font-serif-editorial" style={{ fontSize: '18px', fontWeight: 800, color: '#F5F5F0' }}>
+                  {rev.name}
+                </div>
+                <div style={{ color: '#F59E0B', fontSize: '13px' }}>
+                  {'★'.repeat(rev.rating)}
+                </div>
+              </div>
+              <p style={{ fontSize: '13.5px', color: '#A0A0B5', lineHeight: 1.6, fontStyle: 'italic', marginBottom: '16px' }}>
+                “{rev.comment}”
+              </p>
+              <div style={{ fontSize: '11px', color: '#D4AF37', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                {rev.badge}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── EDITORIAL FAQ ACCORDION ── */}
+      <section style={{ background: '#0F1017', borderTop: '1px solid rgba(255, 255, 255, 0.08)', padding: '72px 32px' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <div className="editorial-issue-tag" style={{ marginBottom: '8px' }}>
               FREQUENTLY ASKED QUESTIONS
             </div>
-            <h2 style={{ fontSize: '28px', fontWeight: 900, color: '#0F172A', margin: '4px 0 8px 0', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-              <span>Frequently Asked Questions (FAQ)</span>
-              <i className="fa-solid fa-circle-question" style={{ color: '#E85D04' }}></i>
+            <h2 className="font-serif-editorial" style={{ fontSize: '34px', fontWeight: 800, color: '#F5F5F0', margin: 0 }}>
+              Rental Guidelines & Information
             </h2>
-            <div style={{ fontSize: '14px', color: '#64748B' }}>
-              Everything you need to know about rental requirements, amenities, delivery services, and security deposit policies
-            </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -917,58 +777,22 @@ export default function SharpSquareBusinessWebsitePage() {
               return (
                 <div
                   key={idx}
-                  className="sharp-card"
-                  style={{
-                    overflow: 'hidden',
-                    background: isOpen ? '#FFFFFF' : '#FFFFFF',
-                    border: `1.5px solid ${isOpen ? '#E85D04' : '#0F172A'}`,
-                    boxShadow: isOpen ? '4px 4px 0px #E85D04' : '3px 3px 0px #0F172A',
-                    transition: 'all 0.2s ease'
-                  }}
+                  className="editorial-card"
+                  style={{ padding: '20px 24px', cursor: 'pointer', borderColor: isOpen ? 'rgba(212, 175, 55, 0.4)' : 'rgba(255, 255, 255, 0.08)' }}
+                  onClick={() => setOpenFaq(isOpen ? null : idx)}
                 >
-                  <button
-                    type="button"
-                    onClick={() => setOpenFaq(isOpen ? null : idx)}
-                    style={{
-                      width: '100%',
-                      padding: '18px 20px',
-                      background: 'transparent',
-                      border: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '12px',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      fontWeight: 800,
-                      fontSize: '15px',
-                      color: '#0F172A'
-                    }}
-                  >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{
-                        width: '26px',
-                        height: '26px',
-                        background: isOpen ? '#E85D04' : '#0F172A',
-                        color: '#FFFFFF',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '12px',
-                        fontWeight: 900,
-                        flexShrink: 0
-                      }}>
-                        Q{idx + 1}
-                      </span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+                    <div className="font-serif-editorial" style={{ fontSize: '17px', fontWeight: 700, color: isOpen ? '#D4AF37' : '#F5F5F0' }}>
                       {faq.q}
-                    </span>
-                    <i className={`fa-solid ${isOpen ? 'fa-minus' : 'fa-plus'}`} style={{ color: isOpen ? '#E85D04' : '#0F172A', fontSize: '14px' }}></i>
-                  </button>
-
-                  {isOpen && (
-                    <div style={{ padding: '0 20px 20px 56px', fontSize: '14px', color: '#334155', lineHeight: 1.6, borderTop: '1px dashed #CBD5E1', paddingTop: '14px' }}>
-                      {faq.a}
                     </div>
+                    <div style={{ color: '#D4AF37', fontSize: '16px', fontWeight: 900 }}>
+                      {isOpen ? '−' : '+'}
+                    </div>
+                  </div>
+                  {isOpen && (
+                    <p style={{ fontSize: '13.5px', color: '#A0A0B5', marginTop: '14px', lineHeight: 1.7, borderTop: '1px solid rgba(255, 255, 255, 0.06)', paddingTop: '14px' }}>
+                      {faq.a}
+                    </p>
                   )}
                 </div>
               );
@@ -977,155 +801,41 @@ export default function SharpSquareBusinessWebsitePage() {
         </div>
       </section>
 
-      {/* ── EMBEDDED INTERACTIVE LIVE GOOGLE MAPS SECTION ("Find Boss Rent Pererenan") ── */}
-      <section style={{ padding: '56px 24px', background: '#FFFFFF' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <div style={{ fontSize: '11px', color: '#E85D04', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
-              INTERACTIVE GOOGLE MAPS LOCATION
-            </div>
-            <h2 style={{ fontSize: '28px', fontWeight: 900, color: '#0F172A', margin: '4px 0 8px 0', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-              <span>Find Boss Rent Pererenan</span>
-              <i className="fa-solid fa-location-dot" style={{ color: '#E85D04' }}></i>
-            </h2>
-            <div style={{ fontSize: '14px', color: '#64748B' }}>
-              {biz.address}
-            </div>
+      {/* ── EDITORIAL FOOTER ── */}
+      <footer style={{ background: '#07070A', borderTop: '1px solid rgba(212, 175, 55, 0.25)', padding: '52px 32px 32px 32px', textAlign: 'center' }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          <div className="font-serif-editorial" style={{ fontSize: '26px', fontWeight: 800, color: '#F5F5F0', marginBottom: '8px' }}>
+            {biz.name}
           </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px', alignItems: 'start' }}>
-            {/* Business Contact Info */}
-            <div className="sharp-card" style={{ padding: '28px' }}>
-              <div style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', marginBottom: '16px' }}>
-                Store Information
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', fontSize: '13.5px', color: '#334155', lineHeight: 1.6 }}>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                  <div style={{ width: '36px', height: '36px', background: '#0F172A', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 900 }}>
-                    <i className="fa-solid fa-location-dot" style={{ fontSize: '16px' }}></i>
-                  </div>
-                  <div>
-                    <strong style={{ color: '#0F172A' }}>Address:</strong><br />
-                    {biz.address}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <div style={{ width: '36px', height: '36px', background: '#22C55E', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 900 }}>
-                    <i className="fa-solid fa-phone" style={{ fontSize: '16px' }}></i>
-                  </div>
-                  <div>
-                    <strong style={{ color: '#0F172A' }}>Phone / WhatsApp:</strong><br />
-                    <a href={`https://wa.me/${biz.phone.replace(/[^0-9]/g, '')}`} style={{ color: '#25D366', fontWeight: 800 }}>
-                      {biz.phoneRaw} ({biz.phone})
-                    </a>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <div style={{ width: '36px', height: '36px', background: '#2563EB', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 900 }}>
-                    <i className="fa-solid fa-clock" style={{ fontSize: '16px' }}></i>
-                  </div>
-                  <div>
-                    <strong style={{ color: '#0F172A' }}>Operating Hours:</strong><br />
-                    {biz.hours}
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: '24px' }}>
-                <a
-                  href={biz.mapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn sharp-btn"
-                  style={{ background: '#E85D04', color: '#fff', padding: '12px 22px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}
-                >
-                  <i className="fa-solid fa-route"></i>
-                  <span>Open Directions on Google Maps</span>
-                </a>
-              </div>
-            </div>
-
-            {/* Embedded Live Google Maps Iframe */}
-            <div className="sharp-card" style={{ overflow: 'hidden' }}>
-              <iframe
-                title="Boss Rent Pererenan Google Map"
-                src={biz.mapsEmbedUrl}
-                width="100%"
-                height="380"
-                style={{ border: 0 }}
-                allowFullScreen=""
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              ></iframe>
-            </div>
+          <p style={{ fontSize: '13px', color: '#9898B0', maxWidth: '600px', margin: '0 auto 28px auto' }}>
+            {biz.address} • Phone: {biz.phone}
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginBottom: '32px' }}>
+            <a
+              href={`https://wa.me/${biz.phoneRaw.replace(/[^0-9]/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="editorial-filter-btn active"
+              style={{ padding: '10px 24px', textDecoration: 'none' }}
+            >
+              <i className="fa-brands fa-whatsapp" style={{ marginRight: '6px' }}></i> Contact WA Concierge
+            </a>
+            <a
+              href={biz.instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="editorial-filter-btn"
+              style={{ padding: '10px 24px', textDecoration: 'none' }}
+            >
+              <i className="fa-brands fa-instagram" style={{ marginRight: '6px' }}></i> Instagram
+            </a>
           </div>
-        </div>
-      </section>
-
-      {/* ── FLOATING ACTION BUTTONS STACK (INSTAGRAM & WHATSAPP) ── */}
-      <div style={{ position: 'fixed', bottom: '24px', right: '24px', display: 'flex', flexDirection: 'column', gap: '12px', zIndex: 9999 }}>
-        <a
-          href={biz.instagramUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            background: 'linear-gradient(135deg, #833AB4, #FD1D1D, #FCB045)',
-            color: '#FFF',
-            width: '54px',
-            height: '54px',
-            borderRadius: '0px !important',
-            border: '2px solid #0F172A',
-            boxShadow: '4px 4px 0px #0F172A',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '26px',
-            transition: 'all 0.15s ease'
-          }}
-          title="Follow Boss Rent Pererenan on Instagram"
-        >
-          <i className="fa-brands fa-instagram"></i>
-        </a>
-
-        <a
-          href={`https://wa.me/${biz.phone.replace(/[^0-9]/g, '')}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            background: '#25D366',
-            color: '#FFF',
-            width: '54px',
-            height: '54px',
-            borderRadius: '0px !important',
-            border: '2px solid #0F172A',
-            boxShadow: '4px 4px 0px #0F172A',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '28px',
-            transition: 'all 0.15s ease'
-          }}
-          title="Chat with Boss Rent Pererenan on WhatsApp"
-        >
-          <i className="fa-brands fa-whatsapp"></i>
-        </a>
-      </div>
-
-      {/* ── FOOTER ── */}
-      <footer style={{ background: '#F8FAFC', borderTop: '2px solid #0F172A', padding: '28px 24px', textAlign: 'center', fontSize: '12.5px', color: '#64748B' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            © {new Date().getFullYear()} <strong style={{ color: '#0F172A' }}>{biz.name}</strong> • Premium Scooter Rental Pererenan, Canggu, Bali.
-          </div>
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <a href={biz.mapsUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#475569', textDecoration: 'none', fontWeight: 700 }}>Google Maps Profile</a>
-            <a href={`https://wa.me/${biz.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ color: '#25D366', textDecoration: 'none', fontWeight: 800 }}>WhatsApp Us</a>
+          <div style={{ fontSize: '11px', color: '#66667A', borderTop: '1px solid rgba(255, 255, 255, 0.06)', paddingTop: '20px' }}>
+            © 2026 {biz.name}. All Rights Reserved. Quiet Luxury Scooter Rentals in Pererenan & Canggu, Bali.
           </div>
         </div>
       </footer>
+
     </div>
   );
 }
