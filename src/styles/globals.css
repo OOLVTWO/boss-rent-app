@@ -1975,21 +1975,5 @@ button, a, input, select, textarea {
   }
 }
 
-/* Dashboard Charts Grid Layout System */
-.dashboard-charts-grid {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: var(--space-5);
-  align-items: stretch;
-}
-
-@media (max-width: 992px) {
-  .dashboard-charts-grid {
-    grid-template-columns: 1fr !important;
-    gap: var(--space-4);
-  }
-}
-
-
 
 
