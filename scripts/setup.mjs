@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://eedrziblypwrufdzctvd.supabase.co';
-const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const ANON_KEY     = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const ADMIN_EMAIL  = 'admin@bossrent.com';
-const ADMIN_PASS   = 'BossRent2024!';
+const SUPABASE_URL = 'https://eedrziblypwrufdzctvd.supabase.co';
+const SERVICE_KEY = 'sb_secret_eENyau7M99jlO2J9iCLSyQ_0P4qGgBl';
+const ANON_KEY = 'sb_publishable_zUqMMF85DjjkO4HMiiZcvQ_ZWdKiFpF';
+const ADMIN_EMAIL = 'admin@bossrent.com';
+const ADMIN_PASS = 'BossRent2024!';
 
 const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false }
