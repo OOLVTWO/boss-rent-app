@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import Sidebar from '@/components/layout/Sidebar';
-import Header from '@/components/layout/Header';
+import DashboardShell from '@/components/layout/DashboardShell';
 
 export default async function DashboardLayout({ children }) {
   const supabase = await createClient();
@@ -15,14 +14,8 @@ export default async function DashboardLayout({ children }) {
   }
 
   return (
-    <div className="app-layout">
-      <Sidebar user={user} />
-      <div className="main-content">
-        <Header />
-        <main className="page-content fade-in">
-          {children}
-        </main>
-      </div>
-    </div>
+    <DashboardShell user={user}>
+      {children}
+    </DashboardShell>
   );
 }

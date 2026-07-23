@@ -27,7 +27,7 @@ function getDaysLeft(endDate) {
   return Math.floor((end - today) / (1000 * 60 * 60 * 24));
 }
 
-export default function Sidebar({ user }) {
+export default function Sidebar({ user, mobileOpen, onClose }) {
   const pathname = usePathname();
   const router = useRouter();
   const [alertCounts, setAlertCounts] = useState({ tracking: 0, availability: 0 });
@@ -65,13 +65,23 @@ export default function Sidebar({ user }) {
   const userInitial = userEmail.charAt(0).toUpperCase();
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${mobileOpen ? 'mobile-active' : ''}`}>
+      {/* Mobile Close Button */}
+      <button
+        type="button"
+        className="mobile-sidebar-close-btn"
+        onClick={onClose}
+        aria-label="Tutup Menu"
+      >
+        <i className="fa-solid fa-xmark"></i>
+      </button>
+
       {/* Logo */}
       <div className="sidebar-logo">
         <img
           src="/images/logoCompany.png"
           alt="BOSS RENT PERERENAN Logo"
-          style={{ height: '52px', width: 'auto', objectFit: 'contain', marginBottom: '8px' }}
+          style={{ height: '48px', width: 'auto', objectFit: 'contain', marginBottom: '6px' }}
         />
         <h1>Boss Rent</h1>
         <p>Pererenan — Admin Panel</p>
@@ -90,6 +100,7 @@ export default function Sidebar({ user }) {
               key={item.href}
               href={item.href}
               className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
+              onClick={onClose}
             >
               <span className="nav-icon">
                 <i className={item.iconClass}></i>
