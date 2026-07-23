@@ -1,5 +1,5 @@
 -- =============================================
--- Boss Rent Pererenan — Supabase Schema v5 (Complete Master Schema)
+-- Boss Rent Pererenan — Supabase Schema v5 (Master Schema + RLS Policy Approved)
 -- Jalankan script ini di Supabase SQL Editor
 -- =============================================
 
@@ -128,18 +128,21 @@ CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date);
 CREATE INDEX IF NOT EXISTS idx_expenses_vehicle_id ON expenses(vehicle_id);
 
 -- =============================================
--- ROW LEVEL SECURITY (RLS) POLICIES
+-- ROW LEVEL SECURITY (RLS) POLICIES (FULL PERMISSION)
 -- =============================================
--- Nonaktifkan RLS agar API Next.js / Vercel dapat meng-insert & update data tanpa batasan
-ALTER TABLE vehicles DISABLE ROW LEVEL SECURITY;
-ALTER TABLE transactions DISABLE ROW LEVEL SECURITY;
-ALTER TABLE expenses DISABLE ROW LEVEL SECURITY;
+-- Enable RLS dengan Policy Akses Penuh untuk Next.js / Vercel API
+ALTER TABLE vehicles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 
--- Backup Policy jika RLS diaktifkan kembali
+DROP POLICY IF EXISTS "vehicles_all_access" ON vehicles;
+DROP POLICY IF EXISTS "transactions_all_access" ON transactions;
+DROP POLICY IF EXISTS "expenses_all_access" ON expenses;
+
 DROP POLICY IF EXISTS "vehicles_public_all" ON vehicles;
 DROP POLICY IF EXISTS "transactions_public_all" ON transactions;
 DROP POLICY IF EXISTS "expenses_public_all" ON expenses;
 
-CREATE POLICY "vehicles_public_all" ON vehicles FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "transactions_public_all" ON transactions FOR ALL TO public USING (true) WITH CHECK (true);
-CREATE POLICY "expenses_public_all" ON expenses FOR ALL TO public USING (true) WITH CHECK (true);
+CREATE POLICY "vehicles_all_access" ON vehicles FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "transactions_all_access" ON transactions FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "expenses_all_access" ON expenses FOR ALL USING (true) WITH CHECK (true);
