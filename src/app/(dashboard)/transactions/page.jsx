@@ -15,11 +15,23 @@ function formatRupiah(amount) {
 
 const statusBadge = (status) => {
   const map = {
-    active: <span className="badge badge-info"><i className="fa-solid fa-spinner" style={{ marginRight: '4px' }}></i> Aktif</span>,
-    completed: <span className="badge badge-success"><i className="fa-solid fa-circle-check" style={{ marginRight: '4px' }}></i> Selesai</span>,
-    cancelled: <span className="badge badge-danger"><i className="fa-solid fa-circle-xmark" style={{ marginRight: '4px' }}></i> Dibatalkan</span>,
+    active: (
+      <span className="tx-status-pill active">
+        <i className="fa-solid fa-bolt" style={{ fontSize: '11px' }}></i> Sewa Aktif
+      </span>
+    ),
+    completed: (
+      <span className="tx-status-pill completed">
+        <i className="fa-solid fa-circle-check" style={{ fontSize: '11px' }}></i> Selesai
+      </span>
+    ),
+    cancelled: (
+      <span className="tx-status-pill cancelled">
+        <i className="fa-solid fa-circle-xmark" style={{ fontSize: '11px' }}></i> Dibatalkan
+      </span>
+    ),
   };
-  return map[status] || <span className="badge badge-muted">{status}</span>;
+  return map[status] || <span className="tx-status-pill">{status}</span>;
 };
 
 const BRANDS = [
@@ -1570,37 +1582,37 @@ export default function TransactionsPage() {
               <tbody>
                 {filtered.map((tx, idx) => (
                   <tr key={tx.id}>
-                    <td>{idx + 1}</td>
+                    <td style={{ fontWeight: 700, color: 'var(--text-muted)' }}>{idx + 1}</td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ display: 'flex', position: 'relative' }}>
-                          <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--bg-card-hover)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--bg-border)' }}>
+                      <div className="tx-customer-cell">
+                        <div style={{ display: 'flex', position: 'relative', flexShrink: 0 }}>
+                          <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'var(--bg-card-hover)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--bg-border)' }}>
                             {tx.customer_image_url ? (
                               <img src={tx.customer_image_url} alt={tx.renter_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} title="Foto KTP/SIM Penyewa" />
                             ) : (
-                              <i className="fa-solid fa-user" style={{ fontSize: '15px', color: 'var(--brand-primary)' }}></i>
+                              <i className="fa-solid fa-user" style={{ fontSize: '16px', color: 'var(--brand-primary)' }}></i>
                             )}
                           </div>
                           {tx.handover_image_url && (
-                            <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#3B82F6', overflow: 'hidden', position: 'absolute', bottom: '-2px', right: '-4px', border: '2px solid #0F172A' }} title="Foto Serah Terima Motor">
+                            <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#3B82F6', overflow: 'hidden', position: 'absolute', bottom: '-2px', right: '-4px', border: '2px solid #0F172A' }} title="Foto Serah Terima Motor">
                               <img src={tx.handover_image_url} alt="Serah Terima" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             </div>
                           )}
                         </div>
-                        <div>
-                          <strong>{tx.renter_name}</strong>
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                            {tx.renter_phone}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                          <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{tx.renter_name}</strong>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}><i className="fa-solid fa-phone" style={{ marginRight: '4px', fontSize: '10px' }}></i>{tx.renter_phone}</span>
                             {tx.payment_method && (
-                              <span style={{ marginLeft: '6px', color: getPaymentMethodMeta(tx.payment_method).color, fontWeight: 600 }}>
-                                • <i className={getPaymentMethodMeta(tx.payment_method).icon} style={{ marginRight: '3px' }}></i>
+                              <span className="tx-info-pill" style={{ color: getPaymentMethodMeta(tx.payment_method).color, borderColor: `${getPaymentMethodMeta(tx.payment_method).color}40`, background: `${getPaymentMethodMeta(tx.payment_method).color}15` }}>
+                                <i className={getPaymentMethodMeta(tx.payment_method).icon} style={{ fontSize: '10px' }}></i>
                                 {getPaymentMethodMeta(tx.payment_method).label}
                               </span>
                             )}
                           </div>
                           {tx.renter_address && (
-                            <div style={{ fontSize: '10.5px', color: 'var(--brand-primary-light)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px' }} title={tx.renter_address}>
-                              <i className="fa-solid fa-location-dot" style={{ marginRight: '3px' }}></i>
+                            <div style={{ fontSize: '11px', color: 'var(--brand-primary-light)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px' }} title={tx.renter_address}>
+                              <i className="fa-solid fa-location-dot" style={{ marginRight: '4px' }}></i>
                               {tx.renter_address}
                             </div>
                           )}
@@ -1608,41 +1620,69 @@ export default function TransactionsPage() {
                       </div>
                     </td>
                     <td>
-                      <strong>{tx.vehicles?.name || '-'}</strong>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{tx.vehicles?.plate_number}</div>
-                    </td>
-                    <td style={{ fontSize: '12px' }}>
-                      <div><i className="fa-solid fa-calendar-days" style={{ marginRight: '4px', fontSize: '11px', color: 'var(--brand-primary-light)' }}></i> {new Date(tx.start_date).toLocaleDateString('id-ID')} s/d</div>
-                      <div><i className="fa-solid fa-calendar-days" style={{ marginRight: '4px', fontSize: '11px', color: 'var(--brand-primary-light)' }}></i> {new Date(tx.end_date).toLocaleDateString('id-ID')} ({tx.duration_days} hari)</div>
-                    </td>
-                    <td style={{ fontSize: '12px' }}>
-                      <div>Start: <strong>{tx.km_start ? `${tx.km_start} KM` : '-'}</strong></div>
-                      <div>End: <strong>{tx.km_end ? `${tx.km_end} KM` : '-'}</strong></div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                        <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)' }}>{tx.vehicles?.name || '-'}</strong>
+                        <div>
+                          <span className="tx-info-pill" style={{ color: 'var(--brand-primary-light)', borderColor: 'rgba(232, 93, 4, 0.3)', background: 'rgba(232, 93, 4, 0.1)' }}>
+                            <i className="fa-solid fa-motorcycle" style={{ fontSize: '10px' }}></i>
+                            {tx.vehicles?.plate_number || '-'}
+                          </span>
+                        </div>
+                      </div>
                     </td>
                     <td>
-                      <strong style={{ color: 'var(--brand-primary-light)' }}>{formatRupiah(tx.total_price)}</strong>
-                      {tx.discount > 0 && (
-                        <div style={{ fontSize: '11px', color: '#F59E0B' }}>
-                          Diskon: -{formatRupiah(tx.discount)}
+                      <div className="tx-date-cell">
+                        <div style={{ fontSize: '12px', color: 'var(--text-primary)' }}>
+                          <i className="fa-solid fa-calendar-plus" style={{ marginRight: '6px', fontSize: '11px', color: '#22C55E' }}></i>
+                          {new Date(tx.start_date).toLocaleDateString('id-ID')}
                         </div>
-                      )}
-                    </td>
-                    <td style={{ fontSize: '12px' }}>
-                      <div>Dep: {formatRupiah(tx.deposit)}</div>
-                      {tx.damage_fee > 0 && (
-                        <div style={{ color: '#EF4444', fontWeight: 700 }}>
-                          Denda: +{formatRupiah(tx.damage_fee)}
+                        <div style={{ fontSize: '12px', color: 'var(--text-primary)' }}>
+                          <i className="fa-solid fa-calendar-check" style={{ marginRight: '6px', fontSize: '11px', color: '#3B82F6' }}></i>
+                          {new Date(tx.end_date).toLocaleDateString('id-ID')}
                         </div>
-                      )}
+                        <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                          Durasi: {tx.duration_days} Hari
+                        </div>
+                      </div>
                     </td>
-                    <td>{statusBadge(tx.status)}</td>
                     <td>
-                      <div className="flex gap-2">
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '12px' }}>
+                        <div>Start: <strong>{tx.km_start ? `${tx.km_start} KM` : '-'}</strong></div>
+                        <div>End: <strong>{tx.km_end ? `${tx.km_end} KM` : '-'}</strong></div>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="tx-price-cell">
+                        <strong style={{ fontSize: '14px', color: '#22C55E' }}>{formatRupiah(tx.total_price)}</strong>
+                        {tx.discount > 0 && (
+                          <div>
+                            <span className="tx-info-pill" style={{ color: '#F59E0B', borderColor: 'rgba(245, 158, 11, 0.3)', background: 'rgba(245, 158, 11, 0.1)' }}>
+                              Diskon: -{formatRupiah(tx.discount)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '12px' }}>
+                        <div>Dep: <strong>{formatRupiah(tx.deposit)}</strong></div>
+                        {tx.damage_fee > 0 && (
+                          <div>
+                            <span className="tx-info-pill" style={{ color: '#EF4444', borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.1)' }}>
+                              Denda: +{formatRupiah(tx.damage_fee)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ verticalAlign: 'middle' }}>{statusBadge(tx.status)}</td>
+                    <td style={{ verticalAlign: 'middle' }}>
+                      <div className="tx-actions-cell">
                         {/* WhatsApp Invoice Button */}
                         <button
                           className="btn btn-success btn-sm"
                           title="Kirim Invoice WhatsApp"
-                          style={{ background: '#25D366', borderColor: '#25D366', color: '#fff' }}
+                          style={{ background: '#25D366', borderColor: '#25D366', color: '#fff', padding: '7px 10px' }}
                           onClick={() => setWaModal({ open: true, tx })}
                         >
                           <i className="fa-brands fa-whatsapp"></i>
@@ -1652,6 +1692,7 @@ export default function TransactionsPage() {
                           <button
                             className="btn btn-success btn-sm"
                             title="Tandai Selesai & Penyesuaian Deposit"
+                            style={{ padding: '7px 10px' }}
                             onClick={() => setCompleteModal({ open: true, tx })}
                           >
                             <i className="fa-solid fa-check"></i>
@@ -1659,14 +1700,16 @@ export default function TransactionsPage() {
                         )}
                         <button
                           className="btn btn-secondary btn-sm"
-                          title="Edit"
+                          title="Edit Transaksi"
+                          style={{ padding: '7px 10px' }}
                           onClick={() => { setEditData(tx); setShowModal(true); }}
                         >
                           <i className="fa-solid fa-pen-to-square"></i>
                         </button>
                         <button
                           className="btn btn-danger btn-sm"
-                          title="Hapus"
+                          title="Hapus Transaksi"
+                          style={{ padding: '7px 10px' }}
                           onClick={() => setDeleteModal({ open: true, txId: tx.id })}
                         >
                           <i className="fa-solid fa-trash-can"></i>
