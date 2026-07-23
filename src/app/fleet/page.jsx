@@ -266,6 +266,7 @@ export default function SharpSquareBusinessWebsitePage() {
         setBiz(prev => ({
           ...prev,
           name: parsed.name || prev.name,
+          logoUrl: parsed.logoUrl || prev.logoUrl || '/images/logoCompany.png',
           phone: parsed.phone || prev.phone,
           phoneRaw: parsed.phone || prev.phoneRaw,
           address: parsed.address || prev.address,
@@ -474,7 +475,7 @@ export default function SharpSquareBusinessWebsitePage() {
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <img
-              src="/images/logoCompany.png"
+              src={biz.logoUrl || "/images/logoCompany.png"}
               alt="BOSS RENT PERERENAN Logo"
               style={{ height: '48px', width: 'auto', objectFit: 'contain' }}
             />

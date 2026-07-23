@@ -31,6 +31,17 @@ export default function Sidebar({ user, mobileOpen, onClose }) {
   const pathname = usePathname();
   const router = useRouter();
   const [alertCounts, setAlertCounts] = useState({ tracking: 0, availability: 0 });
+  const [logoUrl, setLogoUrl] = useState('/images/logoCompany.png');
+
+  useEffect(() => {
+    try {
+      const savedBiz = localStorage.getItem('boss_rent_biz_settings');
+      if (savedBiz) {
+        const parsed = JSON.parse(savedBiz);
+        if (parsed.logoUrl) setLogoUrl(parsed.logoUrl);
+      }
+    } catch { /* ignore */ }
+  }, []);
 
   useEffect(() => {
     const fetchAlerts = async () => {
@@ -79,7 +90,7 @@ export default function Sidebar({ user, mobileOpen, onClose }) {
       {/* Logo */}
       <div className="sidebar-logo">
         <img
-          src="/images/logoCompany.png"
+          src={logoUrl}
           alt="BOSS RENT PERERENAN Logo"
           style={{ height: '48px', width: 'auto', objectFit: 'contain', marginBottom: '6px' }}
         />

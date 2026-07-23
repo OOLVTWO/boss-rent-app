@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import VuiVoiceControl from '@/components/dashboard/VuiVoiceControl';
 
@@ -21,6 +22,17 @@ export default function Header({ onToggleMobile }) {
   const pathname = usePathname();
   const matchedKey = Object.keys(pageMeta).find(key => pathname.startsWith(key));
   const meta = pageMeta[matchedKey] || { title: 'Boss Rent', subtitle: 'Admin Panel' };
+  const [logoUrl, setLogoUrl] = useState('/images/logoCompany.png');
+
+  useEffect(() => {
+    try {
+      const savedBiz = localStorage.getItem('boss_rent_biz_settings');
+      if (savedBiz) {
+        const parsed = JSON.parse(savedBiz);
+        if (parsed.logoUrl) setLogoUrl(parsed.logoUrl);
+      }
+    } catch { /* ignore */ }
+  }, []);
 
   const now = new Date();
   const dateStr = now.toLocaleDateString('id-ID', {
@@ -50,7 +62,7 @@ export default function Header({ onToggleMobile }) {
       <div className="header-right-wrap">
         <VuiVoiceControl />
         <img
-          src="/images/logoCompany.png"
+          src={logoUrl}
           alt="Boss Rent Pererenan"
           className="header-logo-img"
         />

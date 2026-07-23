@@ -69,6 +69,7 @@ export default function SettingsPage() {
   // Business & Public Web CMS Settings State
   const [bizForm, setBizForm] = useState({
     name: 'BOSS RENT PERERENAN',
+    logoUrl: '/images/logoCompany.png',
     location: 'Jl. Pantai Pererenan No.119, Pererenan, Kec. Mengwi, Kabupaten Badung, Bali 80351',
     phone: '+62 812-3710-9751',
     instagramUrl: 'https://www.instagram.com/bossrentpererenan?igsh=MWFxZzE3eWI2dWlqZA==',
@@ -148,6 +149,38 @@ export default function SettingsPage() {
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  const handleLogoFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setBizForm(p => ({ ...p, logoUrl: event.target.result }));
+      showAlert('🖼️ Logo brand berhasil di-upload! Tekan tombol Simpan Pengaturan di bawah untuk meng-update logo di seluruh aplikasi.');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDownloadGalleryBackup = () => {
+    const backupData = {
+      app: 'Boss Rent Pererenan',
+      type: 'Gallery Photos Storage Backup',
+      exported_at: new Date().toISOString(),
+      total_photos: bizForm.uploadedStoragePhotos?.length || 0,
+      photos: bizForm.uploadedStoragePhotos || []
+    };
+
+    const jsonStr = JSON.stringify(backupData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_boss_rent_gallery_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showAlert('📦 File backup repositori galeri foto berhasil di-download!');
   };
 
   const handleUseStoragePhotoInGallery = (photo) => {
@@ -1422,6 +1455,33 @@ export default function SettingsPage() {
               {/* SUB-TAB 1: PROFIL USAHA & KONTAK */}
               {cmsSubTab === 'profile' && (
                 <div>
+                  {/* Editable Brand Logo Manager Card */}
+                  <div style={{ background: 'var(--bg-elevated)', padding: '16px', borderRadius: '12px', border: '1px solid var(--bg-border)', marginBottom: '20px' }}>
+                    <label className="form-label" style={{ fontSize: '13px', fontWeight: 800, color: 'var(--brand-primary-light)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <i className="fa-solid fa-image"></i> Logo Brand Perusahaan (Tampil di Sidebar, Header Admin & Web Customer)
+                    </label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '16px', alignItems: 'center' }}>
+                      <div style={{ background: '#FFF', padding: '8px', borderRadius: '8px', border: '1px solid var(--bg-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img src={bizForm.logoUrl || '/images/logoCompany.png'} alt="Logo Preview" style={{ height: '54px', width: 'auto', objectFit: 'contain' }} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', width: 'fit-content' }}>
+                          <i className="fa-solid fa-cloud-arrow-up" style={{ color: 'var(--brand-primary)' }}></i>
+                          <span>Upload Logo Baru Dari HP / Laptop</span>
+                          <input type="file" accept="image/*" onChange={handleLogoFileUpload} style={{ display: 'none' }} />
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          style={{ fontSize: '11px' }}
+                          placeholder="URL / Path Logo Custom (/images/logoCompany.png atau data:image/...)"
+                          value={bizForm.logoUrl || ''}
+                          onChange={e => setBizForm(p => ({ ...p, logoUrl: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="form-group">
                     <label className="form-label" htmlFor="biz-name">
                       <i className="fa-solid fa-building" style={{ marginRight: '6px' }}></i> Nama Rental
@@ -1819,10 +1879,13 @@ export default function SettingsPage() {
                     </label>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
                     <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--brand-primary-light)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <i className="fa-solid fa-hard-drive"></i> Repositori Storage Galeri Foto ({bizForm.uploadedStoragePhotos?.length || 0} Foto Tersimpan)
                     </h4>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={handleDownloadGalleryBackup}>
+                      <i className="fa-solid fa-download" style={{ marginRight: '6px', color: '#22C55E' }}></i> Download Backup Galeri Foto (JSON Archive)
+                    </button>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px' }}>
@@ -2099,13 +2162,13 @@ export default function SettingsPage() {
               {/* Quick Preset Selector */}
               <div className="form-group">
                 <label className="form-label">
-                  <i className="fa-solid fa-images" style={{ marginRight: '6px' }}></i> Atau Pilih Dari Preset Galeri Boss Rent
+                  <i className="fa-solid fa-images" style={{ marginRight: '6px' }}></i> Atau Pilih Dari Repositori Storage Opsi #5 ({bizForm.uploadedStoragePhotos?.length || 0} Foto Tersimpan)
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxHeight: '140px', overflowY: 'auto', padding: '6px', background: 'var(--bg-elevated)', borderRadius: '8px', border: '1px solid var(--bg-border)' }}>
-                  {PHOTO_PRESETS.map((preset, idx) => (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxHeight: '160px', overflowY: 'auto', padding: '6px', background: 'var(--bg-elevated)', borderRadius: '8px', border: '1px solid var(--bg-border)' }}>
+                  {((bizForm.uploadedStoragePhotos && bizForm.uploadedStoragePhotos.length > 0) ? bizForm.uploadedStoragePhotos : PHOTO_PRESETS).map((preset, idx) => (
                     <div
                       key={idx}
-                      onClick={() => setNewPhotoForm(p => ({ ...p, url: preset.url, title: p.title || preset.label }))}
+                      onClick={() => setNewPhotoForm(p => ({ ...p, url: preset.url, title: p.title || preset.label || preset.title }))}
                       style={{
                         padding: '6px',
                         borderRadius: '6px',
@@ -2115,9 +2178,9 @@ export default function SettingsPage() {
                         background: 'var(--bg-card)'
                       }}
                     >
-                      <img src={preset.url} alt={preset.label} style={{ width: '100%', height: '48px', objectFit: 'cover', borderRadius: '4px', marginBottom: '4px' }} />
+                      <img src={preset.url} alt={preset.label || preset.title} style={{ width: '100%', height: '48px', objectFit: 'cover', borderRadius: '4px', marginBottom: '4px' }} />
                       <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {preset.label}
+                        {preset.label || preset.title}
                       </div>
                     </div>
                   ))}
