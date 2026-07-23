@@ -423,8 +423,8 @@ export default function SettingsPage() {
 
       {alert && <div className={`alert alert-${alert.type}`}>{alert.message}</div>}
 
-      {/* Tabs Bar */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap', borderBottom: '1px solid var(--bg-border)', paddingBottom: '12px' }}>
+      {/* Scrollable Tabs Chips / Horizontal Pills Bar */}
+      <div className="scrollable-tabs-bar">
         {[
           { id: 'storage', label: 'Database & Storage', icon: 'fa-solid fa-database' },
           { id: 'payment', label: 'Metode Pembayaran', icon: 'fa-solid fa-credit-card' },
@@ -436,24 +436,12 @@ export default function SettingsPage() {
           return (
             <button
               key={tab.id}
+              type="button"
+              className={`scrollable-tab-btn ${isActive ? 'active' : ''}`}
               onClick={() => setActiveTab(tab.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 18px',
-                borderRadius: '10px',
-                border: `1px solid ${isActive ? 'var(--brand-primary)' : 'var(--bg-border)'}`,
-                background: isActive ? 'var(--brand-primary)' : 'var(--bg-card)',
-                color: isActive ? '#fff' : 'var(--text-secondary)',
-                fontWeight: isActive ? 700 : 500,
-                fontSize: '13px',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
             >
               <i className={tab.icon}></i>
-              <span>{tab.label}</span>
+              {tab.label}
             </button>
           );
         })}

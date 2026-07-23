@@ -2412,7 +2412,22 @@ button, a, input, select, textarea {
   .vui-btn-label {
     display: none;
   }
+@media (max-width: 600px) {
+  .bento-chart-full-card .card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .bento-pill-tag {
+    width: 100% !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+    padding: 6px 12px !important;
+    font-size: 11px !important;
+  }
 }
+
 
 
 
