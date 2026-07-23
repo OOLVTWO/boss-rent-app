@@ -32,7 +32,14 @@ export async function POST(request) {
     status: body.status || 'available',
     image_url: body.image_url || null,
     current_km: parseInt(body.current_km) || 15000,
-    notes: body.notes || ''
+    notes: body.notes || '',
+    // Investor & Ownership Privacy Fields
+    owner_type: body.owner_type || 'internal',
+    owner_name: body.owner_name || '',
+    owner_contact: body.owner_contact || '',
+    revenue_share_percentage: parseInt(body.revenue_share_percentage) || 70,
+    purchase_date: body.purchase_date || null,
+    purchase_price: parseFloat(body.purchase_price) || 0,
   };
 
   if (!payload.id) delete payload.id;
@@ -45,7 +52,7 @@ export async function POST(request) {
 
   if (error && (error.message.includes('Could not find the') || error.message.includes('schema cache'))) {
     console.warn('Fallback vehicle insert without unmigrated columns:', error.message);
-    const { image_url: _i, current_km: _ck, ...fallbackPayload } = payload;
+    const { owner_type: _ot, owner_name: _on, owner_contact: _oc, revenue_share_percentage: _rsp, purchase_date: _pd, purchase_price: _pp, image_url: _i, current_km: _ck, ...fallbackPayload } = payload;
 
     const retry = await supabase
       .from('vehicles')

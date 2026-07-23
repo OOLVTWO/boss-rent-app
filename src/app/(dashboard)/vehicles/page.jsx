@@ -347,9 +347,8 @@ function ImageAdjusterModal({ isOpen, imageSrc, onConfirm, onCancel }) {
   );
 }
 
-// ===== VEHICLE MODAL =====
 function VehicleModal({ isOpen, onClose, onSubmit, editData, onOpenAdjuster }) {
-  const [form, setForm] = useState({
+  const defaultForm = {
     name: '',
     plate_number: '',
     year: new Date().getFullYear(),
@@ -362,7 +361,16 @@ function VehicleModal({ isOpen, onClose, onSubmit, editData, onOpenAdjuster }) {
     current_km: 15000,
     status: 'available',
     notes: '',
-  });
+    // Investor & Ownership Fields
+    owner_type: 'internal',
+    owner_name: '',
+    owner_contact: '',
+    revenue_share_percentage: '70',
+    purchase_date: '',
+    purchase_price: '',
+  };
+
+  const [form, setForm] = useState(defaultForm);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -381,15 +389,21 @@ function VehicleModal({ isOpen, onClose, onSubmit, editData, onOpenAdjuster }) {
         current_km: editData.current_km || 15000,
         status: editData.status || 'available',
         notes: editData.notes || '',
+        owner_type: editData.owner_type || (editData.owner_name ? 'investor' : 'internal'),
+        owner_name: editData.owner_name || '',
+        owner_contact: editData.owner_contact || '',
+        revenue_share_percentage: editData.revenue_share_percentage ? String(editData.revenue_share_percentage) : '70',
+        purchase_date: editData.purchase_date || '',
+        purchase_price: editData.purchase_price ? String(editData.purchase_price) : '',
       });
     } else {
-      setForm({ name: '', plate_number: '', year: new Date().getFullYear(), color: '', category: 'honda', rate_per_day: '', rate_per_week: '', rate_per_month: '', image_url: '', current_km: 15000, status: 'available', notes: '' });
+      setForm(defaultForm);
     }
   }, [editData, isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const numericFields = ['rate_per_day', 'rate_per_week', 'rate_per_month', 'current_km'];
+    const numericFields = ['rate_per_day', 'rate_per_week', 'rate_per_month', 'current_km', 'revenue_share_percentage', 'purchase_price'];
     if (numericFields.includes(name)) {
       setForm({ ...form, [name]: value.replace(/[^0-9]/g, '') });
     } else {
@@ -423,6 +437,8 @@ function VehicleModal({ isOpen, onClose, onSubmit, editData, onOpenAdjuster }) {
       rate_per_week:  safeInt(form.rate_per_week),
       rate_per_month: safeInt(form.rate_per_month),
       current_km:     safeInt(form.current_km),
+      revenue_share_percentage: safeInt(form.revenue_share_percentage) || 70,
+      purchase_price: safeInt(form.purchase_price),
     });
     setLoading(false);
   };
@@ -638,6 +654,121 @@ function VehicleModal({ isOpen, onClose, onSubmit, editData, onOpenAdjuster }) {
               )}
             </div>
 
+          {/* 🔒 OWNERSHIP & INVESTOR SECTION (PRIVACY MANAGEMENT ONLY) */}
+          <div style={{ background: 'rgba(168, 85, 247, 0.07)', border: '1px solid rgba(168, 85, 247, 0.28)', padding: '16px', borderRadius: '14px', marginBottom: '20px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 800, color: '#A855F7', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <i className="fa-solid fa-user-shield"></i>
+              <span>Kepemilikan & Investor (Privasi Management)</span>
+            </div>
+
+            <div className="form-group mb-3">
+              <label className="form-label" style={{ fontSize: '12px', fontWeight: 700 }}>
+                Status Kepemilikan Unit Motor
+              </label>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)', background: 'var(--bg-card)', padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--bg-border)' }}>
+                  <input
+                    type="radio"
+                    name="owner_type"
+                    value="internal"
+                    checked={form.owner_type === 'internal'}
+                    onChange={e => setForm(p => ({ ...p, owner_type: e.target.value }))}
+                    style={{ accentColor: '#A855F7' }}
+                  />
+                  <span><i className="fa-solid fa-building" style={{ marginRight: '4px', color: 'var(--brand-primary)' }}></i> Milik Internal Boss Rent</span>
+                </label>
+                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-primary)', background: 'var(--bg-card)', padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--bg-border)' }}>
+                  <input
+                    type="radio"
+                    name="owner_type"
+                    value="investor"
+                    checked={form.owner_type === 'investor'}
+                    onChange={e => setForm(p => ({ ...p, owner_type: e.target.value }))}
+                    style={{ accentColor: '#A855F7' }}
+                  />
+                  <span><i className="fa-solid fa-crown" style={{ marginRight: '4px', color: '#A855F7' }}></i> Titipan Investor (Bagi Hasil)</span>
+                </label>
+              </div>
+            </div>
+
+            {form.owner_type === 'investor' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed rgba(168, 85, 247, 0.3)' }}>
+                <div className="form-row cols-2">
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="v-owner-name">
+                      <i className="fa-solid fa-user-tie" style={{ marginRight: '6px', color: '#A855F7' }}></i> Nama Investor / Pemilik <span className="required">*</span>
+                    </label>
+                    <input
+                      id="v-owner-name"
+                      name="owner_name"
+                      type="text"
+                      className="form-control"
+                      placeholder="e.g. Bpk. Budi Santoso / PT Bali Investama"
+                      value={form.owner_name}
+                      onChange={handleChange}
+                      required={form.owner_type === 'investor'}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="v-owner-contact">
+                      <i className="fa-brands fa-whatsapp" style={{ marginRight: '6px', color: '#22C55E' }}></i> No. WA / HP Investor
+                    </label>
+                    <input
+                      id="v-owner-contact"
+                      name="owner_contact"
+                      type="text"
+                      className="form-control"
+                      placeholder="081234567890"
+                      value={form.owner_contact}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row cols-2">
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="v-share-pct">
+                      <i className="fa-solid fa-percent" style={{ marginRight: '6px', color: '#A855F7' }}></i> Bagi Hasil Investor (%)
+                    </label>
+                    <input
+                      id="v-share-pct"
+                      name="revenue_share_percentage"
+                      type="text"
+                      inputMode="numeric"
+                      className="form-control"
+                      placeholder="70"
+                      value={form.revenue_share_percentage}
+                      onChange={handleChange}
+                    />
+                    <div style={{ fontSize: '11px', color: '#A855F7', marginTop: '4px', fontWeight: 600 }}>
+                      * {form.revenue_share_percentage || 70}% Investor / {100 - Number(form.revenue_share_percentage || 70)}% Boss Rent
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="v-purchase-price">
+                      <i className="fa-solid fa-money-bill-wave" style={{ marginRight: '6px', color: '#22C55E' }}></i> Modal Beli Unit (Rp)
+                    </label>
+                    <input
+                      id="v-purchase-price"
+                      name="purchase_price"
+                      type="text"
+                      inputMode="numeric"
+                      className="form-control"
+                      placeholder="25000000"
+                      value={form.purchase_price}
+                      onChange={handleChange}
+                    />
+                    {form.purchase_price > 0 && (
+                      <div style={{ fontSize: '11px', color: '#22C55E', marginTop: '4px', fontWeight: 600 }}>
+                        {formatRupiah(form.purchase_price)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="form-group">
             <label className="form-label" htmlFor="v-status">
               <i className="fa-solid fa-list-check" style={{ marginRight: '6px' }}></i> Status Kendaraan
@@ -746,34 +877,41 @@ export default function VehiclesPage() {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [showModal, setShowModal] = useState(false);
-  const [editData, setEditData] = useState(null);
-  const [deleteModal, setDeleteModal] = useState({ open: false, id: null, name: '', historyError: false });
-  const [alert, setAlert] = useState(null);
-
-  const showAlert = (message, type = 'success') => {
-    setAlert({ message, type });
-    setTimeout(() => setAlert(null), 4000);
-  };
-
-  const fetchVehicles = useCallback(async () => {
-    setLoading(true);
-    const res = await fetch('/api/vehicles');
-    const data = await res.json();
-    setVehicles(Array.isArray(data) ? data : []);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { fetchVehicles(); }, [fetchVehicles]);
+  const [ownershipFilter, setOwnershipFilter] = useState('all'); // 'all', 'internal', 'investor', 'investor_recap'
 
   const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
 
+  const investorVehicles = safeVehicles.filter(v => v.owner_type === 'investor' || (v.owner_name && v.owner_name.trim() !== ''));
+  const internalVehicles = safeVehicles.filter(v => (!v.owner_type || v.owner_type === 'internal') && (!v.owner_name || v.owner_name.trim() === ''));
+
+  // Group vehicles by unique investor
+  const investorMap = {};
+  investorVehicles.forEach(v => {
+    const name = v.owner_name?.trim() || 'Investor Tanpa Nama';
+    if (!investorMap[name]) {
+      investorMap[name] = {
+        name,
+        contact: v.owner_contact || '-',
+        sharePct: v.revenue_share_percentage || 70,
+        vehicles: [],
+        totalCapital: 0
+      };
+    }
+    investorMap[name].vehicles.push(v);
+    investorMap[name].totalCapital += Number(v.purchase_price || 0);
+  });
+  const investorList = Object.values(investorMap);
+
   const filtered = safeVehicles.filter(v => {
     const matchStatus = statusFilter === 'all' || v.status === statusFilter;
+    const isInvestor = v.owner_type === 'investor' || (v.owner_name && v.owner_name.trim() !== '');
+    const matchOwnership = ownershipFilter === 'all' || ownershipFilter === 'investor_recap' ||
+      (ownershipFilter === 'internal' && !isInvestor) ||
+      (ownershipFilter === 'investor' && isInvestor);
+
     const q = searchQuery.toLowerCase();
-    const matchSearch = !q || v.name?.toLowerCase().includes(q) || v.plate_number?.toLowerCase().includes(q) || v.color?.toLowerCase().includes(q);
-    return matchStatus && matchSearch;
+    const matchSearch = !q || v.name?.toLowerCase().includes(q) || v.plate_number?.toLowerCase().includes(q) || v.color?.toLowerCase().includes(q) || v.owner_name?.toLowerCase().includes(q);
+    return matchStatus && matchOwnership && matchSearch;
   });
 
   const handleSubmit = async (formData) => {
@@ -858,6 +996,42 @@ export default function VehiclesPage() {
 
       {alert && <div className={`alert alert-${alert.type}`}>{alert.message}</div>}
 
+      {/* OWNERSHIP TABS FILTER BAR */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
+        <button
+          className={`btn btn-sm ${ownershipFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setOwnershipFilter('all')}
+          style={{ borderRadius: '8px', padding: '6px 14px', fontSize: '12.5px', fontWeight: 600, whiteSpace: 'nowrap' }}
+        >
+          <i className="fa-solid fa-motorcycle" style={{ marginRight: '6px' }}></i>
+          Semua Unit Armada ({safeVehicles.length})
+        </button>
+        <button
+          className={`btn btn-sm ${ownershipFilter === 'internal' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setOwnershipFilter('internal')}
+          style={{ borderRadius: '8px', padding: '6px 14px', fontSize: '12.5px', fontWeight: 600, whiteSpace: 'nowrap' }}
+        >
+          <i className="fa-solid fa-building" style={{ marginRight: '6px' }}></i>
+          Milik Internal ({internalVehicles.length})
+        </button>
+        <button
+          className={`btn btn-sm ${ownershipFilter === 'investor' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setOwnershipFilter('investor')}
+          style={{ borderRadius: '8px', padding: '6px 14px', fontSize: '12.5px', fontWeight: 600, whiteSpace: 'nowrap' }}
+        >
+          <i className="fa-solid fa-crown" style={{ marginRight: '6px', color: '#A855F7' }}></i>
+          Milik Investor ({investorVehicles.length})
+        </button>
+        <button
+          className={`btn btn-sm ${ownershipFilter === 'investor_recap' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setOwnershipFilter('investor_recap')}
+          style={{ borderRadius: '8px', padding: '6px 14px', fontSize: '12.5px', fontWeight: 600, whiteSpace: 'nowrap' }}
+        >
+          <i className="fa-solid fa-users-gear" style={{ marginRight: '6px', color: '#A855F7' }}></i>
+          📊 Directory & Rekap Investor ({investorList.length})
+        </button>
+      </div>
+
       <div className="page-actions">
         <div className="filter-bar">
           <div className="search-bar">
@@ -866,7 +1040,7 @@ export default function VehiclesPage() {
               id="vehicle-search"
               type="text"
               className="form-control"
-              placeholder="Cari motor, plat, warna..."
+              placeholder="Cari motor, plat, nama investor..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />
@@ -894,6 +1068,105 @@ export default function VehiclesPage() {
 
       {loading ? (
         <div className="table-empty card"><i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '8px' }}></i> Memuat data motor...</div>
+      ) : ownershipFilter === 'investor_recap' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Investor Summary Cards */}
+          <div className="grid-3">
+            <div className="stat-card">
+              <div className="stat-icon" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#A855F7' }}>
+                <i className="fa-solid fa-users"></i>
+              </div>
+              <div className="stat-info">
+                <div className="stat-label">Total Investor Aktif</div>
+                <div className="stat-value" style={{ color: '#A855F7' }}>{investorList.length} Investor</div>
+                <div className="stat-change">{investorVehicles.length} total unit motor titipan</div>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon" style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#22C55E' }}>
+                <i className="fa-solid fa-hand-holding-dollar"></i>
+              </div>
+              <div className="stat-info">
+                <div className="stat-label">Unit Titipan Investor</div>
+                <div className="stat-value" style={{ color: '#22C55E' }}>{investorVehicles.length} Unit</div>
+                <div className="stat-change">{Math.round((investorVehicles.length / Math.max(safeVehicles.length, 1)) * 100)}% dari total armada</div>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6' }}>
+                <i className="fa-solid fa-vault"></i>
+              </div>
+              <div className="stat-info">
+                <div className="stat-label">Estimasi Modal Beli Investor</div>
+                <div className="stat-value" style={{ color: '#3B82F6' }}>
+                  {formatRupiah(investorVehicles.reduce((s, v) => s + Number(v.purchase_price || 0), 0))}
+                </div>
+                <div className="stat-change">Akumulasi harga beli unit titipan</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Directory Cards Grid */}
+          {investorList.length === 0 ? (
+            <div className="table-empty card">
+              <div className="table-empty-icon"><i className="fa-solid fa-crown" style={{ color: '#A855F7' }}></i></div>
+              <p>Belum ada data investor terdaftar. Edit atau tambah motor baru lalu aktifkan status kepemilikan 'Titipan Investor'.</p>
+            </div>
+          ) : (
+            <div className="grid-2">
+              {investorList.map((inv, idx) => (
+                <div key={idx} className="card" style={{ padding: '20px', borderRadius: '16px', border: '1px solid rgba(168, 85, 247, 0.3)', background: 'var(--bg-card)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px', borderBottom: '1px solid var(--bg-border)', paddingBottom: '12px' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="badge" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#A855F7', padding: '4px 10px', fontSize: '11px' }}>
+                          <i className="fa-solid fa-crown"></i> Investor #{idx + 1}
+                        </span>
+                        <strong style={{ fontSize: '15.5px', color: 'var(--text-primary)' }}>{inv.name}</strong>
+                      </div>
+                      {inv.contact && inv.contact !== '-' && (
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                          <i className="fa-brands fa-whatsapp" style={{ color: '#22C55E', marginRight: '6px' }}></i>{inv.contact}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span className="badge badge-success" style={{ fontSize: '11.5px', padding: '4px 10px' }}>
+                        {inv.sharePct}% Investor / {100 - Number(inv.sharePct)}% Boss Rent
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '14px' }}>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>
+                      <i className="fa-solid fa-motorcycle" style={{ marginRight: '6px', color: 'var(--brand-primary-light)' }}></i> Unit Motor Dititipkan ({inv.vehicles.length} Unit):
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {inv.vehicles.map(v => (
+                        <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-elevated)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--bg-border)' }}>
+                          <div>
+                            <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{v.name}</strong>
+                            <span style={{ fontSize: '11px', color: 'var(--brand-primary-light)', marginLeft: '8px', fontWeight: 600 }}>({v.plate_number})</span>
+                          </div>
+                          <div>{statusBadge(v.status)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {inv.totalCapital > 0 && (
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', background: 'rgba(59, 130, 246, 0.08)', padding: '8px 12px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>Total Modal Pembelian Unit:</span>
+                      <strong style={{ color: '#3B82F6' }}>{formatRupiah(inv.totalCapital)}</strong>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       ) : filtered.length === 0 ? (
         <div className="table-empty card">
           <div className="table-empty-icon"><i className="fa-solid fa-motorcycle"></i></div>
@@ -901,72 +1174,83 @@ export default function VehiclesPage() {
         </div>
       ) : (
         <div className="grid-3">
-          {filtered.map(vehicle => (
-            <div key={vehicle.id} className="vehicle-card" style={{ display: 'flex', flexDirection: 'column' }}>
-              <div className="vehicle-card-image" style={{ position: 'relative', overflow: 'hidden', height: '160px', background: 'var(--bg-card-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {vehicle.image_url ? (
-                  <img
-                    src={vehicle.image_url}
-                    alt={vehicle.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-                  />
-                ) : null}
-                <div style={{ display: vehicle.image_url ? 'none' : 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                  <i className="fa-solid fa-motorcycle" style={{ fontSize: '48px', color: 'var(--brand-primary)' }}></i>
-                </div>
-                {vehicle.image_url && (
-                  <button
-                    onClick={() => handleCardAdjuster(vehicle)}
-                    title="Sesuaikan tampilan foto motor"
-                    style={{
-                      position: 'absolute', top: '10px', left: '10px',
-                      background: 'rgba(0,0,0,0.6)', color: '#fff',
-                      border: 'none', borderRadius: '6px',
-                      width: '30px', height: '30px',
-                      cursor: 'pointer', fontSize: '12px',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}
-                  >
-                    <i className="fa-solid fa-sliders"></i>
-                  </button>
-                )}
-                <div className="vehicle-card-status" style={{ position: 'absolute', top: '10px', right: '10px' }}>
-                  {statusBadge(vehicle.status)}
-                </div>
-              </div>
-              <div className="vehicle-card-body" style={{ flex: 1 }}>
-                <div className="vehicle-card-name">{vehicle.name}</div>
-                <div className="vehicle-card-plate"><i className="fa-solid fa-id-card" style={{ marginRight: '4px' }}></i> {vehicle.plate_number}</div>
-                <div className="vehicle-card-rate">{formatRupiah(vehicle.rate_per_day)}<span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 400 }}>/hari</span></div>
-                <div className="vehicle-card-meta" style={{ marginTop: '8px' }}>
-                  <span><i className="fa-solid fa-calendar-days" style={{ marginRight: '4px' }}></i> {vehicle.year}</span>
-                  <span><i className="fa-solid fa-palette" style={{ marginRight: '4px' }}></i> {vehicle.color}</span>
-                  <span><i className="fa-solid fa-gauge-high" style={{ marginRight: '4px' }}></i> {vehicle.current_km ? `${vehicle.current_km.toLocaleString('id-ID')} KM` : '-'}</span>
-                </div>
-                {vehicle.notes && (
-                  <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                    <i className="fa-regular fa-note-sticky" style={{ marginRight: '4px' }}></i> {vehicle.notes}
+          {filtered.map(vehicle => {
+            const isInvestorUnit = vehicle.owner_type === 'investor' || (vehicle.owner_name && vehicle.owner_name.trim() !== '');
+
+            return (
+              <div key={vehicle.id} className="vehicle-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                <div className="vehicle-card-image" style={{ position: 'relative', overflow: 'hidden', height: '160px', background: 'var(--bg-card-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {vehicle.image_url ? (
+                    <img
+                      src={vehicle.image_url}
+                      alt={vehicle.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                    />
+                  ) : null}
+                  <div style={{ display: vehicle.image_url ? 'none' : 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                    <i className="fa-solid fa-motorcycle" style={{ fontSize: '48px', color: 'var(--brand-primary)' }}></i>
                   </div>
-                )}
+                  {vehicle.image_url && (
+                    <button
+                      onClick={() => handleCardAdjuster(vehicle)}
+                      title="Sesuaikan tampilan foto motor"
+                      style={{
+                        position: 'absolute', top: '10px', left: '10px',
+                        background: 'rgba(0,0,0,0.6)', color: '#fff',
+                        border: 'none', borderRadius: '6px',
+                        width: '30px', height: '30px',
+                        cursor: 'pointer', fontSize: '12px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}
+                    >
+                      <i className="fa-solid fa-sliders"></i>
+                    </button>
+                  )}
+                  <div className="vehicle-card-status" style={{ position: 'absolute', top: '10px', right: '10px' }}>
+                    {statusBadge(vehicle.status)}
+                  </div>
+                </div>
+                <div className="vehicle-card-body" style={{ flex: 1 }}>
+                  <div className="vehicle-card-name">{vehicle.name}</div>
+                  <div className="vehicle-card-plate"><i className="fa-solid fa-id-card" style={{ marginRight: '4px' }}></i> {vehicle.plate_number}</div>
+                  <div className="vehicle-card-rate">{formatRupiah(vehicle.rate_per_day)}<span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 400 }}>/hari</span></div>
+                  <div className="vehicle-card-meta" style={{ marginTop: '8px' }}>
+                    <span><i className="fa-solid fa-calendar-days" style={{ marginRight: '4px' }}></i> {vehicle.year}</span>
+                    <span><i className="fa-solid fa-palette" style={{ marginRight: '4px' }}></i> {vehicle.color}</span>
+                    <span><i className="fa-solid fa-gauge-high" style={{ marginRight: '4px' }}></i> {vehicle.current_km ? `${vehicle.current_km.toLocaleString('id-ID')} KM` : '-'}</span>
+                  </div>
+                  {isInvestorUnit && (
+                    <div style={{ marginTop: '8px' }}>
+                      <span className="badge" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#A855F7', borderColor: 'rgba(168, 85, 247, 0.35)', fontSize: '10.5px', padding: '3px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <i className="fa-solid fa-crown"></i> Investor: {vehicle.owner_name || 'Bagi Hasil'} ({vehicle.revenue_share_percentage || 70}/{100 - Number(vehicle.revenue_share_percentage || 70)})
+                      </span>
+                    </div>
+                  )}
+                  {vehicle.notes && (
+                    <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                      <i className="fa-regular fa-note-sticky" style={{ marginRight: '4px' }}></i> {vehicle.notes}
+                    </div>
+                  )}
+                </div>
+                <div className="vehicle-card-actions">
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    style={{ flex: 1 }}
+                    onClick={() => { setEditData(vehicle); setShowModal(true); }}
+                  >
+                    <i className="fa-solid fa-pen-to-square" style={{ marginRight: '4px' }}></i> Edit
+                  </button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => setDeleteModal({ open: true, id: vehicle.id, name: vehicle.name })}
+                  >
+                    <i className="fa-solid fa-trash-can"></i>
+                  </button>
+                </div>
               </div>
-              <div className="vehicle-card-actions">
-                <button
-                  className="btn btn-secondary btn-sm"
-                  style={{ flex: 1 }}
-                  onClick={() => { setEditData(vehicle); setShowModal(true); }}
-                >
-                  <i className="fa-solid fa-pen-to-square" style={{ marginRight: '4px' }}></i> Edit
-                </button>
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={() => setDeleteModal({ open: true, id: vehicle.id, name: vehicle.name })}
-                >
-                  <i className="fa-solid fa-trash-can"></i>
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
