@@ -105,7 +105,7 @@ export default function Sidebar({ user, mobileOpen, onClose }) {
           const isActive = pathname.startsWith(item.href);
           const badgeCount = item.badge === 'tracking' ? alertCounts.tracking
             : item.badge === 'availability' ? alertCounts.availability
-            : 0;
+              : 0;
           return (
             <Link
               key={item.href}

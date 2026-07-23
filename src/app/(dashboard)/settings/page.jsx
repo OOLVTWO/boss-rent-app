@@ -47,12 +47,6 @@ const COLOR_OPTIONS = [
 const DEFAULT_STORAGE_PHOTOS = [
   { id: 'logo-company', title: 'Company Official Logo (logoCompany.png)', url: '/images/logoCompany.png', date: 'System Asset' },
   { id: 'logo-brand', title: 'Brand Logo Badge (logo.png)', url: '/images/logo.png', date: 'System Asset' },
-  { id: 'ed-hero', title: 'Editorial Vogue Cover Showcase', url: '/images/boss_rent_fleet_lineup.png', date: 'Editorial Asset' },
-  { id: 'ed-vespa', title: 'Editorial Quiet Luxury Vespa Sprint', url: '/images/boss_rent_bento_1.png', date: 'Editorial Asset' },
-  { id: 'ed-nmax', title: 'Editorial Heritage NMAX 155 Bali', url: '/images/boss_rent_bento_9.png', date: 'Editorial Asset' },
-  { id: 'ed-pcx', title: 'Editorial Coastal PCX 160 Pererenan', url: '/images/boss_rent_bento_10.png', date: 'Editorial Asset' },
-  { id: 'ed-scoopy', title: 'Editorial Cafe Edition Scoopy 110', url: '/images/boss_rent_bento_8.png', date: 'Editorial Asset' },
-  { id: 'ed-aerox', title: 'Editorial Cyber Sport Aerox 155', url: '/images/boss_rent_bento_11.png', date: 'Editorial Asset' },
   { id: '1', title: 'Customer Bali Scooter', url: '/images/boss_rent_customer_bali.png', date: 'Bento Asset' },
   { id: '2', title: 'Mint Green Vespa Sprint Fleet', url: '/images/boss_rent_bento_1.png', date: 'Bento Asset' },
   { id: '3', title: 'Fleet Lineup Serviced & Clean', url: '/images/boss_rent_fleet_lineup.png', date: 'Bento Asset' },
@@ -880,7 +874,7 @@ export default function SettingsPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                 <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'rgba(62, 207, 142, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3ECF8E', fontSize: '22px', border: '1px solid rgba(62, 207, 142, 0.3)' }}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path fillRule="evenodd" clipRule="evenodd" d="M13.35 2.54a1 1 0 0 0-1.7 0l-8.5 13.5A1 1 0 0 0 4 17.5h7v4a1 1 0 0 0 1.7 0l8.5-13.5a1 1 0 0 0-.85-1.5h-7v-3.96z" fill="#3ECF8E"/>
+                    <path fillRule="evenodd" clipRule="evenodd" d="M13.35 2.54a1 1 0 0 0-1.7 0l-8.5 13.5A1 1 0 0 0 4 17.5h7v4a1 1 0 0 0 1.7 0l8.5-13.5a1 1 0 0 0-.85-1.5h-7v-3.96z" fill="#3ECF8E" />
                   </svg>
                 </div>
                 <div>
