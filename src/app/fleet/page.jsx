@@ -56,7 +56,7 @@ export default function SharpSquareBusinessWebsitePage() {
   // Bento gallery show more state (limit initial display to 5 photos)
   const [showAllPhotos, setShowAllPhotos] = useState(false);
 
-  // Business information state (loads from admin panel settings or defaults)
+  // Business & CMS Landing Page State (Loads dynamically from admin panel settings)
   const [biz, setBiz] = useState({
     name: 'BOSS RENT PERERENAN',
     tagline: 'Available Scooter For Rent • Best Service • Best Price • Villa Delivery Available • Clean & Well-Maintained Scooters',
@@ -66,6 +66,10 @@ export default function SharpSquareBusinessWebsitePage() {
     hours: 'Open Daily from 09.00 AM WITA',
     rating: 5.0,
     reviewsCount: 24,
+    satisfactionPercent: 100,
+    cleanScootersCount: 50,
+    heroTitle: 'Clean & Reliable Scooter Rental in Pererenan & Canggu',
+    heroSubtitle: 'Explore Bali with confidence! Clean helmets, delivery & pickup in Canggu / Pererenan area, transparent daily & weekly rates, and 24/7 WhatsApp support.',
     instagramUrl: 'https://www.instagram.com/bossrentpererenan?igsh=MWFxZzE3eWI2dWlqZA==',
     instagramHandle: '@bossrentpererenan',
     mapsUrl: 'https://maps.app.goo.gl/SdqrCREMRtkanUGd6',
@@ -75,7 +79,7 @@ export default function SharpSquareBusinessWebsitePage() {
   // FAQ Accordion State (100% English for Tourists)
   const [openFaq, setOpenFaq] = useState(null);
 
-  const faqs = [
+  const [faqs, setFaqs] = useState([
     {
       q: 'What documents are required to rent a scooter at Boss Rent Pererenan?',
       a: 'It is very simple! You only need to present a valid ID / Passport and a Driver’s License (or International Driving Permit for overseas tourists). Verification takes only 3 minutes with no complicated original document holding.'
@@ -96,13 +100,13 @@ export default function SharpSquareBusinessWebsitePage() {
       q: 'How does the security deposit refund process work?',
       a: 'The security deposit is refunded in full (Cash or Bank Transfer) immediately upon scooter return following a quick joint physical check.'
     }
-  ];
+  ]);
 
-  // Animated counters
-  const animatedRating = useCountUp(5.0, 1200, true);
-  const animatedReviews = useCountUp(24, 1500, false);
-  const animatedSatisfaction = useCountUp(100, 1600, false);
-  const animatedFleet = useCountUp(50, 1400, false);
+  // Animated counters from dynamic CMS state
+  const animatedRating = useCountUp(biz.rating || 5.0, 1200, true);
+  const animatedReviews = useCountUp(biz.reviewsCount || 24, 1500, false);
+  const animatedSatisfaction = useCountUp(biz.satisfactionPercent || 100, 1600, false);
+  const animatedFleet = useCountUp(biz.cleanScootersCount || 50, 1400, false);
 
   // 10 Extended Google Reviews representing the 24 Google Reviews
   const reviews = [
@@ -254,7 +258,7 @@ export default function SharpSquareBusinessWebsitePage() {
     setStartDate(today.toISOString().split('T')[0]);
     setEndDate(threeDaysLater.toISOString().split('T')[0]);
 
-    // Load admin business settings from localStorage if available
+    // Load admin business settings & CMS landing page data from localStorage if available
     try {
       const savedBiz = localStorage.getItem('boss_rent_biz_settings');
       if (savedBiz) {
@@ -266,9 +270,19 @@ export default function SharpSquareBusinessWebsitePage() {
           phoneRaw: parsed.phone || prev.phoneRaw,
           address: parsed.address || prev.address,
           tagline: parsed.tagline || prev.tagline,
+          heroTitle: parsed.heroTitle || prev.heroTitle,
+          heroSubtitle: parsed.heroSubtitle || prev.heroSubtitle,
+          rating: parsed.rating ? parseFloat(parsed.rating) : prev.rating,
+          reviewsCount: parsed.reviewsCount ? parseInt(parsed.reviewsCount) : prev.reviewsCount,
+          satisfactionPercent: parsed.satisfactionPercent ? parseInt(parsed.satisfactionPercent) : prev.satisfactionPercent,
+          cleanScootersCount: parsed.cleanScootersCount ? parseInt(parsed.cleanScootersCount) : prev.cleanScootersCount,
           instagramUrl: parsed.instagramUrl || prev.instagramUrl,
           instagramHandle: parsed.instagramHandle || prev.instagramHandle,
         }));
+
+        if (Array.isArray(parsed.faqs) && parsed.faqs.length > 0) {
+          setFaqs(parsed.faqs);
+        }
       }
     } catch {
       // ignore
@@ -474,18 +488,6 @@ export default function SharpSquareBusinessWebsitePage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <a
-              href={biz.instagramUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn sharp-btn"
-              style={{ background: 'linear-gradient(135deg, #833AB4, #FD1D1D, #FCB045)', color: '#FFFFFF', padding: '9px 18px', fontSize: '12px', border: '1px solid #0F172A', display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
-            >
-              <i className="fa-brands fa-instagram" style={{ fontSize: '16px' }}></i>
-              <span>{biz.instagramHandle}</span>
-            </a>
-          </div>
         </div>
       </header>
 
@@ -501,12 +503,12 @@ export default function SharpSquareBusinessWebsitePage() {
           </div>
 
           <h1 style={{ fontSize: '40px', fontWeight: 900, marginBottom: '14px', color: '#0F172A', lineHeight: 1.15, letterSpacing: '-0.8px' }}>
-            Clean & Reliable Scooter Rental in Pererenan & Canggu
+            {biz.heroTitle}
             <i className="fa-solid fa-location-dot" style={{ color: '#E85D04', marginLeft: '10px' }}></i>
           </h1>
 
           <p style={{ fontSize: '15px', color: '#334155', lineHeight: 1.6, marginBottom: '36px', maxWidth: '740px', margin: '0 auto 36px auto', fontWeight: 500 }}>
-            Explore Bali with confidence! Clean helmets, free delivery & pickup in Canggu / Pererenan area, transparent daily & weekly rates, and 24/7 WhatsApp support.
+            {biz.heroSubtitle}
           </p>
 
           {/* ── ANIMATED COUNTER GRID (Sharp Square Stat Cards) ── */}

@@ -63,7 +63,7 @@ export default function SettingsPage() {
   const [showPass, setShowPass] = useState(false);
   const [savingPass, setSavingPass] = useState(false);
 
-  // Business Settings State
+  // Business & Public Web CMS Settings State
   const [bizForm, setBizForm] = useState({
     name: 'BOSS RENT PERERENAN',
     location: 'Jl. Pantai Pererenan No.119, Pererenan, Kec. Mengwi, Kabupaten Badung, Bali 80351',
@@ -71,10 +71,63 @@ export default function SettingsPage() {
     instagramUrl: 'https://www.instagram.com/bossrentpererenan?igsh=MWFxZzE3eWI2dWlqZA==',
     instagramHandle: '@bossrentpererenan',
     tagline: 'Available Scooter For Rent • Best Service • Best Price • Villa Delivery Available • Clean & Well-Maintained Scooters',
+    heroTitle: 'Clean & Reliable Scooter Rental in Pererenan & Canggu',
+    heroSubtitle: 'Explore Bali with confidence! Clean helmets, delivery & pickup in Canggu / Pererenan area, transparent daily & weekly rates, and 24/7 WhatsApp support.',
+    rating: 5.0,
+    reviewsCount: 24,
+    satisfactionPercent: 100,
+    cleanScootersCount: 50,
     defaultDeposit: 500000,
     oilInterval: 2000,
     cvtInterval: 6000,
+    faqs: [
+      {
+        q: 'What documents are required to rent a scooter at Boss Rent Pererenan?',
+        a: 'It is very simple! You only need to present a valid ID / Passport and a Driver’s License (or International Driving Permit for overseas tourists). Verification takes only 3 minutes with no complicated original document holding.'
+      },
+      {
+        q: 'Is villa or hotel delivery service available in Pererenan & Canggu?',
+        a: 'Yes! We provide convenient scooter delivery & pickup service directly to your Villa, Hotel, or Resort in Pererenan, Canggu, Batu Bolong, Echo Beach, and Umalas areas upon request.'
+      },
+      {
+        q: 'What amenities are included with every scooter rental?',
+        a: 'Every scooter rental comes equipped with 2 clean sanitized helmets, 2 premium raincoats, a sturdy handlebar phone holder for GPS navigation, and a well-maintained scooter with fuel ready to ride.'
+      },
+      {
+        q: 'What should I do if I experience a flat tire or mechanical issue during my rental?',
+        a: 'Don’t worry! Our 24/7 Roadside Assistance team is always ready to assist you anywhere in Bali to fix the issue or provide a swap scooter promptly.'
+      },
+      {
+        q: 'How does the security deposit refund process work?',
+        a: 'The security deposit is refunded in full (Cash or Bank Transfer) immediately upon scooter return following a quick joint physical check.'
+      }
+    ]
   });
+
+  const handleAddFaq = () => {
+    setBizForm(prev => ({
+      ...prev,
+      faqs: [
+        ...(prev.faqs || []),
+        { q: 'New Question title in English...', a: 'Detailed answer explanation in English...' }
+      ]
+    }));
+  };
+
+  const handleUpdateFaq = (index, field, value) => {
+    setBizForm(prev => {
+      const newFaqs = [...(prev.faqs || [])];
+      newFaqs[index] = { ...newFaqs[index], [field]: value };
+      return { ...prev, faqs: newFaqs };
+    });
+  };
+
+  const handleDeleteFaq = (index) => {
+    setBizForm(prev => ({
+      ...prev,
+      faqs: (prev.faqs || []).filter((_, i) => i !== index)
+    }));
+  };
 
   // WA Template & Gateway State (Dual Templates: Invoice & Reminder + API Gateway)
   const [waSubTab, setWaSubTab] = useState('invoice'); // 'invoice' | 'reminder' | 'gateway'
@@ -1171,7 +1224,151 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div style={{ marginTop: '20px' }}>
+              {/* ── CMS LANDING PAGE CONTENT EDITOR ── */}
+              <div style={{ borderTop: '1px solid var(--bg-border)', marginTop: '24px', paddingTop: '20px' }}>
+                <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--brand-primary-light)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <i className="fa-solid fa-pen-to-square"></i> Edit Konten Hero Banner Web Publik
+                </h4>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="cms-hero-title">
+                    <i className="fa-solid fa-heading" style={{ marginRight: '6px' }}></i> Judul Utama Hero Banner (H1)
+                  </label>
+                  <input
+                    id="cms-hero-title"
+                    type="text"
+                    className="form-control"
+                    value={bizForm.heroTitle || ''}
+                    onChange={e => setBizForm(p => ({ ...p, heroTitle: e.target.value }))}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="cms-hero-subtitle">
+                    <i className="fa-solid fa-align-left" style={{ marginRight: '6px' }}></i> Subtitle Deskripsi Banner
+                  </label>
+                  <textarea
+                    id="cms-hero-subtitle"
+                    className="form-control"
+                    rows={2}
+                    value={bizForm.heroSubtitle || ''}
+                    onChange={e => setBizForm(p => ({ ...p, heroSubtitle: e.target.value }))}
+                  />
+                </div>
+
+                {/* Live Metrics Setup */}
+                <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--brand-primary-light)', marginTop: '20px', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <i className="fa-solid fa-chart-simple"></i> Setup Angka Statistik & Rating Pelanggan
+                </h4>
+
+                <div className="form-row cols-2 mb-4">
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="cms-rating">
+                      <i className="fa-solid fa-star" style={{ color: '#F59E0B', marginRight: '6px' }}></i> Google Rating Score
+                    </label>
+                    <input
+                      id="cms-rating"
+                      type="number"
+                      step="0.1"
+                      min="1"
+                      max="5"
+                      className="form-control"
+                      value={bizForm.rating || 5.0}
+                      onChange={e => setBizForm(p => ({ ...p, rating: parseFloat(e.target.value) || 5.0 }))}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="cms-reviews">
+                      <i className="fa-solid fa-comments" style={{ marginRight: '6px' }}></i> Total Google Reviews
+                    </label>
+                    <input
+                      id="cms-reviews"
+                      type="number"
+                      className="form-control"
+                      value={bizForm.reviewsCount || 24}
+                      onChange={e => setBizForm(p => ({ ...p, reviewsCount: parseInt(e.target.value) || 0 }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row cols-2 mb-4">
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="cms-satisfaction">
+                      <i className="fa-solid fa-face-smile" style={{ color: '#22C55E', marginRight: '6px' }}></i> Customer Satisfaction (%)
+                    </label>
+                    <input
+                      id="cms-satisfaction"
+                      type="number"
+                      min="1"
+                      max="100"
+                      className="form-control"
+                      value={bizForm.satisfactionPercent || 100}
+                      onChange={e => setBizForm(p => ({ ...p, satisfactionPercent: parseInt(e.target.value) || 100 }))}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="cms-scooters">
+                      <i className="fa-solid fa-motorcycle" style={{ color: '#E85D04', marginRight: '6px' }}></i> Clean Scooters Fleet Count
+                    </label>
+                    <input
+                      id="cms-scooters"
+                      type="number"
+                      className="form-control"
+                      value={bizForm.cleanScootersCount || 50}
+                      onChange={e => setBizForm(p => ({ ...p, cleanScootersCount: parseInt(e.target.value) || 50 }))}
+                    />
+                  </div>
+                </div>
+
+                {/* FAQ Manager */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', marginBottom: '14px' }}>
+                  <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--brand-primary-light)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <i className="fa-solid fa-circle-question"></i> Kelola Pertanyaan FAQ (Public Web)
+                  </h4>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={handleAddFaq}>
+                    <i className="fa-solid fa-plus" style={{ marginRight: '4px' }}></i> Tambah FAQ Baru
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {(bizForm.faqs || []).map((faq, idx) => (
+                    <div key={idx} style={{ background: 'var(--bg-elevated)', padding: '14px', borderRadius: '10px', border: '1px solid var(--bg-border)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--brand-primary-light)' }}>
+                          FAQ #{idx + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteFaq(idx)}
+                          style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}
+                        >
+                          <i className="fa-solid fa-trash-can" style={{ marginRight: '4px' }}></i> Hapus
+                        </button>
+                      </div>
+                      <div className="form-group" style={{ marginBottom: '8px' }}>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Judul Pertanyaan (English)..."
+                          value={faq.q}
+                          onChange={e => handleUpdateFaq(idx, 'q', e.target.value)}
+                        />
+                      </div>
+                      <div className="form-group" style={{ marginBottom: 0 }}>
+                        <textarea
+                          className="form-control"
+                          rows={2}
+                          placeholder="Jawaban Penjelasan (English)..."
+                          value={faq.a}
+                          onChange={e => handleUpdateFaq(idx, 'a', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginTop: '24px' }}>
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
                   <i className="fa-solid fa-floppy-disk" style={{ marginRight: '6px' }}></i> Simpan Konfigurasi Operasional & Web Publik
                 </button>
