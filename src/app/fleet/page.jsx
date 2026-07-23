@@ -63,9 +63,37 @@ export default function SharpSquareBusinessWebsitePage() {
     hours: 'Open Daily from 09.00 AM WITA',
     rating: 5.0,
     reviewsCount: 24,
+    instagramUrl: 'https://www.instagram.com/bossrentpererenan?igsh=MWFxZzE3eWI2dWlqZA==',
+    instagramHandle: '@bossrentpererenan',
     mapsUrl: 'https://maps.app.goo.gl/SdqrCREMRtkanUGd6',
-    mapsEmbedUrl: 'https://maps.google.com/maps?q=Jl.+Pantai+Pererenan+No.119,+Pererenan,+Kec.+Mengwi,+Kabupaten+Badung,+Bali+80351&t=&z=16&ie=UTF8&iwloc=&output=embed'
+    mapsEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3944.402636541527!2d115.1226017!3d-8.6477169!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd23961f77d33d9%3A0xe543e0d8fa099307!2sJl.%20Pantai%20Pererenan%2C%20Pererenan%2C%20Mengwi%2C%20Badung%20Regency%2C%20Bali!5e0!3m2!1sen!2sid!4v1700000000000'
   };
+
+  // FAQ Accordion State
+  const [openFaq, setOpenFaq] = useState(null);
+
+  const faqs = [
+    {
+      q: 'Syarat apa saja yang diperlukan untuk menyewa motor di Boss Rent Pererenan?',
+      a: 'Syaratnya sangat mudah! Kakak cukup menunjukkan E-KTP / Paspor serta SIM C (atau International Driving Permit bagi wisatawan asing) yang masih berlaku. Proses verifikasi serah terima hanya 3 menit tanpa penahanan dokumen asli yang rumit.'
+    },
+    {
+      q: 'Apakah ada fasilitas antar-jemput gratis ke Villa atau Hotel di Pererenan & Canggu?',
+      a: 'Ya, GRATIS! Kami menyediakan layanan antar-jemput motor gratis langsung ke lokasi Villa, Hotel, atau Resort Anda di area Pererenan, Canggu, Batu Bolong, Echo Beach, dan Umalas.'
+    },
+    {
+      q: 'Fasilitas & kelengkapan apa saja yang sudah termasuk dalam harga sewa?',
+      a: 'Setiap sewa motor sudah termasuk: 2 Helm SNI steril & bersih, 2 Jas Hujan kualitas premium, Holder HP stang untuk navigasi GPS Google Maps, serta kondisi motor yang bersih & BBM terisi siap pakai.'
+    },
+    {
+      q: 'Bagaimana jika motor mengalami kendala atau ban bocor di jalan saat digunakan?',
+      a: 'Tenang saja! Tim Roadside Assistance 24/7 kami siap meluncur langsung ke lokasi Anda di Bali untuk memberikan bantuan penanganan atau mengganti unit motor cadangan secara GRATIS.'
+    },
+    {
+      q: 'Bagaimana prosedur pengembalian deposit jaminan?',
+      a: 'Deposit jaminan akan dikembalikan 100% secara instan (Tunai/Transfer) sesaat setelah pengembalian unit motor dan pengecekan kondisi fisik kendaraan bersama selesai.'
+    }
+  ];
 
   // Animated counters
   const animatedRating = useCountUp(5.0, 1200, true);
@@ -423,27 +451,36 @@ export default function SharpSquareBusinessWebsitePage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <a
+              href={biz.instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn sharp-btn"
+              style={{ background: 'linear-gradient(135deg, #833AB4, #FD1D1D, #FCB045)', color: '#FFFFFF', padding: '9px 18px', fontSize: '12px', border: '1px solid #0F172A', display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
+            >
+              <i className="fa-brands fa-instagram" style={{ fontSize: '16px' }}></i>
+              <span>{biz.instagramHandle}</span>
+            </a>
+
             <a
               href={biz.mapsUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="btn sharp-btn"
-              style={{ background: '#F8FAFC', color: '#1E293B', padding: '8px 18px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
+              style={{ background: '#F8FAFC', color: '#1E293B', padding: '9px 16px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
             >
               <i className="fa-solid fa-map-location-dot" style={{ color: '#4285F4' }}></i>
-              <span>Google Maps</span>
+              <span>Lokasi Maps</span>
             </a>
 
             <a
-              href={`https://wa.me/${biz.phone.replace(/[^0-9]/g, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/dashboard"
               className="btn sharp-btn"
-              style={{ background: '#25D366', color: '#fff', padding: '9px 20px', fontSize: '12.5px', border: '1px solid #0F172A', display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
+              style={{ background: '#0F172A', color: '#FFFFFF', padding: '9px 18px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
             >
-              <i className="fa-brands fa-whatsapp" style={{ fontSize: '17px' }}></i>
-              <span>{biz.phoneRaw}</span>
+              <i className="fa-solid fa-user-lock" style={{ color: '#E85D04' }}></i>
+              <span>Admin Login</span>
             </a>
           </div>
         </div>
@@ -821,6 +858,88 @@ export default function SharpSquareBusinessWebsitePage() {
             <i className="fa-brands fa-google" style={{ color: '#4285F4' }}></i>
             <span>View All 24 Reviews on Google Maps</span>
           </a>
+        </div>
+      </section>
+
+      {/* ── FAQ SECTION (FREQUENTLY ASKED QUESTIONS) ── */}
+      <section style={{ padding: '56px 24px', background: '#F8FAFC', borderTop: '2px solid #0F172A', borderBottom: '2px solid #0F172A' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+            <div style={{ fontSize: '11px', color: '#E85D04', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
+              FREQUENTLY ASKED QUESTIONS
+            </div>
+            <h2 style={{ fontSize: '28px', fontWeight: 900, color: '#0F172A', margin: '4px 0 8px 0', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              <span>Pertanyaan Umum Sewa Motor (FAQ)</span>
+              <i className="fa-solid fa-circle-question" style={{ color: '#E85D04' }}></i>
+            </h2>
+            <div style={{ fontSize: '14px', color: '#64748B' }}>
+              Informasi lengkap seputar syarat, fasilitas, layanan antar-jemput, dan garansi sewa di Boss Rent Pererenan
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {faqs.map((faq, idx) => {
+              const isOpen = openFaq === idx;
+              return (
+                <div
+                  key={idx}
+                  className="sharp-card"
+                  style={{
+                    overflow: 'hidden',
+                    background: isOpen ? '#FFFFFF' : '#FFFFFF',
+                    border: `1.5px solid ${isOpen ? '#E85D04' : '#0F172A'}`,
+                    boxShadow: isOpen ? '4px 4px 0px #E85D04' : '3px 3px 0px #0F172A',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(isOpen ? null : idx)}
+                    style={{
+                      width: '100%',
+                      padding: '18px 20px',
+                      background: 'transparent',
+                      border: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '12px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      fontWeight: 800,
+                      fontSize: '15px',
+                      color: '#0F172A'
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{
+                        width: '26px',
+                        height: '26px',
+                        background: isOpen ? '#E85D04' : '#0F172A',
+                        color: '#FFFFFF',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        fontWeight: 900,
+                        flexShrink: 0
+                      }}>
+                        Q{idx + 1}
+                      </span>
+                      {faq.q}
+                    </span>
+                    <i className={`fa-solid ${isOpen ? 'fa-minus' : 'fa-plus'}`} style={{ color: isOpen ? '#E85D04' : '#0F172A', fontSize: '14px' }}></i>
+                  </button>
+
+                  {isOpen && (
+                    <div style={{ padding: '0 20px 20px 56px', fontSize: '14px', color: '#334155', lineHeight: 1.6, borderTop: '1px dashed #CBD5E1', paddingTop: '14px' }}>
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
 
