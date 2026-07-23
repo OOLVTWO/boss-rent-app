@@ -151,26 +151,36 @@ export default function SettingsPage() {
   };
 
   const handleUseStoragePhotoInGallery = (photo) => {
-    setBizForm(prev => ({
-      ...prev,
-      galleryPhotos: [
-        ...(prev.galleryPhotos || []),
-        {
-          title: photo.title || 'Foto Baru Upload',
-          tag: 'Customer Photo',
-          url: photo.url,
-          icon: 'fa-solid fa-camera'
-        }
-      ]
-    }));
+    setBizForm(prev => {
+      const updated = {
+        ...prev,
+        galleryPhotos: [
+          ...(prev.galleryPhotos || []),
+          {
+            title: photo.title || 'Foto Baru Upload',
+            tag: 'Customer Photo',
+            url: photo.url,
+            icon: 'fa-solid fa-camera'
+          }
+        ]
+      };
+      localStorage.setItem('boss_rent_biz_settings', JSON.stringify(updated));
+      return updated;
+    });
     setCmsSubTab('gallery');
+    showAlert('📌 Foto dari Storage Repositori berhasil digunakan pada Landing Page!');
   };
 
   const handleDeleteStoragePhoto = (photoId) => {
-    setBizForm(prev => ({
-      ...prev,
-      uploadedStoragePhotos: (prev.uploadedStoragePhotos || []).filter(p => p.id !== photoId)
-    }));
+    setBizForm(prev => {
+      const updated = {
+        ...prev,
+        uploadedStoragePhotos: (prev.uploadedStoragePhotos || []).filter(p => p.id !== photoId)
+      };
+      localStorage.setItem('boss_rent_biz_settings', JSON.stringify(updated));
+      return updated;
+    });
+    showAlert('Foto berhasil dihapus dari Storage Repositori.');
   };
 
   const handleModalFileUpload = (e) => {
@@ -286,13 +296,26 @@ export default function SettingsPage() {
     e.preventDefault();
     if (!newPhotoForm.title || !newPhotoForm.url) return;
 
-    setBizForm(prev => ({
-      ...prev,
-      galleryPhotos: [
-        ...(prev.galleryPhotos || []),
-        { ...newPhotoForm }
-      ]
-    }));
+    const newStorageItem = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+      title: newPhotoForm.title,
+      url: newPhotoForm.url,
+      date: new Date().toLocaleDateString('id-ID')
+    };
+
+    setBizForm(prev => {
+      const updatedPhotos = [...(prev.galleryPhotos || []), { ...newPhotoForm }];
+      const updatedStorage = [newStorageItem, ...(prev.uploadedStoragePhotos || [])];
+
+      const newForm = {
+        ...prev,
+        galleryPhotos: updatedPhotos,
+        uploadedStoragePhotos: updatedStorage
+      };
+
+      localStorage.setItem('boss_rent_biz_settings', JSON.stringify(newForm));
+      return newForm;
+    });
 
     setShowAddPhotoModal(false);
     setNewPhotoForm({
@@ -301,6 +324,8 @@ export default function SettingsPage() {
       url: '/images/boss_rent_bento_1.png',
       icon: 'fa-solid fa-motorcycle'
     });
+
+    showAlert('✨ Foto baru berhasil ditambahkan ke Galeri & otomatis tersimpan ke Storage Repositori Opsi #5!');
   };
 
   const handleUpdateGalleryPhoto = (index, field, value) => {
@@ -656,7 +681,7 @@ export default function SettingsPage() {
   const handleSaveBizSettings = (e) => {
     e.preventDefault();
     localStorage.setItem('boss_rent_biz_settings', JSON.stringify(bizForm));
-    showAlert('Pengaturan operasional rental berhasil disimpan!');
+    showAlert('✅ Pengaturan Operasional & CMS Web Publik Berhasil Diperbarui! Tampilan Halaman Utama Pelanggan Telah Di-Sinkronkan secara Live.');
   };
 
   return (
@@ -666,7 +691,41 @@ export default function SettingsPage() {
         <p>Kelola koneksi database, metode pembayaran, keamanan akun, dan konfigurasi rental</p>
       </div>
 
-      {alert && <div className={`alert alert-${alert.type}`}>{alert.message}</div>}
+      {/* FLOATING TOAST POP-UP NOTIFICATION ALERT */}
+      {alert && (
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          right: '24px',
+          zIndex: 99999,
+          background: alert.type === 'danger' ? '#EF4444' : '#0F172A',
+          color: '#FFFFFF',
+          padding: '16px 22px',
+          borderRadius: '14px',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3)',
+          border: '2px solid var(--brand-primary)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          maxWidth: '460px',
+          animation: 'fadeIn 0.3s ease-out'
+        }}>
+          <div style={{ fontSize: '22px', color: alert.type === 'danger' ? '#FFF' : '#22C55E' }}>
+            <i className={alert.type === 'danger' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-check'}></i>
+          </div>
+          <div style={{ flex: 1, fontSize: '13px', fontWeight: 700, lineHeight: 1.45 }}>
+            {alert.message}
+          </div>
+          <button
+            onClick={() => setAlert(null)}
+            style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FFF', borderRadius: '50%', width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '12px', fontWeight: 800 }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {alert && <div className={`alert alert-${alert.type}`} style={{ marginBottom: '20px' }}>{alert.message}</div>}
 
       {/* Scrollable Tabs Chips / Horizontal Pills Bar */}
       <div className="scrollable-tabs-bar">
