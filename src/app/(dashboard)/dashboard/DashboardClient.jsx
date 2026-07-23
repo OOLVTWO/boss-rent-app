@@ -94,51 +94,72 @@ export default function DashboardClient({ transactions, vehicles }) {
 
       {/* ── BENTO GRID LAYOUT ── */}
       <div className="bento-grid-container mb-6">
-        {/* 1. Hero Bento Card: Financial Intelligence (Ultra Modern Holographic Glass) */}
-        <div className="bento-card bento-hero-card">
-          <div className="bento-card-bg-glow"></div>
-          <div className="bento-hero-content">
-            <div className="bento-hero-top">
-              <div className="bento-hero-badge">
-                <span className="bento-live-pulse"></span>
-                <i className="fa-solid fa-wand-magic-sparkles"></i> AI Financial Intelligence
+        {/* 1. Hero Bento Card: Financial Intelligence (Ultra Modern Holographic 3D Glass) */}
+        <div className="bento-card bento-hero-card" style={{
+          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.98))',
+          border: '1.5px solid rgba(232, 93, 4, 0.4)',
+          borderRadius: '20px',
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div className="bento-card-bg-glow" style={{
+            position: 'absolute',
+            top: '-50%',
+            left: '-20%',
+            width: '140%',
+            height: '200%',
+            background: 'radial-gradient(circle, rgba(232, 93, 4, 0.15) 0%, rgba(245, 158, 11, 0.05) 50%, transparent 70%)',
+            pointerEvents: 'none'
+          }}></div>
+
+          <div className="bento-hero-content" style={{ position: 'relative', zIndex: 2, padding: '24px' }}>
+            <div className="bento-hero-top" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
+              <div className="bento-hero-badge" style={{ background: 'rgba(232, 93, 4, 0.15)', border: '1px solid rgba(232, 93, 4, 0.4)', color: '#FF8A00', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                <span className="bento-live-pulse" style={{ background: '#22C55E', boxShadow: '0 0 10px #22C55E' }}></span>
+                <i className="fa-solid fa-wand-magic-sparkles" style={{ color: '#F59E0B' }}></i> AI Financial Intelligence
               </div>
-              <div className="bento-profit-tag">
-                <i className="fa-solid fa-chart-line"></i> Laba Operasional
+              <div className="bento-profit-tag" style={{ background: netProfit >= 0 ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)', border: `1px solid ${netProfit >= 0 ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`, color: netProfit >= 0 ? '#22C55E' : '#EF4444', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <i className={`fa-solid ${netProfit >= 0 ? 'fa-chart-line' : 'fa-chart-line-down'}`}></i>
+                <span>{netProfit >= 0 ? 'Surplus Laba Operasional' : 'Defisit Operasional'}</span>
               </div>
             </div>
 
-            <div className="bento-hero-main">
-              <div className="bento-hero-label">Laba Bersih (Net Profit)</div>
-              <div className="bento-hero-value-wrap">
-                <span className="bento-hero-value" style={{ color: netProfit >= 0 ? '#22C55E' : '#EF4444' }}>
+            <div className="bento-hero-main" style={{ marginBottom: '22px' }}>
+              <div className="bento-hero-label" style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-muted)', fontWeight: 800, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <i className="fa-solid fa-sack-dollar" style={{ color: 'var(--brand-primary-light)' }}></i> Total Laba Bersih (Net Profit)
+              </div>
+              <div className="bento-hero-value-wrap" style={{ display: 'flex', alignItems: 'baseline', gap: '14px', flexWrap: 'wrap' }}>
+                <span className="bento-hero-value" style={{ fontSize: '38px', fontWeight: 900, color: netProfit >= 0 ? '#22C55E' : '#EF4444', letterSpacing: '-1px', textShadow: '0 4px 20px rgba(34,197,94,0.3)' }}>
                   {formatRupiah(netProfit)}
                 </span>
                 {totalRevenue > 0 && (
-                  <span className="bento-margin-chip">
-                    <i className="fa-solid fa-arrow-trend-up"></i> Margin {Math.round((netProfit / totalRevenue) * 100)}%
+                  <span className="bento-margin-chip" style={{ background: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.4)', color: '#22C55E', padding: '6px 14px', borderRadius: '20px', fontWeight: 800, fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <i className="fa-solid fa-arrow-trend-up"></i> Profit Margin {Math.round((netProfit / totalRevenue) * 100)}%
                   </span>
                 )}
               </div>
             </div>
 
-            <div className="bento-hero-stats">
+            <div className="bento-hero-stats" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', background: 'var(--bg-elevated)', padding: '16px', borderRadius: '14px', border: '1px solid var(--bg-border)' }}>
               <div className="bento-stat-sub income">
-                <div className="sub-head">
-                  <div className="sub-icon"><i className="fa-solid fa-arrow-down-left"></i></div>
+                <div className="sub-head" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '4px' }}>
+                  <div className="sub-icon" style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'rgba(34, 197, 94, 0.15)', color: '#22C55E', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <i className="fa-solid fa-arrow-down-left"></i>
+                  </div>
                   <span>Pemasukan Kotor (Sewa)</span>
                 </div>
-                <div className="sub-val">{formatRupiah(totalRevenue)}</div>
+                <div className="sub-val" style={{ fontSize: '18px', fontWeight: 900, color: '#22C55E' }}>{formatRupiah(totalRevenue)}</div>
               </div>
 
-              <div className="bento-stat-divider"></div>
-
-              <div className="bento-stat-sub expense">
-                <div className="sub-head">
-                  <div className="sub-icon"><i className="fa-solid fa-arrow-up-right"></i></div>
+              <div className="bento-stat-sub expense" style={{ borderLeft: '1px solid var(--bg-border)', paddingLeft: '16px' }}>
+                <div className="sub-head" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '4px' }}>
+                  <div className="sub-icon" style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <i className="fa-solid fa-arrow-up-right"></i>
+                  </div>
                   <span>Pengeluaran Operasional</span>
                 </div>
-                <div className="sub-val">{formatRupiah(totalExpenses)}</div>
+                <div className="sub-val" style={{ fontSize: '18px', fontWeight: 900, color: '#EF4444' }}>{formatRupiah(totalExpenses)}</div>
               </div>
             </div>
           </div>

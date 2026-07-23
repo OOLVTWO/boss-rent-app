@@ -35,6 +35,8 @@ export async function POST(request) {
     notes: body.notes || ''
   };
 
+  if (!payload.id) delete payload.id;
+
   let { data, error } = await supabase
     .from('vehicles')
     .insert([payload])

@@ -53,6 +53,8 @@ export async function POST(request) {
     notes: body.notes || ''
   };
 
+  if (!payload.id) delete payload.id;
+
   const { data, error } = await supabase
     .from('expenses')
     .insert([payload])

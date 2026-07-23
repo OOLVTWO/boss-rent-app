@@ -40,6 +40,8 @@ export async function POST(request) {
     km_end: parseInt(km_end) || 0,
   };
 
+  if (!payload.id) delete payload.id;
+
   let { data: tx, error } = await supabase
     .from('transactions')
     .insert([payload])
