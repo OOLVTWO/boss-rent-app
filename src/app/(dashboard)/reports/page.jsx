@@ -5,11 +5,23 @@ import { exportTransactionsToExcel, exportExpensesToExcel, formatRupiah } from '
 
 const statusBadge = (status) => {
   const map = {
-    active: <span className="badge badge-info"><i className="fa-solid fa-spinner" style={{ marginRight: '4px' }}></i> Aktif</span>,
-    completed: <span className="badge badge-success"><i className="fa-solid fa-circle-check" style={{ marginRight: '4px' }}></i> Selesai</span>,
-    cancelled: <span className="badge badge-danger"><i className="fa-solid fa-circle-xmark" style={{ marginRight: '4px' }}></i> Dibatalkan</span>,
+    active: (
+      <span className="tx-status-pill active">
+        <i className="fa-solid fa-bolt" style={{ fontSize: '11px' }}></i> Sewa Aktif
+      </span>
+    ),
+    completed: (
+      <span className="tx-status-pill completed">
+        <i className="fa-solid fa-circle-check" style={{ fontSize: '11px' }}></i> Selesai
+      </span>
+    ),
+    cancelled: (
+      <span className="tx-status-pill cancelled">
+        <i className="fa-solid fa-circle-xmark" style={{ fontSize: '11px' }}></i> Dibatalkan
+      </span>
+    ),
   };
-  return map[status] || status;
+  return map[status] || <span className="tx-status-pill">{status}</span>;
 };
 
 export default function ReportsPage() {
@@ -231,13 +243,46 @@ export default function ReportsPage() {
                 <tbody>
                   {safeTx.map((tx, idx) => (
                     <tr key={tx.id}>
-                      <td>{idx + 1}</td>
-                      <td>{new Date(tx.created_at).toLocaleDateString('id-ID')}</td>
-                      <td><strong>{tx.renter_name}</strong></td>
-                      <td>{tx.vehicles?.name} ({tx.vehicles?.plate_number})</td>
-                      <td>{tx.duration_days} hari</td>
-                      <td><strong style={{ color: '#22C55E' }}>{formatRupiah(tx.total_price)}</strong></td>
-                      <td>{statusBadge(tx.status)}</td>
+                      <td style={{ fontWeight: 700, color: 'var(--text-muted)' }}>{idx + 1}</td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                          <i className="fa-solid fa-calendar-day" style={{ color: 'var(--brand-primary-light)', fontSize: '11px' }}></i>
+                          {new Date(tx.created_at || tx.start_date).toLocaleDateString('id-ID')}
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)' }}>{tx.renter_name}</strong>
+                          {tx.renter_phone && (
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                              <i className="fa-solid fa-phone" style={{ marginRight: '4px', fontSize: '10px' }}></i>{tx.renter_phone}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', minWidth: '180px' }}>
+                          <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)', lineHeight: 1.35 }}>{tx.vehicles?.name || '-'}</strong>
+                          {tx.vehicles?.plate_number && (
+                            <div>
+                              <span className="tx-info-pill" style={{ color: 'var(--brand-primary-light)', borderColor: 'rgba(232, 93, 4, 0.35)', background: 'rgba(232, 93, 4, 0.12)', padding: '4px 10px' }}>
+                                <i className="fa-solid fa-motorcycle" style={{ fontSize: '11px', marginRight: '6px' }}></i>
+                                {tx.vehicles.plate_number}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <span className="tx-info-pill" style={{ color: '#3B82F6', borderColor: 'rgba(59, 130, 246, 0.3)', background: 'rgba(59, 130, 246, 0.1)', padding: '4px 10px' }}>
+                          <i className="fa-solid fa-clock" style={{ fontSize: '10px', marginRight: '5px' }}></i>
+                          {tx.duration_days} Hari
+                        </span>
+                      </td>
+                      <td>
+                        <strong style={{ fontSize: '14px', color: '#22C55E' }}>{formatRupiah(tx.total_price)}</strong>
+                      </td>
+                      <td style={{ verticalAlign: 'middle' }}>{statusBadge(tx.status)}</td>
                     </tr>
                   ))}
                 </tbody>

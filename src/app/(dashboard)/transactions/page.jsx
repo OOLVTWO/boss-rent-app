@@ -1620,11 +1620,13 @@ export default function TransactionsPage() {
                       </div>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                        <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)' }}>{tx.vehicles?.name || '-'}</strong>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '180px' }}>
+                        <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)', lineHeight: 1.35 }}>
+                          {tx.vehicles?.name || '-'}
+                        </strong>
                         <div>
-                          <span className="tx-info-pill" style={{ color: 'var(--brand-primary-light)', borderColor: 'rgba(232, 93, 4, 0.3)', background: 'rgba(232, 93, 4, 0.1)' }}>
-                            <i className="fa-solid fa-motorcycle" style={{ fontSize: '10px' }}></i>
+                          <span className="tx-info-pill" style={{ color: 'var(--brand-primary-light)', borderColor: 'rgba(232, 93, 4, 0.35)', background: 'rgba(232, 93, 4, 0.12)', padding: '4px 10px' }}>
+                            <i className="fa-solid fa-motorcycle" style={{ fontSize: '11px', marginRight: '6px' }}></i>
                             {tx.vehicles?.plate_number || '-'}
                           </span>
                         </div>
