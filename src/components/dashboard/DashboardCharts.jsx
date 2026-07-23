@@ -162,7 +162,7 @@ export default function DashboardCharts({ transactions, vehicles }) {
         ) : (
           <div className="bento-fleet-status-row">
             {/* Pie Chart Visual */}
-            <div style={{ width: '220px', height: '200px', flexShrink: 0 }}>
+            <div className="bento-pie-container">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie

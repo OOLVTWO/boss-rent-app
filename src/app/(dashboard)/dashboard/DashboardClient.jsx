@@ -16,11 +16,23 @@ function formatRupiah(amount) {
 
 const statusBadge = (status) => {
   const map = {
-    active: <span className="badge badge-info"><i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '4px' }}></i> Aktif</span>,
-    completed: <span className="badge badge-success"><i className="fa-solid fa-circle-check" style={{ marginRight: '4px' }}></i> Selesai</span>,
-    cancelled: <span className="badge badge-danger"><i className="fa-solid fa-circle-xmark" style={{ marginRight: '4px' }}></i> Dibatalkan</span>,
+    active: (
+      <span className="tx-status-pill active">
+        <i className="fa-solid fa-bolt" style={{ fontSize: '11px' }}></i> Sewa Aktif
+      </span>
+    ),
+    completed: (
+      <span className="tx-status-pill completed">
+        <i className="fa-solid fa-circle-check" style={{ fontSize: '11px' }}></i> Selesai
+      </span>
+    ),
+    cancelled: (
+      <span className="tx-status-pill cancelled">
+        <i className="fa-solid fa-circle-xmark" style={{ fontSize: '11px' }}></i> Dibatalkan
+      </span>
+    ),
   };
-  return map[status] || <span className="badge badge-muted">{status}</span>;
+  return map[status] || <span className="tx-status-pill">{status}</span>;
 };
 
 export default function DashboardClient({ transactions, vehicles }) {
@@ -217,15 +229,14 @@ export default function DashboardClient({ transactions, vehicles }) {
             <p>Belum ada transaksi terdaftar. <Link href="/transactions">Catat transaksi pertama</Link></p>
           </div>
         ) : (
-          <div className="table-responsive">
-            <table className="table">
+          <div className="table-wrapper">
+            <table className="table" style={{ minWidth: '650px' }}>
               <thead>
                 <tr>
                   <th>Penyewa</th>
                   <th>Motor</th>
-                  <th>Tgl Mulai</th>
-                  <th>Tgl Selesai</th>
-                  <th>Total</th>
+                  <th>Tanggal Sewa</th>
+                  <th>Total Harga</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -233,17 +244,44 @@ export default function DashboardClient({ transactions, vehicles }) {
                 {recentTx.map((tx) => (
                   <tr key={tx.id}>
                     <td>
-                      <strong style={{ color: 'var(--text-primary)' }}>{tx.renter_name}</strong>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{tx.renter_phone}</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)' }}>{tx.renter_name}</strong>
+                        {tx.renter_phone && (
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                            <i className="fa-solid fa-phone" style={{ marginRight: '4px', fontSize: '10px' }}></i>{tx.renter_phone}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td>
-                      <span style={{ fontWeight: 600 }}>{tx.vehicles?.name || '-'}</span>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{tx.vehicles?.plate_number}</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', minWidth: '160px' }}>
+                        <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)', lineHeight: 1.35 }}>{tx.vehicles?.name || '-'}</strong>
+                        {tx.vehicles?.plate_number && (
+                          <div>
+                            <span className="tx-info-pill" style={{ color: 'var(--brand-primary-light)', borderColor: 'rgba(232, 93, 4, 0.35)', background: 'rgba(232, 93, 4, 0.12)', padding: '3px 8px' }}>
+                              <i className="fa-solid fa-motorcycle" style={{ fontSize: '10px', marginRight: '5px' }}></i>
+                              {tx.vehicles.plate_number}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </td>
-                    <td>{new Date(tx.start_date).toLocaleDateString('id-ID')}</td>
-                    <td>{new Date(tx.end_date).toLocaleDateString('id-ID')}</td>
-                    <td><strong style={{ color: 'var(--brand-primary-light)' }}>{formatRupiah(tx.total_price)}</strong></td>
-                    <td>{statusBadge(tx.status)}</td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '12px' }}>
+                        <div style={{ color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                          <i className="fa-solid fa-calendar-plus" style={{ marginRight: '5px', fontSize: '11px', color: '#22C55E' }}></i>
+                          {new Date(tx.start_date).toLocaleDateString('id-ID')}
+                        </div>
+                        <div style={{ color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                          <i className="fa-solid fa-calendar-check" style={{ marginRight: '5px', fontSize: '11px', color: '#3B82F6' }}></i>
+                          {new Date(tx.end_date).toLocaleDateString('id-ID')}
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <strong style={{ fontSize: '14px', color: '#22C55E' }}>{formatRupiah(tx.total_price)}</strong>
+                    </td>
+                    <td style={{ verticalAlign: 'middle' }}>{statusBadge(tx.status)}</td>
                   </tr>
                 ))}
               </tbody>
