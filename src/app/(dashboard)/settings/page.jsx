@@ -90,6 +90,17 @@ export default function SettingsPage() {
       { url: '/images/boss_rent_bento_2.png', title: 'Pererenan Beach Exploring', tag: 'Canggu Area', icon: 'fa-solid fa-umbrella-beach' },
       { url: '/images/boss_rent_bento_3.png', title: 'Easy Key Handover Service', tag: 'Express Pickup', icon: 'fa-solid fa-key' }
     ],
+    uploadedStoragePhotos: [
+      { id: '1', title: 'Customer Bali Scooter', url: '/images/boss_rent_customer_bali.png', date: 'Default Preset' },
+      { id: '2', title: 'Mint Green Vespa Fleet', url: '/images/boss_rent_bento_1.png', date: 'Default Preset' },
+      { id: '3', title: 'Fleet Lineup Serviced', url: '/images/boss_rent_fleet_lineup.png', date: 'Default Preset' },
+      { id: '4', title: 'Pererenan Beach Exploring', url: '/images/boss_rent_bento_2.png', date: 'Default Preset' },
+      { id: '5', title: 'Key Handover Service', url: '/images/boss_rent_bento_3.png', date: 'Default Preset' },
+      { id: '6', title: 'Red Honda Scoopy Sunset', url: '/images/boss_rent_bento_8.png', date: 'Default Preset' },
+      { id: '7', title: 'Sanitized Clean Helmets', url: '/images/boss_rent_bento_6.png', date: 'Default Preset' },
+      { id: '8', title: 'Helmet Handover Villa', url: '/images/boss_rent_helmet_handover.png', date: 'Default Preset' },
+      { id: '9', title: 'Scenic Countryside Cruise', url: '/images/boss_rent_bento_5.png', date: 'Default Preset' },
+    ],
     faqs: [
       {
         q: 'What documents are required to rent a scooter at Boss Rent Pererenan?',
@@ -113,6 +124,69 @@ export default function SettingsPage() {
       }
     ]
   });
+
+  // Direct File Upload Handler (FileReader -> Base64 Storage)
+  const handleFileUploadToStorage = (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64Url = event.target.result;
+        const newPhotoItem = {
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+          title: file.name.replace(/\.[^/.]+$/, ""),
+          url: base64Url,
+          date: new Date().toLocaleDateString('id-ID')
+        };
+
+        setBizForm(prev => ({
+          ...prev,
+          uploadedStoragePhotos: [newPhotoItem, ...(prev.uploadedStoragePhotos || [])]
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleUseStoragePhotoInGallery = (photo) => {
+    setBizForm(prev => ({
+      ...prev,
+      galleryPhotos: [
+        ...(prev.galleryPhotos || []),
+        {
+          title: photo.title || 'Foto Baru Upload',
+          tag: 'Customer Photo',
+          url: photo.url,
+          icon: 'fa-solid fa-camera'
+        }
+      ]
+    }));
+    setCmsSubTab('gallery');
+  };
+
+  const handleDeleteStoragePhoto = (photoId) => {
+    setBizForm(prev => ({
+      ...prev,
+      uploadedStoragePhotos: (prev.uploadedStoragePhotos || []).filter(p => p.id !== photoId)
+    }));
+  };
+
+  const handleModalFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setNewPhotoForm(p => ({
+        ...p,
+        url: event.target.result,
+        title: p.title || file.name.replace(/\.[^/.]+$/, "")
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleAddFaq = () => {
     setBizForm(prev => ({
@@ -1276,6 +1350,13 @@ export default function SettingsPage() {
               >
                 <i className="fa-solid fa-circle-question"></i> 4. FAQ Manager
               </button>
+              <button
+                type="button"
+                className={`scrollable-tab-btn ${cmsSubTab === 'storage_gallery' ? 'active' : ''}`}
+                onClick={() => setCmsSubTab('storage_gallery')}
+              >
+                <i className="fa-solid fa-hard-drive"></i> 5. Storage Galeri Foto Web
+              </button>
             </div>
 
             <form onSubmit={handleSaveBizSettings}>
@@ -1652,6 +1733,83 @@ export default function SettingsPage() {
                 </div>
               )}
 
+              {/* SUB-TAB 5: STORAGE GALERI FOTO WEB (DIRECT FILE UPLOADER) */}
+              {cmsSubTab === 'storage_gallery' && (
+                <div>
+                  <div style={{ background: 'var(--bg-elevated)', padding: '20px', borderRadius: '14px', border: '2px dashed var(--brand-primary)', textAlign: 'center', marginBottom: '24px' }}>
+                    <div style={{ fontSize: '36px', color: 'var(--brand-primary)', marginBottom: '8px' }}>
+                      <i className="fa-solid fa-cloud-arrow-up"></i>
+                    </div>
+                    <h4 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--brand-primary-light)', margin: '0 0 6px 0' }}>
+                      Upload Foto Baru Langsung Dari Perangkat (HP / Laptop)
+                    </h4>
+                    <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginBottom: '18px', maxWidth: '540px', margin: '0 auto 18px auto', lineHeight: 1.5 }}>
+                      Klien/Admin dapat langsung memilih file foto dari Galeri HP atau Laptop. Foto akan otomatis disimpan ke Storage Repositori tanpa perlu memasukkan URL atau mengetik kode file!
+                    </p>
+
+                    <label className="btn btn-primary" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 28px', fontSize: '13px', fontWeight: 800 }}>
+                      <i className="fa-solid fa-folder-open"></i>
+                      <span>Pilih & Upload Foto Dari HP / Laptop</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleFileUploadToStorage}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--brand-primary-light)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <i className="fa-solid fa-hard-drive"></i> Repositori Storage Galeri Foto ({bizForm.uploadedStoragePhotos?.length || 0} Foto Tersimpan)
+                    </h4>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px' }}>
+                    {(bizForm.uploadedStoragePhotos || []).map((photo) => (
+                      <div
+                        key={photo.id}
+                        style={{
+                          background: 'var(--bg-elevated)',
+                          padding: '12px',
+                          borderRadius: '12px',
+                          border: '1px solid var(--bg-border)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '10px'
+                        }}
+                      >
+                        <img src={photo.url} alt={photo.title} style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--bg-border)' }} />
+                        <div style={{ fontSize: '11.5px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }}>
+                          {photo.title}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '6px', marginTop: 'auto' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleUseStoragePhotoInGallery(photo)}
+                            className="btn btn-primary btn-sm"
+                            style={{ flex: 1, padding: '6px 8px', fontSize: '11px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                            title="Gunakan foto ini ke landing page"
+                          >
+                            <i className="fa-solid fa-plus"></i> Pakai Di Web
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteStoragePhoto(photo.id)}
+                            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#EF4444', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px' }}
+                            title="Hapus dari storage"
+                          >
+                            <i className="fa-solid fa-trash-can"></i>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div style={{ marginTop: '24px', borderTop: '1px solid var(--bg-border)', paddingTop: '16px' }}>
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
                   <i className="fa-solid fa-floppy-disk" style={{ marginRight: '6px' }}></i> Simpan Pengaturan CMS Web Publik
@@ -1862,12 +2020,29 @@ export default function SettingsPage() {
                 </div>
               </div>
 
+              {/* Direct File Picker Upload Button */}
+              <div className="form-group" style={{ marginBottom: '14px' }}>
+                <label className="form-label">
+                  <i className="fa-solid fa-cloud-arrow-up" style={{ marginRight: '6px', color: 'var(--brand-primary)' }}></i> Upload File Foto Dari Perangkat (HP / Laptop)
+                </label>
+                <label className="btn btn-secondary btn-sm" style={{ width: '100%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px', background: 'var(--bg-elevated)', border: '1px dashed var(--brand-primary)' }}>
+                  <i className="fa-solid fa-folder-open" style={{ color: 'var(--brand-primary)' }}></i>
+                  <span>Pilih & Upload Foto Langsung Dari HP / Laptop</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleModalFileUpload}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              </div>
+
               {/* Quick Preset Selector */}
               <div className="form-group">
                 <label className="form-label">
-                  <i className="fa-solid fa-images" style={{ marginRight: '6px' }}></i> Pilih Dari Preset Galeri Boss Rent
+                  <i className="fa-solid fa-images" style={{ marginRight: '6px' }}></i> Atau Pilih Dari Preset Galeri Boss Rent
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxHeight: '160px', overflowY: 'auto', padding: '6px', background: 'var(--bg-elevated)', borderRadius: '8px', border: '1px solid var(--bg-border)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxHeight: '140px', overflowY: 'auto', padding: '6px', background: 'var(--bg-elevated)', borderRadius: '8px', border: '1px solid var(--bg-border)' }}>
                   {PHOTO_PRESETS.map((preset, idx) => (
                     <div
                       key={idx}
@@ -1881,7 +2056,7 @@ export default function SettingsPage() {
                         background: 'var(--bg-card)'
                       }}
                     >
-                      <img src={preset.url} alt={preset.label} style={{ width: '100%', height: '50px', objectFit: 'cover', borderRadius: '4px', marginBottom: '4px' }} />
+                      <img src={preset.url} alt={preset.label} style={{ width: '100%', height: '48px', objectFit: 'cover', borderRadius: '4px', marginBottom: '4px' }} />
                       <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {preset.label}
                       </div>
@@ -1892,13 +2067,13 @@ export default function SettingsPage() {
 
               <div className="form-group">
                 <label className="form-label" htmlFor="photo-url">
-                  <i className="fa-solid fa-link" style={{ marginRight: '6px' }}></i> URL / Path Foto <span className="required">*</span>
+                  <i className="fa-solid fa-link" style={{ marginRight: '6px' }}></i> URL / Path Foto / Preview Base64 <span className="required">*</span>
                 </label>
                 <input
                   id="photo-url"
                   type="text"
                   className="form-control"
-                  placeholder="/images/boss_rent_bento_1.png atau https://..."
+                  placeholder="/images/boss_rent_bento_1.png atau data:image/png;base64..."
                   value={newPhotoForm.url}
                   onChange={e => setNewPhotoForm(p => ({ ...p, url: e.target.value }))}
                   required
