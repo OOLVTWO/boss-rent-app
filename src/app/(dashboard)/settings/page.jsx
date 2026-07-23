@@ -63,6 +63,9 @@ export default function SettingsPage() {
   const [showPass, setShowPass] = useState(false);
   const [savingPass, setSavingPass] = useState(false);
 
+  // Operasional & CMS Sub-Tab State ('profile' | 'hero' | 'gallery' | 'faqs')
+  const [cmsSubTab, setCmsSubTab] = useState('profile');
+
   // Business & Public Web CMS Settings State
   const [bizForm, setBizForm] = useState({
     name: 'BOSS RENT PERERENAN',
@@ -80,6 +83,13 @@ export default function SettingsPage() {
     defaultDeposit: 500000,
     oilInterval: 2000,
     cvtInterval: 6000,
+    galleryPhotos: [
+      { url: '/images/boss_rent_customer_bali.png', title: 'Scooter Rental in Pererenan', tag: 'Premium Fleet', icon: 'fa-solid fa-star' },
+      { url: '/images/boss_rent_bento_1.png', title: 'Mint Green Vespa Fleet', tag: 'Stylish Scooters', icon: 'fa-solid fa-motorcycle' },
+      { url: '/images/boss_rent_fleet_lineup.png', title: 'Clean & Regularly Serviced Fleet', tag: '100% Maintained', icon: 'fa-solid fa-wrench' },
+      { url: '/images/boss_rent_bento_2.png', title: 'Pererenan Beach Exploring', tag: 'Canggu Area', icon: 'fa-solid fa-umbrella-beach' },
+      { url: '/images/boss_rent_bento_3.png', title: 'Easy Key Handover Service', tag: 'Express Pickup', icon: 'fa-solid fa-key' }
+    ],
     faqs: [
       {
         q: 'What documents are required to rent a scooter at Boss Rent Pererenan?',
@@ -126,6 +136,31 @@ export default function SettingsPage() {
     setBizForm(prev => ({
       ...prev,
       faqs: (prev.faqs || []).filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleUpdateGalleryPhoto = (index, field, value) => {
+    setBizForm(prev => {
+      const newPhotos = [...(prev.galleryPhotos || [])];
+      newPhotos[index] = { ...newPhotos[index], [field]: value };
+      return { ...prev, galleryPhotos: newPhotos };
+    });
+  };
+
+  const handleAddGalleryPhoto = () => {
+    setBizForm(prev => ({
+      ...prev,
+      galleryPhotos: [
+        ...(prev.galleryPhotos || []),
+        { url: '/images/boss_rent_bento_5.png', title: 'New Customer Scooter Photo', tag: 'Bali Trip', icon: 'fa-solid fa-camera' }
+      ]
+    }));
+  };
+
+  const handleDeleteGalleryPhoto = (index) => {
+    setBizForm(prev => ({
+      ...prev,
+      galleryPhotos: (prev.galleryPhotos || []).filter((_, i) => i !== index)
     }));
   };
 
@@ -1115,262 +1150,347 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* TAB 4: PENGATURAN OPERASIONAL RENTAL */}
+      {/* TAB 4: PENGATURAN OPERASIONAL RENTAL & CMS WEB PUBLIK */}
       {activeTab === 'business' && (
-        <div style={{ maxWidth: '680px' }}>
+        <div style={{ maxWidth: '720px' }}>
           <div className="card">
-            <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '6px' }}>
-              <i className="fa-solid fa-sliders" style={{ marginRight: '8px', color: 'var(--brand-primary-light)' }}></i>
-              Konfigurasi Operasional Rental
-            </h3>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '20px' }}>
-              Atur informasi usaha, nominal deposit default, dan interval jadwal maintenance AI
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+              <div>
+                <h3 style={{ fontSize: '17px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <i className="fa-solid fa-sliders" style={{ color: 'var(--brand-primary-light)' }}></i>
+                  Pengaturan Operasional & CMS Web Publik
+                </h3>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Kelola profil usaha, banner utama, rating pelanggan, galeri foto, dan pertanyaan FAQ
+                </p>
+              </div>
+            </div>
+
+            {/* Sub-tab Pills Selector for Operasional & CMS Web Publik */}
+            <div className="scrollable-tabs-bar" style={{ marginBottom: '20px' }}>
+              <button
+                type="button"
+                className={`scrollable-tab-btn ${cmsSubTab === 'profile' ? 'active' : ''}`}
+                onClick={() => setCmsSubTab('profile')}
+              >
+                <i className="fa-solid fa-store"></i> 1. Profil Usaha & Kontak
+              </button>
+              <button
+                type="button"
+                className={`scrollable-tab-btn ${cmsSubTab === 'hero' ? 'active' : ''}`}
+                onClick={() => setCmsSubTab('hero')}
+              >
+                <i className="fa-solid fa-pen-to-square"></i> 2. Banner Hero & Rating
+              </button>
+              <button
+                type="button"
+                className={`scrollable-tab-btn ${cmsSubTab === 'gallery' ? 'active' : ''}`}
+                onClick={() => setCmsSubTab('gallery')}
+              >
+                <i className="fa-solid fa-images"></i> 3. Galeri Foto Web
+              </button>
+              <button
+                type="button"
+                className={`scrollable-tab-btn ${cmsSubTab === 'faqs' ? 'active' : ''}`}
+                onClick={() => setCmsSubTab('faqs')}
+              >
+                <i className="fa-solid fa-circle-question"></i> 4. FAQ Manager
+              </button>
+            </div>
 
             <form onSubmit={handleSaveBizSettings}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="biz-name">
-                  <i className="fa-solid fa-building" style={{ marginRight: '6px' }}></i> Nama Rental
-                </label>
-                <input
-                  id="biz-name"
-                  type="text"
-                  className="form-control"
-                  value={bizForm.name}
-                  onChange={e => setBizForm(p => ({ ...p, name: e.target.value }))}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="biz-location">
-                  <i className="fa-solid fa-location-dot" style={{ marginRight: '6px' }}></i> Lokasi Alamat Store
-                </label>
-                <input
-                  id="biz-location"
-                  type="text"
-                  className="form-control"
-                  value={bizForm.location}
-                  onChange={e => setBizForm(p => ({ ...p, location: e.target.value }))}
-                />
-              </div>
-
-              <div className="form-row cols-2">
-                <div className="form-group">
-                  <label className="form-label" htmlFor="biz-ig-handle">
-                    <i className="fa-brands fa-instagram" style={{ marginRight: '6px', color: '#E1306C' }}></i> Instagram Handle
-                  </label>
-                  <input
-                    id="biz-ig-handle"
-                    type="text"
-                    className="form-control"
-                    placeholder="@bossrentpererenan"
-                    value={bizForm.instagramHandle}
-                    onChange={e => setBizForm(p => ({ ...p, instagramHandle: e.target.value }))}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="biz-ig-url">
-                    <i className="fa-solid fa-link" style={{ marginRight: '6px' }}></i> Instagram Profile Link
-                  </label>
-                  <input
-                    id="biz-ig-url"
-                    type="text"
-                    className="form-control"
-                    placeholder="https://instagram.com/..."
-                    value={bizForm.instagramUrl}
-                    onChange={e => setBizForm(p => ({ ...p, instagramUrl: e.target.value }))}
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="biz-tagline">
-                  <i className="fa-solid fa-bullhorn" style={{ marginRight: '6px', color: '#E85D04' }}></i> Tagline Running Announcement Web Publik
-                </label>
-                <input
-                  id="biz-tagline"
-                  type="text"
-                  className="form-control"
-                  value={bizForm.tagline}
-                  onChange={e => setBizForm(p => ({ ...p, tagline: e.target.value }))}
-                />
-              </div>
-
-              <div className="form-row cols-2">
-                <div className="form-group">
-                  <label className="form-label" htmlFor="biz-phone">
-                    <i className="fa-solid fa-phone" style={{ marginRight: '6px' }}></i> WhatsApp Admin
-                  </label>
-                  <input
-                    id="biz-phone"
-                    type="text"
-                    className="form-control"
-                    value={bizForm.phone}
-                    onChange={e => setBizForm(p => ({ ...p, phone: e.target.value }))}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="biz-deposit">
-                    <i className="fa-solid fa-vault" style={{ marginRight: '6px' }}></i> Default Deposit (Rp)
-                  </label>
-                  <input
-                    id="biz-deposit"
-                    type="number"
-                    className="form-control"
-                    value={bizForm.defaultDeposit}
-                    onChange={e => setBizForm(p => ({ ...p, defaultDeposit: parseInt(e.target.value) || 0 }))}
-                  />
-                </div>
-              </div>
-
-              {/* ── CMS LANDING PAGE CONTENT EDITOR ── */}
-              <div style={{ borderTop: '1px solid var(--bg-border)', marginTop: '24px', paddingTop: '20px' }}>
-                <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--brand-primary-light)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <i className="fa-solid fa-pen-to-square"></i> Edit Konten Hero Banner Web Publik
-                </h4>
-
-                <div className="form-group">
-                  <label className="form-label" htmlFor="cms-hero-title">
-                    <i className="fa-solid fa-heading" style={{ marginRight: '6px' }}></i> Judul Utama Hero Banner (H1)
-                  </label>
-                  <input
-                    id="cms-hero-title"
-                    type="text"
-                    className="form-control"
-                    value={bizForm.heroTitle || ''}
-                    onChange={e => setBizForm(p => ({ ...p, heroTitle: e.target.value }))}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label" htmlFor="cms-hero-subtitle">
-                    <i className="fa-solid fa-align-left" style={{ marginRight: '6px' }}></i> Subtitle Deskripsi Banner
-                  </label>
-                  <textarea
-                    id="cms-hero-subtitle"
-                    className="form-control"
-                    rows={2}
-                    value={bizForm.heroSubtitle || ''}
-                    onChange={e => setBizForm(p => ({ ...p, heroSubtitle: e.target.value }))}
-                  />
-                </div>
-
-                {/* Live Metrics Setup */}
-                <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--brand-primary-light)', marginTop: '20px', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <i className="fa-solid fa-chart-simple"></i> Setup Angka Statistik & Rating Pelanggan
-                </h4>
-
-                <div className="form-row cols-2 mb-4">
+              {/* SUB-TAB 1: PROFIL USAHA & KONTAK */}
+              {cmsSubTab === 'profile' && (
+                <div>
                   <div className="form-group">
-                    <label className="form-label" htmlFor="cms-rating">
-                      <i className="fa-solid fa-star" style={{ color: '#F59E0B', marginRight: '6px' }}></i> Google Rating Score
+                    <label className="form-label" htmlFor="biz-name">
+                      <i className="fa-solid fa-building" style={{ marginRight: '6px' }}></i> Nama Rental
                     </label>
                     <input
-                      id="cms-rating"
-                      type="number"
-                      step="0.1"
-                      min="1"
-                      max="5"
+                      id="biz-name"
+                      type="text"
                       className="form-control"
-                      value={bizForm.rating || 5.0}
-                      onChange={e => setBizForm(p => ({ ...p, rating: parseFloat(e.target.value) || 5.0 }))}
+                      value={bizForm.name}
+                      onChange={e => setBizForm(p => ({ ...p, name: e.target.value }))}
+                      required
                     />
                   </div>
+
                   <div className="form-group">
-                    <label className="form-label" htmlFor="cms-reviews">
-                      <i className="fa-solid fa-comments" style={{ marginRight: '6px' }}></i> Total Google Reviews
+                    <label className="form-label" htmlFor="biz-location">
+                      <i className="fa-solid fa-location-dot" style={{ marginRight: '6px' }}></i> Lokasi Alamat Store
                     </label>
                     <input
-                      id="cms-reviews"
-                      type="number"
+                      id="biz-location"
+                      type="text"
                       className="form-control"
-                      value={bizForm.reviewsCount || 24}
-                      onChange={e => setBizForm(p => ({ ...p, reviewsCount: parseInt(e.target.value) || 0 }))}
+                      value={bizForm.location}
+                      onChange={e => setBizForm(p => ({ ...p, location: e.target.value }))}
                     />
                   </div>
-                </div>
 
-                <div className="form-row cols-2 mb-4">
+                  <div className="form-row cols-2">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="biz-ig-handle">
+                        <i className="fa-brands fa-instagram" style={{ marginRight: '6px', color: '#E1306C' }}></i> Instagram Handle
+                      </label>
+                      <input
+                        id="biz-ig-handle"
+                        type="text"
+                        className="form-control"
+                        placeholder="@bossrentpererenan"
+                        value={bizForm.instagramHandle}
+                        onChange={e => setBizForm(p => ({ ...p, instagramHandle: e.target.value }))}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="biz-ig-url">
+                        <i className="fa-solid fa-link" style={{ marginRight: '6px' }}></i> Instagram Profile Link
+                      </label>
+                      <input
+                        id="biz-ig-url"
+                        type="text"
+                        className="form-control"
+                        placeholder="https://instagram.com/..."
+                        value={bizForm.instagramUrl}
+                        onChange={e => setBizForm(p => ({ ...p, instagramUrl: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
                   <div className="form-group">
-                    <label className="form-label" htmlFor="cms-satisfaction">
-                      <i className="fa-solid fa-face-smile" style={{ color: '#22C55E', marginRight: '6px' }}></i> Customer Satisfaction (%)
+                    <label className="form-label" htmlFor="biz-tagline">
+                      <i className="fa-solid fa-bullhorn" style={{ marginRight: '6px', color: '#E85D04' }}></i> Tagline Running Announcement Web Publik
                     </label>
                     <input
-                      id="cms-satisfaction"
-                      type="number"
-                      min="1"
-                      max="100"
+                      id="biz-tagline"
+                      type="text"
                       className="form-control"
-                      value={bizForm.satisfactionPercent || 100}
-                      onChange={e => setBizForm(p => ({ ...p, satisfactionPercent: parseInt(e.target.value) || 100 }))}
+                      value={bizForm.tagline}
+                      onChange={e => setBizForm(p => ({ ...p, tagline: e.target.value }))}
                     />
                   </div>
+
+                  <div className="form-row cols-2">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="biz-phone">
+                        <i className="fa-solid fa-phone" style={{ marginRight: '6px' }}></i> WhatsApp Admin
+                      </label>
+                      <input
+                        id="biz-phone"
+                        type="text"
+                        className="form-control"
+                        value={bizForm.phone}
+                        onChange={e => setBizForm(p => ({ ...p, phone: e.target.value }))}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="biz-deposit">
+                        <i className="fa-solid fa-vault" style={{ marginRight: '6px' }}></i> Default Deposit (Rp)
+                      </label>
+                      <input
+                        id="biz-deposit"
+                        type="number"
+                        className="form-control"
+                        value={bizForm.defaultDeposit}
+                        onChange={e => setBizForm(p => ({ ...p, defaultDeposit: parseInt(e.target.value) || 0 }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* SUB-TAB 2: BANNER HERO & RATING STATS */}
+              {cmsSubTab === 'hero' && (
+                <div>
                   <div className="form-group">
-                    <label className="form-label" htmlFor="cms-scooters">
-                      <i className="fa-solid fa-motorcycle" style={{ color: '#E85D04', marginRight: '6px' }}></i> Clean Scooters Fleet Count
+                    <label className="form-label" htmlFor="cms-hero-title">
+                      <i className="fa-solid fa-heading" style={{ marginRight: '6px' }}></i> Judul Utama Hero Banner (H1)
                     </label>
                     <input
-                      id="cms-scooters"
-                      type="number"
+                      id="cms-hero-title"
+                      type="text"
                       className="form-control"
-                      value={bizForm.cleanScootersCount || 50}
-                      onChange={e => setBizForm(p => ({ ...p, cleanScootersCount: parseInt(e.target.value) || 50 }))}
+                      value={bizForm.heroTitle || ''}
+                      onChange={e => setBizForm(p => ({ ...p, heroTitle: e.target.value }))}
                     />
                   </div>
-                </div>
 
-                {/* FAQ Manager */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', marginBottom: '14px' }}>
-                  <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--brand-primary-light)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <i className="fa-solid fa-circle-question"></i> Kelola Pertanyaan FAQ (Public Web)
-                  </h4>
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={handleAddFaq}>
-                    <i className="fa-solid fa-plus" style={{ marginRight: '4px' }}></i> Tambah FAQ Baru
-                  </button>
-                </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="cms-hero-subtitle">
+                      <i className="fa-solid fa-align-left" style={{ marginRight: '6px' }}></i> Subtitle Deskripsi Banner
+                    </label>
+                    <textarea
+                      id="cms-hero-subtitle"
+                      className="form-control"
+                      rows={3}
+                      value={bizForm.heroSubtitle || ''}
+                      onChange={e => setBizForm(p => ({ ...p, heroSubtitle: e.target.value }))}
+                    />
+                  </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {(bizForm.faqs || []).map((faq, idx) => (
-                    <div key={idx} style={{ background: 'var(--bg-elevated)', padding: '14px', borderRadius: '10px', border: '1px solid var(--bg-border)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--brand-primary-light)' }}>
-                          FAQ #{idx + 1}
-                        </span>
+                  <div className="form-row cols-2 mb-4">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="cms-rating">
+                        <i className="fa-solid fa-star" style={{ color: '#F59E0B', marginRight: '6px' }}></i> Google Rating Score
+                      </label>
+                      <input
+                        id="cms-rating"
+                        type="number"
+                        step="0.1"
+                        min="1"
+                        max="5"
+                        className="form-control"
+                        value={bizForm.rating || 5.0}
+                        onChange={e => setBizForm(p => ({ ...p, rating: parseFloat(e.target.value) || 5.0 }))}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="cms-reviews">
+                        <i className="fa-solid fa-comments" style={{ marginRight: '6px' }}></i> Total Google Reviews
+                      </label>
+                      <input
+                        id="cms-reviews"
+                        type="number"
+                        className="form-control"
+                        value={bizForm.reviewsCount || 24}
+                        onChange={e => setBizForm(p => ({ ...p, reviewsCount: parseInt(e.target.value) || 0 }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-row cols-2 mb-4">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="cms-satisfaction">
+                        <i className="fa-solid fa-face-smile" style={{ color: '#22C55E', marginRight: '6px' }}></i> Customer Satisfaction (%)
+                      </label>
+                      <input
+                        id="cms-satisfaction"
+                        type="number"
+                        min="1"
+                        max="100"
+                        className="form-control"
+                        value={bizForm.satisfactionPercent || 100}
+                        onChange={e => setBizForm(p => ({ ...p, satisfactionPercent: parseInt(e.target.value) || 100 }))}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="cms-scooters">
+                        <i className="fa-solid fa-motorcycle" style={{ color: '#E85D04', marginRight: '6px' }}></i> Clean Scooters Fleet Count
+                      </label>
+                      <input
+                        id="cms-scooters"
+                        type="number"
+                        className="form-control"
+                        value={bizForm.cleanScootersCount || 50}
+                        onChange={e => setBizForm(p => ({ ...p, cleanScootersCount: parseInt(e.target.value) || 50 }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* SUB-TAB 3: GALERI FOTO WEB SHOWCASE */}
+              {cmsSubTab === 'gallery' && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--brand-primary-light)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <i className="fa-solid fa-images"></i> Kelola Foto Showcase Web Pelanggan
+                    </h4>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={handleAddGalleryPhoto}>
+                      <i className="fa-solid fa-plus" style={{ marginRight: '4px' }}></i> Tambah Foto Baru
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {(bizForm.galleryPhotos || []).map((photo, idx) => (
+                      <div key={idx} style={{ background: 'var(--bg-elevated)', padding: '14px', borderRadius: '10px', border: '1px solid var(--bg-border)', display: 'grid', gridTemplateColumns: '80px 1fr auto', gap: '14px', alignItems: 'center' }}>
+                        <img src={photo.url} alt={photo.title} style={{ width: '80px', height: '60px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--bg-border)' }} />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <input
+                            type="text"
+                            className="form-control"
+                            style={{ fontSize: '12px' }}
+                            placeholder="Judul Foto (Title)..."
+                            value={photo.title}
+                            onChange={e => handleUpdateGalleryPhoto(idx, 'title', e.target.value)}
+                          />
+                          <input
+                            type="text"
+                            className="form-control"
+                            style={{ fontSize: '11px' }}
+                            placeholder="URL / Path Foto (/images/...)"
+                            value={photo.url}
+                            onChange={e => handleUpdateGalleryPhoto(idx, 'url', e.target.value)}
+                          />
+                        </div>
                         <button
                           type="button"
-                          onClick={() => handleDeleteFaq(idx)}
+                          onClick={() => handleDeleteGalleryPhoto(idx)}
                           style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}
                         >
-                          <i className="fa-solid fa-trash-can" style={{ marginRight: '4px' }}></i> Hapus
+                          <i className="fa-solid fa-trash-can"></i>
                         </button>
                       </div>
-                      <div className="form-group" style={{ marginBottom: '8px' }}>
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="Judul Pertanyaan (English)..."
-                          value={faq.q}
-                          onChange={e => handleUpdateFaq(idx, 'q', e.target.value)}
-                        />
-                      </div>
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <textarea
-                          className="form-control"
-                          rows={2}
-                          placeholder="Jawaban Penjelasan (English)..."
-                          value={faq.a}
-                          onChange={e => handleUpdateFaq(idx, 'a', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div style={{ marginTop: '24px' }}>
+              {/* SUB-TAB 4: FAQ MANAGER */}
+              {cmsSubTab === 'faqs' && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--brand-primary-light)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <i className="fa-solid fa-circle-question"></i> Kelola Pertanyaan FAQ (Public Web)
+                    </h4>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={handleAddFaq}>
+                      <i className="fa-solid fa-plus" style={{ marginRight: '4px' }}></i> Tambah FAQ Baru
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {(bizForm.faqs || []).map((faq, idx) => (
+                      <div key={idx} style={{ background: 'var(--bg-elevated)', padding: '14px', borderRadius: '10px', border: '1px solid var(--bg-border)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--brand-primary-light)' }}>
+                            FAQ #{idx + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteFaq(idx)}
+                            style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}
+                          >
+                            <i className="fa-solid fa-trash-can" style={{ marginRight: '4px' }}></i> Hapus
+                          </button>
+                        </div>
+                        <div className="form-group" style={{ marginBottom: '8px' }}>
+                          <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Judul Pertanyaan (English)..."
+                            value={faq.q}
+                            onChange={e => handleUpdateFaq(idx, 'q', e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                          <textarea
+                            className="form-control"
+                            rows={2}
+                            placeholder="Jawaban Penjelasan (English)..."
+                            value={faq.a}
+                            onChange={e => handleUpdateFaq(idx, 'a', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ marginTop: '24px', borderTop: '1px solid var(--bg-border)', paddingTop: '16px' }}>
                 <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-                  <i className="fa-solid fa-floppy-disk" style={{ marginRight: '6px' }}></i> Simpan Konfigurasi Operasional & Web Publik
+                  <i className="fa-solid fa-floppy-disk" style={{ marginRight: '6px' }}></i> Simpan Pengaturan CMS Web Publik
                 </button>
               </div>
             </form>

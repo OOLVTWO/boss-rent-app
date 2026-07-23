@@ -182,8 +182,8 @@ export default function SharpSquareBusinessWebsitePage() {
     }
   ];
 
-  // 9 Clean Scooter & Service Showcase Photos for Tight Bento Matrix Grid
-  const bentoPhotos = [
+  // Bento showcase grid photos (Loads dynamically from admin panel CMS if present)
+  const bentoPhotos = Array.isArray(biz.galleryPhotos) && biz.galleryPhotos.length > 0 ? biz.galleryPhotos : [
     {
       url: '/images/boss_rent_customer_bali.png',
       title: 'Scooter Rental in Pererenan',
@@ -278,6 +278,7 @@ export default function SharpSquareBusinessWebsitePage() {
           cleanScootersCount: parsed.cleanScootersCount ? parseInt(parsed.cleanScootersCount) : prev.cleanScootersCount,
           instagramUrl: parsed.instagramUrl || prev.instagramUrl,
           instagramHandle: parsed.instagramHandle || prev.instagramHandle,
+          galleryPhotos: Array.isArray(parsed.galleryPhotos) && parsed.galleryPhotos.length > 0 ? parsed.galleryPhotos : prev.galleryPhotos
         }));
 
         if (Array.isArray(parsed.faqs) && parsed.faqs.length > 0) {
