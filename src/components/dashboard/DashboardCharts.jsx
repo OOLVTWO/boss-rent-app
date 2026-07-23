@@ -161,34 +161,44 @@ export default function DashboardCharts({ transactions, vehicles }) {
           </div>
         ) : (
           <div className="bento-fleet-status-row">
-            {/* Pie Chart Visual */}
-            <div className="bento-pie-container">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={vehicleStats.chartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
-                    paddingAngle={6}
-                    dataKey="value"
-                  >
-                    {vehicleStats.chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      background: '#1A1A26',
-                      border: '1px solid rgba(255,255,255,0.15)',
-                      borderRadius: '10px',
-                      fontSize: '12px',
-                      color: '#F0F0F5',
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+            {/* Pie Chart Visual with Center Donut Count */}
+            <div className="bento-pie-container" style={{ position: 'relative', width: '220px', height: '200px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <PieChart width={220} height={200}>
+                <Pie
+                  data={vehicleStats.chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={55}
+                  outerRadius={80}
+                  paddingAngle={vehicleStats.chartData.length > 1 ? 6 : 0}
+                  dataKey="value"
+                >
+                  {vehicleStats.chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(val, name) => [`${val} Unit`, name]}
+                  contentStyle={{
+                    background: '#1A1A26',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    borderRadius: '10px',
+                    fontSize: '12px',
+                    color: '#F0F0F5',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.5)'
+                  }}
+                />
+              </PieChart>
+
+              {/* Center Donut Label */}
+              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
+                <div style={{ fontSize: '22px', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>
+                  {vehicleStats.total}
+                </div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 700, marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Armada
+                </div>
+              </div>
             </div>
 
             {/* Status Breakdown Cards */}
