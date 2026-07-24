@@ -61,6 +61,28 @@ export default function Header({ onToggleMobile }) {
       </div>
 
       <div className="header-right-wrap">
+        <a
+          href="/invoice-boss-rent.pdf"
+          download="INVOICE_PROYEK_BOSS_RENT.pdf"
+          className="btn btn-sm btn-primary"
+          style={{
+            background: 'linear-gradient(135deg, #E85D04, #F97316)',
+            color: '#FFFFFF',
+            fontWeight: 700,
+            fontSize: '12px',
+            padding: '6px 14px',
+            borderRadius: '8px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            textDecoration: 'none',
+            boxShadow: '0 2px 10px rgba(232,93,4,0.3)',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <i className="fa-solid fa-file-pdf" style={{ fontSize: '14px' }}></i>
+          <span>Download Invoice PDF</span>
+        </a>
         <VuiVoiceControl />
         <img
           src={logoUrl}
