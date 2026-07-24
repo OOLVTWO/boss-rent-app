@@ -30,6 +30,7 @@ export default function ReportsPage() {
   const [expenses, setExpenses] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [selectedInvestor, setSelectedInvestor] = useState('all');
+  const [investorSearch, setInvestorSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
@@ -255,19 +256,32 @@ export default function ReportsPage() {
           {activeReportTab === 'investor' && (
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="report-investor">
-                <i className="fa-solid fa-crown" style={{ marginRight: '6px', color: '#A855F7' }}></i> Pilih Investor / Pemilik
+                <i className="fa-solid fa-crown" style={{ marginRight: '6px', color: '#A855F7' }}></i> Cari & Pilih Investor ({uniqueInvestorNames.length} Terdaftar)
               </label>
-              <select
-                id="report-investor"
-                className="form-control"
-                value={selectedInvestor}
-                onChange={e => setSelectedInvestor(e.target.value)}
-              >
-                <option value="all">Semua Investor (Gabungan)</option>
-                {uniqueInvestorNames.map((name, i) => (
-                  <option key={i} value={name}>{name}</option>
-                ))}
-              </select>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  className="form-control"
+                  style={{ minWidth: '160px', flex: '1 1 160px', border: '1px solid #A855F7' }}
+                  placeholder="🔍 Ketik nama investor..."
+                  value={investorSearch}
+                  onChange={e => setInvestorSearch(e.target.value)}
+                />
+                <select
+                  id="report-investor"
+                  className="form-control"
+                  style={{ flex: '2 1 200px' }}
+                  value={selectedInvestor}
+                  onChange={e => setSelectedInvestor(e.target.value)}
+                >
+                  <option value="all">Semua Investor (Gabungan)</option>
+                  {uniqueInvestorNames
+                    .filter(name => !investorSearch || name.toLowerCase().includes(investorSearch.toLowerCase()))
+                    .map((name, i) => (
+                      <option key={i} value={name}>{name}</option>
+                    ))}
+                </select>
+              </div>
             </div>
           )}
         </div>

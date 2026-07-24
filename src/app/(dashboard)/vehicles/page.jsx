@@ -480,16 +480,42 @@ function VehicleModal({ isOpen, onClose, onSubmit, editData, onOpenAdjuster }) {
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="v-cat">
-                <i className="fa-solid fa-motorcycle" style={{ marginRight: '6px' }}></i> Merek Motor <span className="required">*</span>
+                <i className="fa-solid fa-motorcycle" style={{ marginRight: '6px' }}></i> Merek / Kategori Motor <span className="required">*</span>
               </label>
-              <select id="v-cat" name="category" className="form-control" value={form.category} onChange={handleChange} required>
+              <select
+                id="v-cat"
+                name="category"
+                className="form-control"
+                value={['honda', 'yamaha', 'suzuki', 'kawasaki', 'vespa'].includes(form.category?.toLowerCase()) ? form.category.toLowerCase() : 'custom'}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (val === 'custom') {
+                    setForm(p => ({ ...p, category: '' }));
+                  } else {
+                    setForm(p => ({ ...p, category: val }));
+                  }
+                }}
+                required
+              >
                 <option value="honda">Honda</option>
                 <option value="yamaha">Yamaha</option>
                 <option value="suzuki">Suzuki</option>
                 <option value="kawasaki">Kawasaki</option>
                 <option value="vespa">Vespa / Piaggio</option>
-                <option value="other">Merek Lain</option>
+                <option value="custom">✏️ + Tambah Merek Baru / Custom...</option>
               </select>
+
+              {!['honda', 'yamaha', 'suzuki', 'kawasaki', 'vespa'].includes(form.category?.toLowerCase()) && (
+                <input
+                  type="text"
+                  className="form-control"
+                  style={{ marginTop: '8px', border: '1px solid #A855F7' }}
+                  placeholder="Ketik merek motor baru (e.g. Aprilia, BMW, Royal Enfield)..."
+                  value={form.category}
+                  onChange={e => setForm(p => ({ ...p, category: e.target.value }))}
+                  required
+                />
+              )}
             </div>
           </div>
 
