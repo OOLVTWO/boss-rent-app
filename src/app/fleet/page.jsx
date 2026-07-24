@@ -54,8 +54,9 @@ export default function SharpSquareBusinessWebsitePage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Bento gallery show more state (limit initial display to 5 photos)
+  // Bento gallery & fleet show more state (limit initial display to 6 cards)
   const [showAllPhotos, setShowAllPhotos] = useState(false);
+  const [showAllFleet, setShowAllFleet] = useState(false);
 
   // Business & CMS Landing Page State (Loads dynamically from admin panel settings)
   const [biz, setBiz] = useState({
@@ -380,6 +381,17 @@ export default function SharpSquareBusinessWebsitePage() {
     e.currentTarget.src = '/images/boss_rent_fleet_lineup.png';
   };
 
+  // Dynamic categories automatically extracted from vehicles
+  const dynamicCategories = ['all'];
+  vehicles.forEach(v => {
+    if (v.category) {
+      const cat = String(v.category).trim().toLowerCase();
+      if (cat && !dynamicCategories.includes(cat)) {
+        dynamicCategories.push(cat);
+      }
+    }
+  });
+
   const filtered = vehicles.filter(v => {
     const matchesCat = selectedCategory === 'all' || (v.category && v.category.toLowerCase() === selectedCategory.toLowerCase());
     const matchesSearch = v.name.toLowerCase().includes(search.toLowerCase()) || (v.plate_number && v.plate_number.toLowerCase().includes(search.toLowerCase()));
@@ -665,27 +677,29 @@ export default function SharpSquareBusinessWebsitePage() {
           </div>
 
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-            {[
-              { id: 'all', label: 'All Scooters' },
-              { id: 'honda', label: 'Honda' },
-              { id: 'yamaha', label: 'Yamaha' },
-              { id: 'vespa', label: 'Vespa' },
-            ].map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className="sharp-btn"
-                style={{
-                  padding: '8px 18px',
-                  fontSize: '12px',
-                  background: selectedCategory === cat.id ? '#E85D04' : '#FFFFFF',
-                  color: selectedCategory === cat.id ? '#fff' : '#0F172A',
-                  cursor: 'pointer'
-                }}
-              >
-                {cat.label}
-              </button>
-            ))}
+            {dynamicCategories.map(catId => {
+              const label = catId === 'all'
+                ? 'All Scooters'
+                : catId.charAt(0).toUpperCase() + catId.slice(1);
+
+              return (
+                <button
+                  key={catId}
+                  onClick={() => { setSelectedCategory(catId); setShowAllFleet(false); }}
+                  className="sharp-btn"
+                  style={{
+                    padding: '8px 18px',
+                    fontSize: '12px',
+                    background: selectedCategory === catId ? '#E85D04' : '#FFFFFF',
+                    color: selectedCategory === catId ? '#fff' : '#0F172A',
+                    cursor: 'pointer',
+                    textTransform: 'capitalize'
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
 
             <input
               type="text"
@@ -710,8 +724,9 @@ export default function SharpSquareBusinessWebsitePage() {
             <div style={{ fontSize: '12px', color: '#64748B', marginTop: '4px' }}>Please select another brand category or clear search.</div>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
-            {filtered.map(vehicle => {
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+              {(showAllFleet ? filtered : filtered.slice(0, 6)).map(vehicle => {
               const estimate = calculateEstimate(vehicle);
               const isAvailable = vehicle.status === 'available';
 
@@ -829,6 +844,33 @@ export default function SharpSquareBusinessWebsitePage() {
               );
             })}
           </div>
+
+            {/* SEE MORE FLEET BUTTON (Triggers when filtered fleet > 6) */}
+            {filtered.length > 6 && (
+              <div style={{ textAlign: 'center', marginTop: '36px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAllFleet(!showAllFleet)}
+                  className="sharp-btn"
+                  style={{
+                    background: '#0F172A',
+                    color: '#FFFFFF',
+                    padding: '14px 36px',
+                    fontSize: '14px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.15)'
+                  }}
+                >
+                  <span>{showAllFleet ? 'Show Less Scooters' : `See More Fleet (${filtered.length - 6} More Scooters)`}</span>
+                  <i className={`fa-solid ${showAllFleet ? 'fa-chevron-up' : 'fa-chevron-down'}`} style={{ color: '#E85D04' }}></i>
+                </button>
+              </div>
+            )}
+          </>
         )}
       </main>
 
