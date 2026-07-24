@@ -2,7 +2,7 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
 
-function createInvoicePDF({ isDiscounted, filename }) {
+function createInvoicePDF({ isDiscounted, isPaid, filename }) {
   const outPath = path.join(process.cwd(), 'public', filename);
   const doc = new PDFDocument({ margin: 40, size: 'A4' });
   const writeStream = fs.createWriteStream(outPath);
@@ -10,9 +10,10 @@ function createInvoicePDF({ isDiscounted, filename }) {
 
   const PRIMARY = '#0F172A';
   const ACCENT = '#E85D04';
+  const GREEN = '#16A34A';
   const TEXT_MUTED = '#64748B';
 
-  // 1. Header Section (100px height for zero overlap)
+  // 1. Header Section (95px height for zero overlap)
   doc.rect(0, 0, 595.28, 95).fill(PRIMARY);
 
   doc.fillColor('#FFFFFF')
@@ -33,8 +34,19 @@ function createInvoicePDF({ isDiscounted, filename }) {
      .fontSize(8.5)
      .font('Helvetica')
      .text('No: INV/2026/07/BR-001', 350, 40, { width: 205, align: 'right' })
-     .text('Tgl: 24 Juli 2026', 350, 52, { width: 205, align: 'right' })
-     .text('Status: Live Deployed', 350, 64, { width: 205, align: 'right' });
+     .text('Tgl: 24 Juli 2026', 350, 52, { width: 205, align: 'right' });
+
+  if (isPaid) {
+    doc.fillColor('#4ADE80')
+       .fontSize(9)
+       .font('Helvetica-Bold')
+       .text('Status: LUNAS / PAID IN FULL', 350, 64, { width: 205, align: 'right' });
+  } else {
+    doc.fillColor('#FCA5A5')
+       .fontSize(8.5)
+       .font('Helvetica')
+       .text('Status: Belum Lunas (Pending)', 350, 64, { width: 205, align: 'right' });
+  }
 
   // 2. Client & Project Info
   doc.y = 115;
@@ -107,12 +119,26 @@ function createInvoicePDF({ isDiscounted, filename }) {
     doc.fillColor(TEXT_MUTED).fontSize(8.5).font('Helvetica-Oblique').text('( Terbilang: Tujuh Juta Lima Ratus Ribu Rupiah — Standard Enterprise Rate )', 55, summaryY + 48);
   }
 
-  // 5. Payment Method Footer
+  // Large Stamp for PAID status
+  if (isPaid) {
+    doc.save();
+    doc.rotate(-12, { origin: [460, summaryY + 30] });
+    doc.rect(380, summaryY + 15, 150, 36).fillAndStroke('#DCFCE7', GREEN);
+    doc.fillColor(GREEN).fontSize(13).font('Helvetica-Bold').text('LUNAS / PAID', 380, summaryY + 26, { width: 150, align: 'center' });
+    doc.restore();
+  }
+
+  // 5. Payment Method & Status Footer
   doc.y = summaryY + boxHeight + 20;
-  doc.fillColor(PRIMARY).fontSize(10).font('Helvetica-Bold').text('Metode Pembayaran:', 40, doc.y);
+  doc.fillColor(PRIMARY).fontSize(10).font('Helvetica-Bold').text('Status & Metode Pembayaran:', 40, doc.y);
   doc.fontSize(9).font('Helvetica').fillColor('#334155');
-  doc.text(`Pembayaran ${isDiscounted ? 'Rp 500.000' : 'Rp 7.500.000'} dapat ditransfer via Transfer Bank / QRIS / Cash.`);
-  doc.text('Status Invoice: Pending Payment (Menunggu Pelunasan)');
+  doc.text(`Jumlah Tagihan: ${isDiscounted ? 'Rp 500.000' : 'Rp 7.500.000'} (Transfer Bank / QRIS / Cash)`);
+
+  if (isPaid) {
+    doc.fillColor(GREEN).font('Helvetica-Bold').text('Status Pembayaran: LUNAS / PAID IN FULL (Telah Dilunasi)');
+  } else {
+    doc.fillColor('#DC2626').font('Helvetica-Bold').text('Status Pembayaran: Menunggu Pelunasan (Pending Payment)');
+  }
 
   doc.moveDown(1.5);
   doc.fontSize(8.5).fillColor(TEXT_MUTED).font('Helvetica-Oblique').text('Terima kasih atas kepercayaan Boss Rent Pererenan. Semoga sistem ini membawa kemajuan pesat untuk bisnis Anda!', { align: 'center' });
@@ -120,9 +146,14 @@ function createInvoicePDF({ isDiscounted, filename }) {
   doc.end();
 }
 
-// Generate 3 files
-createInvoicePDF({ isDiscounted: true, filename: 'invoice-boss-rent-500k.pdf' });
-createInvoicePDF({ isDiscounted: false, filename: 'invoice-boss-rent-7.5jt.pdf' });
-createInvoicePDF({ isDiscounted: true, filename: 'invoice-boss-rent.pdf' });
+// Generate all 4 invoice variations
+createInvoicePDF({ isDiscounted: true, isPaid: true, filename: 'invoice-boss-rent-500k-lunas.pdf' });
+createInvoicePDF({ isDiscounted: false, isPaid: true, filename: 'invoice-boss-rent-7.5jt-lunas.pdf' });
+createInvoicePDF({ isDiscounted: true, isPaid: false, filename: 'invoice-boss-rent-500k-belum-lunas.pdf' });
+createInvoicePDF({ isDiscounted: false, isPaid: false, filename: 'invoice-boss-rent-7.5jt-belum-lunas.pdf' });
 
-console.log('Generated both 500k and 7.5jt invoice PDFs successfully!');
+// Legacy compatibility aliases
+createInvoicePDF({ isDiscounted: true, isPaid: true, filename: 'invoice-boss-rent-500k.pdf' });
+createInvoicePDF({ isDiscounted: false, isPaid: true, filename: 'invoice-boss-rent-7.5jt.pdf' });
+
+console.log('Generated all paid and pending invoice variations successfully!');

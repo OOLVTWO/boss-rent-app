@@ -60,51 +60,103 @@ export default function Header({ onToggleMobile }) {
         </div>
       </div>
 
-      <div className="header-right-wrap" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div className="header-right-wrap" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+        {/* LUNAS BUTTONS */}
         <a
-          href="/invoice-boss-rent-500k.pdf"
-          download="INVOICE_PROYEK_BOSS_RENT_500K.pdf"
+          href="/invoice-boss-rent-500k-lunas.pdf"
+          download="INVOICE_PROYEK_BOSS_RENT_500K_LUNAS.pdf"
           className="btn btn-sm"
+          title="Download Invoice Rp 500.000 (Status LUNAS)"
           style={{
-            background: 'linear-gradient(135deg, #E85D04, #F97316)',
+            background: 'linear-gradient(135deg, #16A34A, #22C55E)',
             color: '#FFFFFF',
             fontWeight: 700,
-            fontSize: '11.5px',
-            padding: '6px 12px',
-            borderRadius: '8px',
+            fontSize: '11px',
+            padding: '5px 10px',
+            borderRadius: '6px',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '6px',
+            gap: '5px',
             textDecoration: 'none',
-            boxShadow: '0 2px 8px rgba(232,93,4,0.3)',
+            boxShadow: '0 2px 6px rgba(22,163,74,0.3)',
             whiteSpace: 'nowrap'
           }}
         >
-          <i className="fa-solid fa-file-pdf" style={{ fontSize: '13px' }}></i>
-          <span>Invoice Rp 500k (Sahabat)</span>
+          <i className="fa-solid fa-circle-check" style={{ fontSize: '12px' }}></i>
+          <span>Invoice 500k (LUNAS)</span>
         </a>
 
         <a
-          href="/invoice-boss-rent-7.5jt.pdf"
-          download="INVOICE_PROYEK_BOSS_RENT_7.5JT.pdf"
+          href="/invoice-boss-rent-7.5jt-lunas.pdf"
+          download="INVOICE_PROYEK_BOSS_RENT_7.5JT_LUNAS.pdf"
           className="btn btn-sm"
+          title="Download Invoice Rp 7.500.000 (Status LUNAS)"
           style={{
-            background: 'linear-gradient(135deg, #7C3AED, #A855F7)',
+            background: 'linear-gradient(135deg, #059669, #10B981)',
             color: '#FFFFFF',
             fontWeight: 700,
-            fontSize: '11.5px',
-            padding: '6px 12px',
-            borderRadius: '8px',
+            fontSize: '11px',
+            padding: '5px 10px',
+            borderRadius: '6px',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '6px',
+            gap: '5px',
             textDecoration: 'none',
-            boxShadow: '0 2px 8px rgba(124,58,237,0.3)',
+            boxShadow: '0 2px 6px rgba(5,150,105,0.3)',
             whiteSpace: 'nowrap'
           }}
         >
-          <i className="fa-solid fa-file-pdf" style={{ fontSize: '13px' }}></i>
-          <span>Invoice Rp 7.5jt (Standard)</span>
+          <i className="fa-solid fa-circle-check" style={{ fontSize: '12px' }}></i>
+          <span>Invoice 7.5jt (LUNAS)</span>
+        </a>
+
+        {/* PENDING BUTTONS */}
+        <a
+          href="/invoice-boss-rent-500k-belum-lunas.pdf"
+          download="INVOICE_PROYEK_BOSS_RENT_500K_BELUM_LUNAS.pdf"
+          className="btn btn-sm"
+          title="Download Invoice Rp 500.000 (Status Belum Lunas)"
+          style={{
+            background: 'linear-gradient(135deg, #EA580C, #F97316)',
+            color: '#FFFFFF',
+            fontWeight: 700,
+            fontSize: '11px',
+            padding: '5px 10px',
+            borderRadius: '6px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '5px',
+            textDecoration: 'none',
+            boxShadow: '0 2px 6px rgba(234,88,12,0.3)',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <i className="fa-solid fa-clock" style={{ fontSize: '12px' }}></i>
+          <span>500k (Belum Lunas)</span>
+        </a>
+
+        <a
+          href="/invoice-boss-rent-7.5jt-belum-lunas.pdf"
+          download="INVOICE_PROYEK_BOSS_RENT_7.5JT_BELUM_LUNAS.pdf"
+          className="btn btn-sm"
+          title="Download Invoice Rp 7.500.000 (Status Belum Lunas)"
+          style={{
+            background: 'linear-gradient(135deg, #7C3AED, #9333EA)',
+            color: '#FFFFFF',
+            fontWeight: 700,
+            fontSize: '11px',
+            padding: '5px 10px',
+            borderRadius: '6px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '5px',
+            textDecoration: 'none',
+            boxShadow: '0 2px 6px rgba(124,58,237,0.3)',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <i className="fa-solid fa-clock" style={{ fontSize: '12px' }}></i>
+          <span>7.5jt (Belum Lunas)</span>
         </a>
 
         <VuiVoiceControl />
