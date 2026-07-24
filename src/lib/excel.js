@@ -278,25 +278,25 @@ export function exportInvestorReportToExcel(investorData, filename = '') {
 
   // ── SHEET 1: RINGKASAN & KOP PERUSAHAAN (INVESTOR FINANCIAL STATEMENT) ──
   const summaryAoa = [
-    ['BOSS RENT PERERENAN — LAPORAN RESMI BAGI HASIL INVESTOR'],
-    ['Tanggal Laporan', new Date().toLocaleDateString('id-ID')],
+    ['LAPORAN RESMI BAGI HASIL INVESTOR — BOSS RENT PERERENAN'],
+    ['Tanggal Cetak Laporan', new Date().toLocaleDateString('id-ID')],
     [''],
-    ['INFORMASI INVESTOR & SKEMA BAGI HASIL'],
+    ['INFORMASI INVESTOR & SKEMA BAGI HASIL', ''],
     ['Nama Investor / Pemilik', invName],
-    ['Kontak WA / HP', investorData.contact || '-'],
+    ['Kontak WhatsApp / HP', investorData.contact || '-'],
     ['Jumlah Unit Motor Titipan', `${investorData.vehicles?.length || 0} Unit`],
-    ['Persentase Bagi Hasil', `${sharePct}% Investor / ${bossSharePct}% Boss Rent`],
+    ['Skema Bagi Hasil', `${sharePct}% Investor / ${bossSharePct}% Boss Rent`],
     [''],
-    ['PERHITUNGAN FINANSIAL & NET PAYOUT'],
+    ['RINGKASAN REKAPITULASI FINANSIAL', ''],
     ['Total Omset Kotor Sewa Motor (+)', formatRupiah(investorData.totalRevenue || 0)],
-    ['Total Potongan Biaya Servis/Perawatan (-)', formatRupiah(investorData.totalExpenses || 0)],
-    ['Laba Bersih Operasional Unit Motor', formatRupiah(investorData.netIncome || 0)],
+    ['Total Biaya Perawatan & Servis (-)', formatRupiah(investorData.totalExpenses || 0)],
+    ['Laba Bersih Operasional Motor', formatRupiah(investorData.netIncome || 0)],
     [''],
-    ['TRANSFER NET PAYOUT KE INVESTOR (' + sharePct + '%)', formatRupiah(investorData.investorPayout || 0)],
-    ['BAGIAN KOMISI BOSS RENT (' + bossSharePct + '%)', formatRupiah(investorData.bossRentShare || 0)],
+    [`TRANSFER NET PAYOUT KE INVESTOR (${sharePct}%)`, formatRupiah(investorData.investorPayout || 0)],
+    [`BAGIAN KOMISI BOSS RENT (${bossSharePct}%)`, formatRupiah(investorData.bossRentShare || 0)],
     [''],
-    ['DAFTAR UNIT MOTOR TITIPAN INVESTOR'],
-    ['No', 'Nama Motor', 'Plat Nomor', 'Tahun', 'Status Kepemilikan']
+    ['DAFTAR UNIT MOTOR TITIPAN INVESTOR', '', '', '', ''],
+    ['No', 'Nama Unit Motor', 'Plat Nomor', 'Tahun', 'Status Bagi Hasil']
   ];
 
   if (Array.isArray(investorData.vehicles)) {
@@ -306,13 +306,19 @@ export function exportInvestorReportToExcel(investorData, filename = '') {
         v.name,
         v.plate_number,
         v.year || '-',
-        'Titipan Investor (Bagi Hasil)'
+        `Titipan Investor (${sharePct}% / ${bossSharePct}%)`
       ]);
     });
   }
 
   const summarySheet = XLSX.utils.aoa_to_sheet(summaryAoa);
-  summarySheet['!cols'] = [{ wch: 8 }, { wch: 32 }, { wch: 20 }, { wch: 12 }, { wch: 28 }, { wch: 24 }];
+  summarySheet['!cols'] = [
+    { wch: 45 },
+    { wch: 32 },
+    { wch: 18 },
+    { wch: 12 },
+    { wch: 30 }
+  ];
   XLSX.utils.book_append_sheet(workbook, summarySheet, 'Ringkasan Bagi Hasil');
 
   // ── SHEET 2: DETAIL TRANSAKSI SEWA MOTOR INVESTOR ──
