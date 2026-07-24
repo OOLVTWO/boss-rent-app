@@ -502,19 +502,22 @@ function VehicleModal({ isOpen, onClose, onSubmit, editData, onOpenAdjuster }) {
                 <option value="suzuki">Suzuki</option>
                 <option value="kawasaki">Kawasaki</option>
                 <option value="vespa">Vespa / Piaggio</option>
-                <option value="custom">✏️ + Tambah Merek Baru / Custom...</option>
+                <option value="custom">+ Tambah Merek Baru / Custom...</option>
               </select>
 
               {!['honda', 'yamaha', 'suzuki', 'kawasaki', 'vespa'].includes(form.category?.toLowerCase()) && (
-                <input
-                  type="text"
-                  className="form-control"
-                  style={{ marginTop: '8px', border: '1px solid #A855F7' }}
-                  placeholder="Ketik merek motor baru (e.g. Aprilia, BMW, Royal Enfield)..."
-                  value={form.category}
-                  onChange={e => setForm(p => ({ ...p, category: e.target.value }))}
-                  required
-                />
+                <div style={{ position: 'relative', marginTop: '8px' }}>
+                  <i className="fa-solid fa-pen-to-square" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#A855F7', fontSize: '13px' }}></i>
+                  <input
+                    type="text"
+                    className="form-control"
+                    style={{ paddingLeft: '34px', border: '1px solid #A855F7' }}
+                    placeholder="Ketik merek motor baru (e.g. Aprilia, BMW, Royal Enfield)..."
+                    value={form.category}
+                    onChange={e => setForm(p => ({ ...p, category: e.target.value }))}
+                    required
+                  />
+                </div>
               )}
             </div>
           </div>
