@@ -6,6 +6,16 @@ Aplikasi ini dikembangkan menggunakan stack teknologi terbaik: **Next.js 16 (App
 
 ---
 
+## 🚀 AKSES WEB LIVE & AKUN LOGIN ADMIN
+
+- 🌐 **Katalog Utama Publik Customer**: [https://boss-rent-app.vercel.app](https://boss-rent-app.vercel.app)
+- 🔑 **Portal Login Admin Dashboard**: [https://boss-rent-app.vercel.app/login](https://boss-rent-app.vercel.app/login) (atau tambahkan `/dashboard`)
+- 👤 **Kredensial Login Admin Default**:
+  - **Email**: `admin@bossrent.com`
+  - **Password**: `RentPererenan!`
+
+---
+
 ## 🌟 FITUR UTAMA APLIKASI
 
 ### 🌐 1. Halaman Utama Katalog Publik Customer (`/fleet`)
