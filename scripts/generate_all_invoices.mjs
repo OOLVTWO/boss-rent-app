@@ -91,45 +91,59 @@ function createInvoicePDF({ isDiscounted, isPaid, filename }) {
     doc.strokeColor('#F1F5F9').lineWidth(0.5).moveTo(40, currentY - 6).lineTo(555, currentY - 6).stroke();
   });
 
-  // 4. Financial Calculation Summary Box
+  // 4. Financial Calculation Summary Box (Zero Overlap Layout)
   doc.y = currentY + 10;
   const summaryY = doc.y;
-  const boxHeight = isDiscounted ? 110 : 70;
-
-  doc.rect(40, summaryY, 515, boxHeight).fill('#F8FAFC');
-  doc.rect(40, summaryY, 515, boxHeight).strokeColor('#CBD5E1').lineWidth(1).stroke();
 
   if (isDiscounted) {
-    doc.fillColor('#334155').fontSize(9.5).font('Helvetica').text('Total Estimasi Nilai Pasar Standar (Enterprise Market Value) :', 55, summaryY + 18);
-    doc.fillColor('#334155').fontSize(9.5).font('Helvetica-Bold').text('Rp 7.500.000', 430, summaryY + 18, { align: 'right' });
+    const boxHeight = 115;
+    doc.rect(40, summaryY, 515, boxHeight).fill('#F8FAFC');
+    doc.rect(40, summaryY, 515, boxHeight).strokeColor('#CBD5E1').lineWidth(1).stroke();
 
-    doc.fillColor('#15803D').fontSize(9.5).font('Helvetica').text('Potongan Harga Spesial Sahabat (Friendship Special Discount)  :', 55, summaryY + 40);
-    doc.fillColor('#15803D').fontSize(9.5).font('Helvetica-Bold').text('- Rp 7.000.000', 430, summaryY + 40, { align: 'right' });
+    doc.fillColor('#334155').fontSize(9.5).font('Helvetica').text('Total Estimasi Nilai Pasar Standar (Enterprise Market Value) :', 55, summaryY + 16);
+    doc.fillColor('#334155').fontSize(9.5).font('Helvetica-Bold').text('Rp 7.500.000', 430, summaryY + 16, { align: 'right' });
+
+    doc.fillColor('#15803D').fontSize(9.5).font('Helvetica').text('Potongan Harga Spesial Sahabat (Friendship Special Discount)  :', 55, summaryY + 38);
+    doc.fillColor('#15803D').fontSize(9.5).font('Helvetica-Bold').text('- Rp 7.000.000', 430, summaryY + 38, { align: 'right' });
+
+    doc.strokeColor('#CBD5E1').lineWidth(1).moveTo(55, summaryY + 58).lineTo(540, summaryY + 58).stroke();
+
+    doc.fillColor(PRIMARY).fontSize(11).font('Helvetica-Bold').text('TOTAL BIAYA AKHIR YANG HARUS DIBAYARKAN :', 55, summaryY + 70);
+    doc.fillColor(ACCENT).fontSize(14).font('Helvetica-Bold').text('Rp 500.000', 430, summaryY + 68, { align: 'right' });
+
+    if (isPaid) {
+      doc.rect(420, summaryY + 88, 125, 18).fill('#DCFCE7');
+      doc.rect(420, summaryY + 88, 125, 18).strokeColor(GREEN).lineWidth(1).stroke();
+      doc.fillColor(GREEN).fontSize(8.5).font('Helvetica-Bold').text('STATUS: LUNAS / PAID', 420, summaryY + 93, { width: 125, align: 'center' });
+    }
+
+    doc.fillColor(TEXT_MUTED).fontSize(8.5).font('Helvetica-Oblique').text('( Terbilang: Lima Ratus Ribu Rupiah — Pembayaran Spesial Sahabat )', 55, summaryY + 93);
+  } else {
+    // 7.5jt Version (Clean 2-row layout with zero overlap)
+    const boxHeight = 85;
+    doc.rect(40, summaryY, 515, boxHeight).fill('#F8FAFC');
+    doc.rect(40, summaryY, 515, boxHeight).strokeColor('#CBD5E1').lineWidth(1).stroke();
+
+    doc.fillColor(PRIMARY).fontSize(11.5).font('Helvetica-Bold').text('TOTAL TAGIHAN PEKERJAAN PROYEK :', 55, summaryY + 18);
+    doc.fillColor(ACCENT).fontSize(15).font('Helvetica-Bold').text('Rp 7.500.000', 430, summaryY + 16, { align: 'right' });
+
+    if (isPaid) {
+      doc.rect(415, summaryY + 38, 130, 20).fill('#DCFCE7');
+      doc.rect(415, summaryY + 38, 130, 20).strokeColor(GREEN).lineWidth(1).stroke();
+      doc.fillColor(GREEN).fontSize(9).font('Helvetica-Bold').text('STATUS: LUNAS / PAID', 415, summaryY + 43, { width: 130, align: 'center' });
+    } else {
+      doc.rect(415, summaryY + 38, 130, 20).fill('#FEE2E2');
+      doc.rect(415, summaryY + 38, 130, 20).strokeColor('#DC2626').lineWidth(1).stroke();
+      doc.fillColor('#DC2626').fontSize(9).font('Helvetica-Bold').text('STATUS: BELUM LUNAS', 415, summaryY + 43, { width: 130, align: 'center' });
+    }
 
     doc.strokeColor('#CBD5E1').lineWidth(1).moveTo(55, summaryY + 62).lineTo(540, summaryY + 62).stroke();
-
-    doc.fillColor(PRIMARY).fontSize(12).font('Helvetica-Bold').text('TOTAL BIAYA AKHIR YANG HARUS DIBAYARKAN :', 55, summaryY + 74);
-    doc.fillColor(ACCENT).fontSize(14).font('Helvetica-Bold').text('Rp 500.000', 430, summaryY + 73, { align: 'right' });
-
-    doc.fillColor(TEXT_MUTED).fontSize(8.5).font('Helvetica-Oblique').text('( Terbilang: Lima Ratus Ribu Rupiah — Pembayaran Spesial Sahabat )', 55, summaryY + 92);
-  } else {
-    doc.fillColor(PRIMARY).fontSize(12).font('Helvetica-Bold').text('TOTAL TAGIHAN PEKERJAAN PROYEK :', 55, summaryY + 25);
-    doc.fillColor(ACCENT).fontSize(15).font('Helvetica-Bold').text('Rp 7.500.000', 430, summaryY + 23, { align: 'right' });
-
-    doc.fillColor(TEXT_MUTED).fontSize(8.5).font('Helvetica-Oblique').text('( Terbilang: Tujuh Juta Lima Ratus Ribu Rupiah — Standard Enterprise Rate )', 55, summaryY + 48);
-  }
-
-  // Large Stamp for PAID status
-  if (isPaid) {
-    doc.save();
-    doc.rotate(-12, { origin: [460, summaryY + 30] });
-    doc.rect(380, summaryY + 15, 150, 36).fillAndStroke('#DCFCE7', GREEN);
-    doc.fillColor(GREEN).fontSize(13).font('Helvetica-Bold').text('LUNAS / PAID', 380, summaryY + 26, { width: 150, align: 'center' });
-    doc.restore();
+    doc.fillColor(TEXT_MUTED).fontSize(8.5).font('Helvetica-Oblique').text('( Terbilang: Tujuh Juta Lima Ratus Ribu Rupiah — Standard Enterprise Rate )', 55, summaryY + 68);
   }
 
   // 5. Payment Method & Status Footer
-  doc.y = summaryY + boxHeight + 20;
+  const footerY = summaryY + (isDiscounted ? 130 : 100);
+  doc.y = footerY;
   doc.fillColor(PRIMARY).fontSize(10).font('Helvetica-Bold').text('Status & Metode Pembayaran:', 40, doc.y);
   doc.fontSize(9).font('Helvetica').fillColor('#334155');
   doc.text(`Jumlah Tagihan: ${isDiscounted ? 'Rp 500.000' : 'Rp 7.500.000'} (Transfer Bank / QRIS / Cash)`);
@@ -155,5 +169,6 @@ createInvoicePDF({ isDiscounted: false, isPaid: false, filename: 'invoice-boss-r
 // Legacy compatibility aliases
 createInvoicePDF({ isDiscounted: true, isPaid: true, filename: 'invoice-boss-rent-500k.pdf' });
 createInvoicePDF({ isDiscounted: false, isPaid: true, filename: 'invoice-boss-rent-7.5jt.pdf' });
+createInvoicePDF({ isDiscounted: true, isPaid: true, filename: 'invoice-boss-rent.pdf' });
 
-console.log('Generated all paid and pending invoice variations successfully!');
+console.log('Generated all paid and pending invoice variations with zero text overlap!');
