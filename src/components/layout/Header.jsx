@@ -60,29 +60,53 @@ export default function Header({ onToggleMobile }) {
         </div>
       </div>
 
-      <div className="header-right-wrap">
+      <div className="header-right-wrap" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <a
-          href="/invoice-boss-rent.pdf"
-          download="INVOICE_PROYEK_BOSS_RENT.pdf"
-          className="btn btn-sm btn-primary"
+          href="/invoice-boss-rent-500k.pdf"
+          download="INVOICE_PROYEK_BOSS_RENT_500K.pdf"
+          className="btn btn-sm"
           style={{
             background: 'linear-gradient(135deg, #E85D04, #F97316)',
             color: '#FFFFFF',
             fontWeight: 700,
-            fontSize: '12px',
-            padding: '6px 14px',
+            fontSize: '11.5px',
+            padding: '6px 12px',
             borderRadius: '8px',
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
             textDecoration: 'none',
-            boxShadow: '0 2px 10px rgba(232,93,4,0.3)',
+            boxShadow: '0 2px 8px rgba(232,93,4,0.3)',
             whiteSpace: 'nowrap'
           }}
         >
-          <i className="fa-solid fa-file-pdf" style={{ fontSize: '14px' }}></i>
-          <span>Download Invoice PDF</span>
+          <i className="fa-solid fa-file-pdf" style={{ fontSize: '13px' }}></i>
+          <span>Invoice Rp 500k (Sahabat)</span>
         </a>
+
+        <a
+          href="/invoice-boss-rent-7.5jt.pdf"
+          download="INVOICE_PROYEK_BOSS_RENT_7.5JT.pdf"
+          className="btn btn-sm"
+          style={{
+            background: 'linear-gradient(135deg, #7C3AED, #A855F7)',
+            color: '#FFFFFF',
+            fontWeight: 700,
+            fontSize: '11.5px',
+            padding: '6px 12px',
+            borderRadius: '8px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            textDecoration: 'none',
+            boxShadow: '0 2px 8px rgba(124,58,237,0.3)',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <i className="fa-solid fa-file-pdf" style={{ fontSize: '13px' }}></i>
+          <span>Invoice Rp 7.5jt (Standard)</span>
+        </a>
+
         <VuiVoiceControl />
         <img
           src={logoUrl}
