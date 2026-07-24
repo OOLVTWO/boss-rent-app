@@ -296,7 +296,7 @@ export function exportInvestorReportToExcel(investorData, filename = '') {
     ['BAGIAN KOMISI BOSS RENT (' + bossSharePct + '%)', formatRupiah(investorData.bossRentShare || 0)],
     [''],
     ['DAFTAR UNIT MOTOR TITIPAN INVESTOR'],
-    ['No', 'Nama Motor', 'Plat Nomor', 'Tahun', 'Tipe Kepemilikan', 'Harga Beli Unit (Modal)']
+    ['No', 'Nama Motor', 'Plat Nomor', 'Tahun', 'Status Kepemilikan']
   ];
 
   if (Array.isArray(investorData.vehicles)) {
@@ -306,8 +306,7 @@ export function exportInvestorReportToExcel(investorData, filename = '') {
         v.name,
         v.plate_number,
         v.year || '-',
-        'Titipan Investor (Bagi Hasil)',
-        formatRupiah(v.purchase_price || 0)
+        'Titipan Investor (Bagi Hasil)'
       ]);
     });
   }

@@ -745,26 +745,6 @@ function VehicleModal({ isOpen, onClose, onSubmit, editData, onOpenAdjuster }) {
                       * {form.revenue_share_percentage || 70}% Investor / {100 - Number(form.revenue_share_percentage || 70)}% Boss Rent
                     </div>
                   </div>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="v-purchase-price">
-                      <i className="fa-solid fa-money-bill-wave" style={{ marginRight: '6px', color: '#22C55E' }}></i> Modal Beli Unit (Rp)
-                    </label>
-                    <input
-                      id="v-purchase-price"
-                      name="purchase_price"
-                      type="text"
-                      inputMode="numeric"
-                      className="form-control"
-                      placeholder="25000000"
-                      value={form.purchase_price}
-                      onChange={handleChange}
-                    />
-                    {form.purchase_price > 0 && (
-                      <div style={{ fontSize: '11px', color: '#22C55E', marginTop: '4px', fontWeight: 600 }}>
-                        {formatRupiah(form.purchase_price)}
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
             )}
@@ -1097,7 +1077,7 @@ export default function VehiclesPage() {
       ) : ownershipFilter === 'investor_recap' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Investor Summary Cards */}
-          <div className="grid-3">
+          <div className="grid-2">
             <div className="stat-card">
               <div className="stat-icon" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#A855F7' }}>
                 <i className="fa-solid fa-users"></i>
@@ -1114,22 +1094,9 @@ export default function VehiclesPage() {
                 <i className="fa-solid fa-hand-holding-dollar"></i>
               </div>
               <div className="stat-info">
-                <div className="stat-label">Unit Titipan Investor</div>
+                <div className="stat-label">Unit Titipan Investor (Bagi Hasil)</div>
                 <div className="stat-value" style={{ color: '#22C55E' }}>{investorVehicles.length} Unit</div>
                 <div className="stat-change">{Math.round((investorVehicles.length / Math.max(safeVehicles.length, 1)) * 100)}% dari total armada</div>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6' }}>
-                <i className="fa-solid fa-vault"></i>
-              </div>
-              <div className="stat-info">
-                <div className="stat-label">Estimasi Modal Beli Investor</div>
-                <div className="stat-value" style={{ color: '#3B82F6' }}>
-                  {formatRupiah(investorVehicles.reduce((s, v) => s + Number(v.purchase_price || 0), 0))}
-                </div>
-                <div className="stat-change">Akumulasi harga beli unit titipan</div>
               </div>
             </div>
           </div>
@@ -1165,7 +1132,7 @@ export default function VehiclesPage() {
                     </div>
                   </div>
 
-                  <div style={{ marginBottom: '14px' }}>
+                  <div>
                     <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px' }}>
                       <i className="fa-solid fa-motorcycle" style={{ marginRight: '6px', color: 'var(--brand-primary-light)' }}></i> Unit Motor Dititipkan ({inv.vehicles.length} Unit):
                     </div>
@@ -1181,13 +1148,6 @@ export default function VehiclesPage() {
                       ))}
                     </div>
                   </div>
-
-                  {inv.totalCapital > 0 && (
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', background: 'rgba(59, 130, 246, 0.08)', padding: '8px 12px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>Total Modal Pembelian Unit:</span>
-                      <strong style={{ color: '#3B82F6' }}>{formatRupiah(inv.totalCapital)}</strong>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
