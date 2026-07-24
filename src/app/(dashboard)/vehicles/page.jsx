@@ -1059,8 +1059,8 @@ export default function VehiclesPage() {
           onClick={() => setOwnershipFilter('investor_recap')}
           style={{ borderRadius: '8px', padding: '6px 14px', fontSize: '12.5px', fontWeight: 600, whiteSpace: 'nowrap' }}
         >
-          <i className="fa-solid fa-users-gear" style={{ marginRight: '6px', color: '#A855F7' }}></i>
-          📊 Directory & Rekap Investor ({investorList.length})
+          <i className="fa-solid fa-address-card" style={{ marginRight: '6px', color: '#A855F7' }}></i>
+          Directory & Rekap Investor ({investorList.length})
         </button>
       </div>
 

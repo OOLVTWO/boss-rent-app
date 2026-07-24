@@ -202,7 +202,7 @@ export default function ReportsPage() {
           className={`scrollable-tab-btn ${activeReportTab === 'investor' ? 'active' : ''}`}
           onClick={() => setActiveReportTab('investor')}
         >
-          <i className="fa-solid fa-crown" style={{ color: '#A855F7' }}></i> 📊 Laporan Bagi Hasil Investor
+          <i className="fa-solid fa-crown" style={{ color: '#A855F7', marginRight: '6px' }}></i> Laporan Bagi Hasil Investor
         </button>
       </div>
 
@@ -259,14 +259,17 @@ export default function ReportsPage() {
                 <i className="fa-solid fa-crown" style={{ marginRight: '6px', color: '#A855F7' }}></i> Cari & Pilih Investor ({uniqueInvestorNames.length} Terdaftar)
               </label>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <input
-                  type="text"
-                  className="form-control"
-                  style={{ minWidth: '160px', flex: '1 1 160px', border: '1px solid #A855F7' }}
-                  placeholder="🔍 Ketik nama investor..."
-                  value={investorSearch}
-                  onChange={e => setInvestorSearch(e.target.value)}
-                />
+                <div style={{ position: 'relative', minWidth: '160px', flex: '1 1 160px' }}>
+                  <i className="fa-solid fa-magnifying-glass" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: '12px' }}></i>
+                  <input
+                    type="text"
+                    className="form-control"
+                    style={{ paddingLeft: '32px', border: '1px solid #A855F7' }}
+                    placeholder="Ketik nama investor..."
+                    value={investorSearch}
+                    onChange={e => setInvestorSearch(e.target.value)}
+                  />
+                </div>
                 <select
                   id="report-investor"
                   className="form-control"
