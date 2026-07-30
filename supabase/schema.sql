@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS transactions (
   issues_reported TEXT,
   payment_method VARCHAR(20) DEFAULT 'cash'
     CHECK (payment_method IN ('cash', 'transfer', 'qris')),
+  payment_status VARCHAR(20) NOT NULL DEFAULT 'paid'
+    CHECK (payment_status IN ('paid', 'unpaid')),
   status VARCHAR(20) NOT NULL DEFAULT 'active'
     CHECK (status IN ('active', 'completed', 'cancelled')),
   notes TEXT,
@@ -111,6 +113,11 @@ ALTER TABLE transactions ADD COLUMN IF NOT EXISTS handover_image_url TEXT;
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS km_start INTEGER DEFAULT 0;
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS km_end INTEGER DEFAULT 0;
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS issues_reported TEXT;
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS payment_status VARCHAR(20) DEFAULT 'paid'
+  CHECK (payment_status IN ('paid', 'unpaid'));
+
+-- Isi payment_status untuk data lama (backward compat)
+UPDATE transactions SET payment_status = 'paid' WHERE payment_status IS NULL;
 
 -- Update Kolom Keuangan
 ALTER TABLE expenses ADD COLUMN IF NOT EXISTS type VARCHAR(20) DEFAULT 'expense';
