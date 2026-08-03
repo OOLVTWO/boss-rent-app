@@ -155,88 +155,86 @@ export default function DashboardClient({ transactions, vehicles }) {
         <p>Ringkasan performa finansial, status armada, dan ketersediaan sewa motor Boss Rent Pererenan — {periodRange.label}</p>
       </div>
 
-      {/* ── Pemilih Periode: baca laporan per bulan / per tahun ── */}
+      {/* ── Filter Periode: baca laporan per bulan / per tahun ── */}
       <div className="card mb-6">
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'flex-end' }}>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <span className="form-label"><i className="fa-solid fa-filter" style={{ marginRight: '6px' }}></i> Mode Periode</span>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${periodMode === 'month' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => setPeriodMode('month')}
-                  style={{ borderRadius: '8px', padding: '6px 14px', fontSize: '12.5px', fontWeight: 600, whiteSpace: 'nowrap' }}
-                >
-                  <i className="fa-solid fa-calendar-day" style={{ marginRight: '4px' }}></i> Bulanan
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${periodMode === 'year' ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => setPeriodMode('year')}
-                  style={{ borderRadius: '8px', padding: '6px 14px', fontSize: '12.5px', fontWeight: 600, whiteSpace: 'nowrap' }}
-                >
-                  <i className="fa-solid fa-calendar" style={{ marginRight: '4px' }}></i> Tahunan
-                </button>
-              </div>
+        <div className="card-header" style={{ flexWrap: 'wrap', gap: '10px' }}>
+          <div>
+            <div className="card-title">
+              <i className="fa-solid fa-filter" style={{ marginRight: '6px' }}></i> Filter Periode Dashboard
             </div>
+            <div className="card-subtitle">Otomatis mulai dari 0 setiap awal bulan — pilih periode untuk membaca laporan bulan / tahun lain</div>
+          </div>
+          {!periodRange.isCurrent && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={handleResetPeriod}
+            >
+              <i className="fa-solid fa-rotate-left" style={{ marginRight: '4px' }}></i> Periode Berjalan
+            </button>
+          )}
+        </div>
 
-            {periodMode === 'month' && (
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" htmlFor="dash-period-month">
-                  <i className="fa-solid fa-calendar-days" style={{ marginRight: '6px' }}></i> Bulan
-                </label>
-                <select
-                  id="dash-period-month"
-                  className="form-control"
-                  value={selectedMonth.substring(5, 7)}
-                  onChange={e => setSelectedMonth(`${selectedMonth.substring(0, 4)}-${e.target.value}`)}
-                >
-                  {MONTH_NAMES.map((name, i) => (
-                    <option key={name} value={String(i + 1).padStart(2, '0')}>{name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+        {/* Mode periode — pill tabs seperti halaman Laporan */}
+        <div className="scrollable-tabs-bar">
+          <button
+            type="button"
+            className={`scrollable-tab-btn ${periodMode === 'month' ? 'active' : ''}`}
+            onClick={() => setPeriodMode('month')}
+          >
+            <i className="fa-solid fa-calendar-day"></i> Bulanan
+          </button>
+          <button
+            type="button"
+            className={`scrollable-tab-btn ${periodMode === 'year' ? 'active' : ''}`}
+            onClick={() => setPeriodMode('year')}
+          >
+            <i className="fa-solid fa-calendar"></i> Tahunan
+          </button>
+        </div>
 
+        <div className={`form-row ${periodMode === 'month' ? 'cols-3' : 'cols-2'}`}>
+          {periodMode === 'month' && (
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" htmlFor="dash-period-year">
-                <i className="fa-solid fa-calendar-days" style={{ marginRight: '6px' }}></i> Tahun
+              <label className="form-label" htmlFor="dash-period-month">
+                <i className="fa-solid fa-calendar-days" style={{ marginRight: '6px' }}></i> Bulan
               </label>
               <select
-                id="dash-period-year"
+                id="dash-period-month"
                 className="form-control"
-                value={periodMode === 'year' ? selectedYear : selectedMonth.substring(0, 4)}
-                onChange={e => {
-                  if (periodMode === 'year') setSelectedYear(e.target.value);
-                  else setSelectedMonth(`${e.target.value}-${selectedMonth.substring(5, 7)}`);
-                }}
+                value={selectedMonth.substring(5, 7)}
+                onChange={e => setSelectedMonth(`${selectedMonth.substring(0, 4)}-${e.target.value}`)}
               >
-                {yearOptions.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                {MONTH_NAMES.map((name, i) => (
+                  <option key={name} value={String(i + 1).padStart(2, '0')}>{name}</option>
+                ))}
               </select>
             </div>
+          )}
 
-            {!periodRange.isCurrent && (
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={handleResetPeriod}
-              >
-                <i className="fa-solid fa-rotate-left" style={{ marginRight: '4px' }}></i> Kembali ke Periode Berjalan
-              </button>
-            )}
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label" htmlFor="dash-period-year">
+              <i className="fa-solid fa-calendar-days" style={{ marginRight: '6px' }}></i> Tahun
+            </label>
+            <select
+              id="dash-period-year"
+              className="form-control"
+              value={periodMode === 'year' ? selectedYear : selectedMonth.substring(0, 4)}
+              onChange={e => {
+                if (periodMode === 'year') setSelectedYear(e.target.value);
+                else setSelectedMonth(`${e.target.value}-${selectedMonth.substring(5, 7)}`);
+              }}
+            >
+              {yearOptions.map(y => <option key={y} value={String(y)}>{y}</option>)}
+            </select>
           </div>
 
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700, marginBottom: '4px' }}>
-              Periode Ditampilkan
-            </div>
-            <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--brand-primary-light)' }}>
-              <i className="fa-solid fa-calendar-check" style={{ marginRight: '6px' }}></i>{periodRange.label}
-            </div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-              <i className="fa-solid fa-circle-info" style={{ marginRight: '4px' }}></i>
-              Dashboard otomatis mulai dari 0 setiap awal bulan
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <span className="form-label">
+              <i className="fa-solid fa-eye" style={{ marginRight: '6px' }}></i> Periode Ditampilkan
+            </span>
+            <div className="form-control" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: 'var(--brand-primary-light)', userSelect: 'none', cursor: 'default' }}>
+              <i className="fa-solid fa-calendar-check"></i> {periodRange.label}
             </div>
           </div>
         </div>
