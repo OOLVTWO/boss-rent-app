@@ -176,7 +176,8 @@ export default function AvailabilityPage() {
   }, []);
 
   useEffect(() => {
-    loadData();
+    // Defer ke microtask: loadData memanggil setState — hindari setState sinkron di effect
+    Promise.resolve().then(loadData);
     const interval = setInterval(loadData, 60000);
     return () => clearInterval(interval);
   }, [loadData]);

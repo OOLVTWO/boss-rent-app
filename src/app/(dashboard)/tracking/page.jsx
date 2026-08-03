@@ -211,6 +211,16 @@ function TrackingCard({ tx, vehicle, onComplete }) {
   const type = classifyTx(tx);
   const daysLeft = getDaysLeft(tx);
 
+  // "now" yang ticking via state — Date.now() tidak boleh dipanggil langsung saat render (purity).
+  // Progress bar tetap hidup: refresh tiap 30 detik.
+  const [nowTs, setNowTs] = useState(null);
+  useEffect(() => {
+    const update = () => setNowTs(Date.now());
+    Promise.resolve().then(update);
+    const t = setInterval(update, 30000);
+    return () => clearInterval(t);
+  }, []);
+
   const categoryMeta = {
     overdue: { label: 'Overdue', color: '#EF4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)', icon: 'fa-solid fa-circle-exclamation', pulse: true },
     today: { label: 'Hari Ini', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)', icon: 'fa-solid fa-bell', pulse: true },
@@ -235,7 +245,7 @@ function TrackingCard({ tx, vehicle, onComplete }) {
   const startD = getExactStartDate(tx);
   const endD = getExactTargetDate(tx);
   const totalMs = endD - startD;
-  const elapsedMs = Date.now() - startD;
+  const elapsedMs = (nowTs ?? startD.getTime()) - startD;
   const progress = totalMs > 0 ? Math.min(100, Math.max(0, (elapsedMs / totalMs) * 100)) : 0;
   const isOverProgress = progress >= 100;
 
@@ -444,7 +454,8 @@ export default function TrackingPage() {
   }, [loadData]);
 
   useEffect(() => {
-    loadData();
+    // Defer ke microtask: hindari setState sinkron di dalam effect
+    Promise.resolve().then(loadData);
     refreshRef.current = setInterval(loadData, 60000);
     return () => clearInterval(refreshRef.current);
   }, [loadData]);

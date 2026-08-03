@@ -42,3 +42,6 @@ next-env.d.ts
 
 # netlify build cache
 .netlify/
+
+# local build output
+build.log

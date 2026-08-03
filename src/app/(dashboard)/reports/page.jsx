@@ -2,6 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { exportTransactionsToExcel, exportExpensesToExcel, exportInvestorReportToExcel, formatRupiah } from '@/lib/excel';
+import {
+  calcFinancialSummary, calcInvestorPayouts, isIncomeEntry, isPaidTransaction,
+  isInvestorVehicle, expenseMatchesVehicle, getLocalDateStr,
+} from '@/lib/finance';
 
 const statusBadge = (status) => {
   const map = {
@@ -35,15 +39,18 @@ export default function ReportsPage() {
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
     d.setDate(1);
-    return d.toISOString().split('T')[0];
+    return getLocalDateStr(d); // tanggal lokal (WITA), bukan UTC
   });
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(getLocalDateStr());
   const [statusFilter, setStatusFilter] = useState('all');
   const [exporting, setExporting] = useState(false);
 
   const fetchReport = useCallback(async () => {
-    setLoading(true);
-    const txParams = new URLSearchParams({ start_date: startDate, end_date: endDate });
+    // Batas tanggal dibuat dari tengah malam WAKTU LOKAL lalu dikirim sebagai ISO penuh
+    // agar filter created_at di API akurat untuk timezone pengguna (WITA/UTC+8).
+    const startISO = new Date(`${startDate}T00:00:00`).toISOString();
+    const endISO = new Date(`${endDate}T23:59:59.999`).toISOString();
+    const txParams = new URLSearchParams({ start_date: startISO, end_date: endISO });
     if (statusFilter !== 'all') txParams.append('status', statusFilter);
 
     const expParams = new URLSearchParams({ start_date: startDate, end_date: endDate });
@@ -72,34 +79,26 @@ export default function ReportsPage() {
     }
   }, [startDate, endDate, statusFilter]);
 
-  useEffect(() => { fetchReport(); }, [fetchReport]);
+  useEffect(() => { Promise.resolve().then(fetchReport); }, [fetchReport]);
 
   // Safe Array Defensive Checks
   const safeTx = Array.isArray(transactions) ? transactions : [];
   const safeExp = Array.isArray(expenses) ? expenses : [];
-
-  const checkIsInc = (e) => {
-    if (!e) return false;
-    if (e.type === 'income') return true;
-    if (typeof e.category === 'string' && (e.category.startsWith('income_') || e.category.includes('income'))) return true;
-    return false;
-  };
-
-  const realExpenses = safeExp.filter(e => !checkIsInc(e));
-  const financialIncomes = safeExp.filter(e => checkIsInc(e));
-
-  const completedTx = safeTx.filter(t => t.status === 'completed');
-  const rentalRevenue = completedTx.reduce((s, t) => s + Number(t.total_price || 0), 0);
-  const depositClaimIncome = completedTx.reduce((s, t) => s + Number(t.damage_fee || 0), 0);
-  const addOnRevenue = financialIncomes.reduce((s, e) => s + Number(e.amount || 0), 0);
-
-  const totalRevenue = rentalRevenue + depositClaimIncome + addOnRevenue;
-  const totalExpenses = realExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
-  const netProfit = totalRevenue - totalExpenses;
-
-  // ── INVESTOR REPORT ENGINE ──
   const safeVeh = Array.isArray(vehicles) ? vehicles : [];
-  const allInvestorVehicles = safeVeh.filter(v => v.owner_type === 'investor' || (v.owner_name && v.owner_name.trim() !== ''));
+
+  const realExpenses = safeExp.filter(e => !isIncomeEntry(e));
+
+  // ── Ringkasan keuangan via Shared Finance Engine (@/lib/finance) ──
+  // Konsisten dengan Dashboard: revenue cash-basis (completed / active+paid),
+  // Laba Bersih = Pemasukan − Pengeluaran − Bagi Hasil Investor.
+  const summary = calcFinancialSummary({ transactions: safeTx, expenses: safeExp, vehicles: safeVeh });
+  const paidTx = summary.paidTx;
+  const totalRevenue = summary.totalRevenue;
+  const totalExpenses = summary.totalExpenses;
+  const netProfit = summary.netProfit;
+
+  // ── INVESTOR REPORT ENGINE (basis NET per motor, via shared engine) ──
+  const allInvestorVehicles = safeVeh.filter(isInvestorVehicle);
   const uniqueInvestorNames = Array.from(new Set(allInvestorVehicles.map(v => v.owner_name?.trim()).filter(Boolean)));
 
   const targetInvestorVehicles = selectedInvestor === 'all'
@@ -108,20 +107,23 @@ export default function ReportsPage() {
 
   const targetVehicleIds = targetInvestorVehicles.map(v => v.id);
 
-  // Transactions for investor vehicles
+  // Transactions for investor vehicles (untuk export & KPI)
   const targetInvestorTx = safeTx.filter(t => targetVehicleIds.includes(t.vehicle_id) || targetVehicleIds.includes(t.vehicles?.id));
-  const targetCompletedTx = targetInvestorTx.filter(t => t.status === 'completed');
+  const targetPaidTx = targetInvestorTx.filter(isPaidTransaction);
 
-  const invRentalRev = targetCompletedTx.reduce((s, t) => s + Number(t.total_price || 0), 0);
-  const invDamageRev = targetCompletedTx.reduce((s, t) => s + Number(t.damage_fee || 0), 0);
-  const invTotalRevenue = invRentalRev + invDamageRev;
+  // Expenses for investor vehicles (untuk export & KPI)
+  const targetInvestorExp = realExpenses.filter(e => targetInvestorVehicles.some(v => expenseMatchesVehicle(e, v)));
 
-  // Expenses for investor vehicles
-  const targetInvestorExp = realExpenses.filter(e => targetVehicleIds.includes(e.vehicle_id) || (e.title && targetInvestorVehicles.some(v => e.title.toLowerCase().includes(v.name.toLowerCase()) || (v.plate_number && e.title.toLowerCase().includes(v.plate_number.toLowerCase())))));
-  const invTotalExpenses = targetInvestorExp.reduce((s, e) => s + Number(e.amount || 0), 0);
-  const invNetIncome = invTotalRevenue - invTotalExpenses;
+  // Kalkulasi bagi hasil per motor (payout dibulatkan per motor — akurat
+  // meskipun tiap motor punya persentase bagi hasil berbeda)
+  const inv = calcInvestorPayouts({ transactions: safeTx, expenses: safeExp, vehicles: targetInvestorVehicles });
+  const invTotalRevenue = inv.totalRevenue;
+  const invTotalExpenses = inv.totalExpenses;
+  const invNetIncome = inv.totalNet;
+  const investorPayout = inv.totalPayout;
+  const bossRentShare = invNetIncome - investorPayout;
 
-  // Share split calculation
+  // Persentase rata-rata hanya untuk label tampilan
   const avgSharePct = targetInvestorVehicles.length > 0
     ? (targetInvestorVehicles.reduce((s, v) => s + Number(v.revenue_share_percentage || 70), 0) / targetInvestorVehicles.length)
     : 70;
@@ -129,9 +131,6 @@ export default function ReportsPage() {
     ? Number(targetInvestorVehicles[0].revenue_share_percentage)
     : Math.round(avgSharePct);
   const bossRentSharePct = 100 - investorSharePct;
-
-  const investorPayout = Math.round(invNetIncome * (investorSharePct / 100));
-  const bossRentShare = invNetIncome - investorPayout;
 
   const handleExportInvestorExcel = () => {
     setExporting(true);
@@ -162,7 +161,7 @@ export default function ReportsPage() {
     } else if (activeReportTab === 'investor') {
       handleExportInvestorExcel();
     } else {
-      exportTransactionsToExcel(safeTx, `laporan-pemasukan-${dateRange}`);
+      exportTransactionsToExcel(paidTx, `laporan-pemasukan-${dateRange}`);
     }
     setTimeout(() => setExporting(false), 1000);
   };
@@ -221,7 +220,7 @@ export default function ReportsPage() {
               type="date"
               className="form-control"
               value={startDate}
-              onChange={e => setStartDate(e.target.value)}
+              onChange={e => { setLoading(true); setStartDate(e.target.value); }}
             />
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
@@ -233,7 +232,7 @@ export default function ReportsPage() {
               type="date"
               className="form-control"
               value={endDate}
-              onChange={e => setEndDate(e.target.value)}
+              onChange={e => { setLoading(true); setEndDate(e.target.value); }}
               min={startDate}
             />
           </div>
@@ -244,7 +243,7 @@ export default function ReportsPage() {
                 id="report-status"
                 className="form-control"
                 value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value)}
+                onChange={e => { setLoading(true); setStatusFilter(e.target.value); }}
               >
                 <option value="all">Semua Status</option>
                 <option value="active">Aktif</option>
@@ -299,7 +298,7 @@ export default function ReportsPage() {
           <div className="stat-info">
             <div className="stat-label">Total Pemasukan</div>
             <div className="stat-value" style={{ color: '#22C55E' }}>{formatRupiah(totalRevenue)}</div>
-            <div className="stat-change">{completedTx.length} transaksi selesai</div>
+            <div className="stat-change">{paidTx.length} transaksi terbayar</div>
           </div>
         </div>
 
@@ -321,7 +320,7 @@ export default function ReportsPage() {
           <div className="stat-info">
             <div className="stat-label">Laba Bersih (Net Profit)</div>
             <div className="stat-value" style={{ color: netProfit >= 0 ? '#3B82F6' : '#EF4444' }}>{formatRupiah(netProfit)}</div>
-            <div className="stat-change">Pemasukan - Pengeluaran</div>
+            <div className="stat-change">Pemasukan − Pengeluaran − Bagi Hasil Investor</div>
           </div>
         </div>
       </div>
@@ -332,12 +331,12 @@ export default function ReportsPage() {
           <div className="card-header" style={{ padding: '20px 24px', borderBottom: '1px solid var(--bg-border)' }}>
             <div>
               <div className="card-title">Detail Transaksi Pemasukan</div>
-              <div className="card-subtitle">{safeTx.length} transaksi ditemukan</div>
+              <div className="card-subtitle">{paidTx.length} transaksi terbayar ditemukan</div>
             </div>
             <button
               className="btn btn-primary"
               onClick={handleExport}
-              disabled={exporting || loading || safeTx.length === 0}
+              disabled={exporting || loading || paidTx.length === 0}
             >
               {exporting ? <><i className="fa-solid fa-spinner fa-spin"></i> Mengexport...</> : <><i className="fa-solid fa-file-excel"></i> Download Excel Pemasukan</>}
             </button>
@@ -346,8 +345,8 @@ export default function ReportsPage() {
           <div className="table-wrapper">
             {loading ? (
               <div className="table-empty"><i className="fa-solid fa-spinner fa-spin"></i> Memuat laporan...</div>
-            ) : safeTx.length === 0 ? (
-              <div className="table-empty"><p>Tidak ada transaksi untuk periode ini</p></div>
+            ) : paidTx.length === 0 ? (
+              <div className="table-empty"><p>Tidak ada transaksi terbayar untuk periode ini</p></div>
             ) : (
               <table className="table">
                 <thead>
@@ -364,7 +363,7 @@ export default function ReportsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {safeTx.map((tx, idx) => {
+                  {paidTx.map((tx, idx) => {
                     const damageFee = Number(tx.damage_fee || 0);
                     const totalPrice = Number(tx.total_price || 0);
                     const grandTotalIncome = totalPrice + (tx.status === 'completed' ? damageFee : 0);
@@ -500,13 +499,18 @@ export default function ReportsPage() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '600px', margin: '20px 0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(34, 197, 94, 0.1)', borderRadius: '8px', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
-              <span>Total Pemasukan Sewa (Selesai):</span>
+              <span>Total Pemasukan (Sewa + Denda + Lainnya):</span>
               <strong style={{ color: '#22C55E', fontSize: '16px' }}>{formatRupiah(totalRevenue)}</strong>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
               <span>Total Pengeluaran Operasional:</span>
               <strong style={{ color: '#EF4444', fontSize: '16px' }}>-{formatRupiah(totalExpenses)}</strong>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(168, 85, 247, 0.08)', borderRadius: '8px', border: '1px solid rgba(168, 85, 247, 0.25)' }}>
+              <span>Bagi Hasil Investor (basis NET per motor):</span>
+              <strong style={{ color: '#A855F7', fontSize: '16px' }}>-{formatRupiah(summary.investorPayout)}</strong>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', background: 'var(--bg-card-hover)', borderRadius: '10px', border: '2px solid var(--brand-primary)', marginTop: '8px' }}>
@@ -531,7 +535,7 @@ export default function ReportsPage() {
               <div className="stat-info">
                 <div className="stat-label">Total Omset Motor (+)</div>
                 <div className="stat-value" style={{ color: '#22C55E' }}>{formatRupiah(invTotalRevenue)}</div>
-                <div className="stat-change">{targetCompletedTx.length} transaksi sewa selesai</div>
+                <div className="stat-change">{targetPaidTx.length} transaksi terbayar</div>
               </div>
             </div>
 
@@ -604,14 +608,7 @@ export default function ReportsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {targetInvestorVehicles.map((v, idx) => {
-                      const vTx = safeTx.filter(t => (t.vehicle_id === v.id || t.vehicles?.id === v.id) && t.status === 'completed');
-                      const vRev = vTx.reduce((s, t) => s + Number(t.total_price || 0) + Number(t.damage_fee || 0), 0);
-                      const vExp = realExpenses.filter(e => e.vehicle_id === v.id || (e.title && (e.title.toLowerCase().includes(v.name.toLowerCase()) || (v.plate_number && e.title.toLowerCase().includes(v.plate_number.toLowerCase()))))).reduce((s, e) => s + Number(e.amount || 0), 0);
-                      const vNet = vRev - vExp;
-                      const sharePct = Number(v.revenue_share_percentage || 70);
-                      const vPayout = Math.round(vNet * (sharePct / 100));
-
+                    {inv.perVehicle.map(({ vehicle: v, revenue: vRev, expenses: vExp, net: vNet, sharePct, payout: vPayout }, idx) => {
                       return (
                         <tr key={v.id}>
                           <td style={{ fontWeight: 700, color: 'var(--text-muted)' }}>{idx + 1}</td>

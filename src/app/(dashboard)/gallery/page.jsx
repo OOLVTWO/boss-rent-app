@@ -16,15 +16,21 @@ function ImageAdjusterModal({ isOpen, imageSrc, onConfirm, onCancel }) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
-  useEffect(() => {
-    if (!isOpen || !imageSrc) return;
-    setScale(1);
-    setBrightness(100);
-    setContrast(100);
-    setPanOffset({ x: 0, y: 0 });
-    setFocalPoint('center');
-    setIsDragging(false);
-  }, [isOpen, imageSrc]);
+  // Reset editor state saat modal dibuka / gambar berganti — pola resmi React
+  // "adjust state during render" (menggantikan useEffect + setState sinkron)
+  const [prevEditKey, setPrevEditKey] = useState(null);
+  const editKey = isOpen && imageSrc ? imageSrc : null;
+  if (editKey !== prevEditKey) {
+    setPrevEditKey(editKey);
+    if (editKey) {
+      setScale(1);
+      setBrightness(100);
+      setContrast(100);
+      setPanOffset({ x: 0, y: 0 });
+      setFocalPoint('center');
+      setIsDragging(false);
+    }
+  }
 
   // Handle Focal Point Presets (9 Grid Boxes)
   const handleFocalSelect = (key) => {
@@ -359,7 +365,7 @@ export default function GalleryPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { Promise.resolve().then(fetchData); }, [fetchData]);
 
   const removeTransactionPhoto = async (txId, fieldName = 'customer_image_url') => {
     const label = fieldName === 'customer_image_url' ? 'foto identitas customer' : 'foto serah terima orang + motor';

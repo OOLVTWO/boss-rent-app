@@ -370,6 +370,7 @@ export default function SettingsPage() {
     if (!newPhotoForm.title || !newPhotoForm.url) return;
 
     const newStorageItem = {
+      // eslint-disable-next-line react-hooks/purity -- ID unik digenerate di event handler (submit), bukan saat render
       id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
       title: newPhotoForm.title,
       url: newPhotoForm.url,
@@ -432,9 +433,12 @@ export default function SettingsPage() {
   const [restoringData, setRestoringData] = useState(false);
 
   useEffect(() => {
-    setWaInvoiceText(getWaTemplate());
-    setWaReminderText(getWaReminderTemplate());
-    setWaGatewayForm(getWaGatewayConfig());
+    // Defer ke microtask: baca localStorage + setState tidak sinkron di effect
+    Promise.resolve().then(() => {
+      setWaInvoiceText(getWaTemplate());
+      setWaReminderText(getWaReminderTemplate());
+      setWaGatewayForm(getWaGatewayConfig());
+    });
   }, []);
 
   const handleSaveWaInvoiceTemplate = (e) => {
@@ -562,7 +566,11 @@ export default function SettingsPage() {
           showAlert('File JSON cadangan tidak valid atau rusak.', 'danger');
           return;
         }
-        setRestoreModalData(json);
+        // Precompute tanggal tampilan di event handler — Date.now() tidak boleh dipanggil saat render (purity)
+        setRestoreModalData({
+          ...json,
+          _displayDate: new Date(json.exported_at || Date.now()).toLocaleDateString('id-ID'),
+        });
       } catch {
         showAlert('Gagal membaca file JSON. Pastikan format file benar.', 'danger');
       }
@@ -647,26 +655,29 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
-    fetchStats();
-    setPaymentMethodsState(getPaymentMethods());
+    // Defer ke microtask: hindari setState sinkron di dalam effect
+    Promise.resolve().then(() => {
+      fetchStats();
+      setPaymentMethodsState(getPaymentMethods());
 
-    // Load business settings from local storage if available, and merge all default storage photos
-    try {
-      const savedBiz = localStorage.getItem('boss_rent_biz_settings');
-      if (savedBiz) {
-        const parsed = JSON.parse(savedBiz);
-        const existingUrls = new Set((parsed.uploadedStoragePhotos || []).map(p => p.url));
-        const missingDefaults = DEFAULT_STORAGE_PHOTOS.filter(dp => !existingUrls.has(dp.url));
-        const mergedStorage = [...(parsed.uploadedStoragePhotos || []), ...missingDefaults];
+      // Load business settings from local storage if available, and merge all default storage photos
+      try {
+        const savedBiz = localStorage.getItem('boss_rent_biz_settings');
+        if (savedBiz) {
+          const parsed = JSON.parse(savedBiz);
+          const existingUrls = new Set((parsed.uploadedStoragePhotos || []).map(p => p.url));
+          const missingDefaults = DEFAULT_STORAGE_PHOTOS.filter(dp => !existingUrls.has(dp.url));
+          const mergedStorage = [...(parsed.uploadedStoragePhotos || []), ...missingDefaults];
 
-        setBizForm({
-          ...parsed,
-          uploadedStoragePhotos: mergedStorage
-        });
+          setBizForm({
+            ...parsed,
+            uploadedStoragePhotos: mergedStorage
+          });
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
-    }
+    });
   }, [fetchStats]);
 
   // Export Data to JSON
@@ -1823,7 +1834,7 @@ export default function SettingsPage() {
                               </span>
                             ) : (
                               <span style={{ fontSize: '10px', background: '#3B82F6', color: '#FFF', padding: '3px 8px', fontWeight: 800, borderRadius: '4px' }}>
-                                👁️ [#{idx + 1}] Tampil saat Customer Klik "See More"
+                                👁️ [#{idx + 1}] Tampil saat Customer Klik &quot;See More&quot;
                               </span>
                             )}
                           </div>
@@ -2129,7 +2140,7 @@ export default function SettingsPage() {
                   <i className="fa-solid fa-cloud-arrow-up"></i> Confirm Restore Database Backup
                 </div>
                 <div className="modal-subtitle">
-                  File: <strong>boss_rent_backup.json</strong> ({new Date(restoreModalData.exported_at || Date.now()).toLocaleDateString('id-ID')})
+                  File: <strong>boss_rent_backup.json</strong> ({restoreModalData._displayDate || '-'})
                 </div>
               </div>
               <button className="modal-close" onClick={() => setRestoreModalData(null)}>✕</button>

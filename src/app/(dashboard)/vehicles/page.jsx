@@ -34,15 +34,21 @@ function ImageAdjusterModal({ isOpen, imageSrc, onConfirm, onCancel }) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
-  useEffect(() => {
-    if (!isOpen || !imageSrc) return;
-    setScale(1);
-    setBrightness(100);
-    setContrast(100);
-    setPanOffset({ x: 0, y: 0 });
-    setFocalPoint('center');
-    setIsDragging(false);
-  }, [isOpen, imageSrc]);
+  // Reset editor state saat modal dibuka / gambar berganti — pola resmi React
+  // "adjust state during render" (menggantikan useEffect + setState sinkron)
+  const [prevEditKey, setPrevEditKey] = useState(null);
+  const editKey = isOpen && imageSrc ? imageSrc : null;
+  if (editKey !== prevEditKey) {
+    setPrevEditKey(editKey);
+    if (editKey) {
+      setScale(1);
+      setBrightness(100);
+      setContrast(100);
+      setPanOffset({ x: 0, y: 0 });
+      setFocalPoint('center');
+      setIsDragging(false);
+    }
+  }
 
   // Handle Focal Point Presets (9 Grid Boxes)
   const handleFocalSelect = (key) => {
@@ -347,8 +353,10 @@ function ImageAdjusterModal({ isOpen, imageSrc, onConfirm, onCancel }) {
   );
 }
 
-function VehicleModal({ isOpen, onClose, onSubmit, editData, onOpenAdjuster }) {
-  const defaultForm = {
+// Default form di module scope (fungsi) — menghindari object baru tiap render
+// sekaligus menghilangkan warning exhaustive-deps pada effect reset form
+function getDefaultVehicleForm() {
+  return {
     name: '',
     plate_number: '',
     year: new Date().getFullYear(),
@@ -369,36 +377,41 @@ function VehicleModal({ isOpen, onClose, onSubmit, editData, onOpenAdjuster }) {
     purchase_date: '',
     purchase_price: '',
   };
+}
 
-  const [form, setForm] = useState(defaultForm);
+function VehicleModal({ isOpen, onClose, onSubmit, editData, onOpenAdjuster }) {
+  const [form, setForm] = useState(() => getDefaultVehicleForm());
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    if (editData) {
-      setForm({
-        name: editData.name || '',
-        plate_number: editData.plate_number || '',
-        year: editData.year || new Date().getFullYear(),
-        color: editData.color || '',
-        category: editData.category || 'honda',
-        rate_per_day: editData.rate_per_day || '',
-        rate_per_week: editData.rate_per_week || '',
-        rate_per_month: editData.rate_per_month || '',
-        image_url: editData.image_url || '',
-        current_km: editData.current_km || 15000,
-        status: editData.status || 'available',
-        notes: editData.notes || '',
-        owner_type: editData.owner_type || (editData.owner_name ? 'investor' : 'internal'),
-        owner_name: editData.owner_name || '',
-        owner_contact: editData.owner_contact || '',
-        revenue_share_percentage: editData.revenue_share_percentage ? String(editData.revenue_share_percentage) : '70',
-        purchase_date: editData.purchase_date || '',
-        purchase_price: editData.purchase_price ? String(editData.purchase_price) : '',
-      });
-    } else {
-      setForm(defaultForm);
-    }
+    // Defer ke microtask: hindari setState sinkron di dalam effect
+    Promise.resolve().then(() => {
+      if (editData) {
+        setForm({
+          name: editData.name || '',
+          plate_number: editData.plate_number || '',
+          year: editData.year || new Date().getFullYear(),
+          color: editData.color || '',
+          category: editData.category || 'honda',
+          rate_per_day: editData.rate_per_day || '',
+          rate_per_week: editData.rate_per_week || '',
+          rate_per_month: editData.rate_per_month || '',
+          image_url: editData.image_url || '',
+          current_km: editData.current_km || 15000,
+          status: editData.status || 'available',
+          notes: editData.notes || '',
+          owner_type: editData.owner_type || (editData.owner_name ? 'investor' : 'internal'),
+          owner_name: editData.owner_name || '',
+          owner_contact: editData.owner_contact || '',
+          revenue_share_percentage: editData.revenue_share_percentage ? String(editData.revenue_share_percentage) : '70',
+          purchase_date: editData.purchase_date || '',
+          purchase_price: editData.purchase_price ? String(editData.purchase_price) : '',
+        });
+      } else {
+        setForm(getDefaultVehicleForm());
+      }
+    });
   }, [editData, isOpen]);
 
   const handleChange = (e) => {
@@ -846,7 +859,7 @@ function ConfirmModal({ isOpen, onClose, onConfirm, onForceDelete, onSetMaintena
               >
                 <i className="fa-solid fa-wrench" style={{ marginRight: '8px' }}></i>
                 <div>
-                  <div style={{ fontWeight: 700 }}>Ubah Status ke 'Perawatan' (Direkomendasikan)</div>
+                  <div style={{ fontWeight: 700 }}>Ubah Status ke &apos;Perawatan&apos; (Direkomendasikan)</div>
                   <div style={{ fontSize: '11px', opacity: 0.8, fontWeight: 400 }}>Motor disembunyikan dari sewa aktif, histori laporan tetap aman</div>
                 </div>
               </button>
@@ -912,7 +925,7 @@ export default function VehiclesPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchVehicles(); }, [fetchVehicles]);
+  useEffect(() => { Promise.resolve().then(fetchVehicles); }, [fetchVehicles]);
 
   const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
 
@@ -1134,7 +1147,7 @@ export default function VehiclesPage() {
           {investorList.length === 0 ? (
             <div className="table-empty card">
               <div className="table-empty-icon"><i className="fa-solid fa-crown" style={{ color: '#A855F7' }}></i></div>
-              <p>Belum ada data investor terdaftar. Edit atau tambah motor baru lalu aktifkan status kepemilikan 'Titipan Investor'.</p>
+              <p>Belum ada data investor terdaftar. Edit atau tambah motor baru lalu aktifkan status kepemilikan &apos;Titipan Investor&apos;.</p>
             </div>
           ) : (
             <div className="grid-2">

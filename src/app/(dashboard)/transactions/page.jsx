@@ -6,6 +6,7 @@ import { getPaymentMethods, getPaymentMethodMeta } from '@/lib/paymentMethods';
 import { COUNTRY_CODES, getWhatsAppShareUrl, generateInvoiceText, getFlagImageUrl } from '@/lib/countryCodes';
 import { createClient } from '@/lib/supabase/client';
 import { fetchCustomers, upsertCustomer } from '@/lib/customers';
+import { getLocalDateStr } from '@/lib/finance';
 
 
 function formatRupiah(amount) {
@@ -61,11 +62,15 @@ function VehicleCombobox({ vehicles, value, onChange }) {
 
   const selected = vehicles.find(v => v.id === value);
 
-  useEffect(() => {
+  // Adjust state saat render (pola resmi React) — menggantikan useEffect
+  const [prevSelectedId, setPrevSelectedId] = useState(null);
+  const selectedId = selected?.id ?? null;
+  if (selectedId !== prevSelectedId) {
+    setPrevSelectedId(selectedId);
     if (selected && !selectedBrand) {
       setSelectedBrand(selected.category || null);
     }
-  }, [selected]);
+  }
 
   const brandVehicles = selectedBrand
     ? vehicles.filter(v => (v.category || 'honda') === selectedBrand)
@@ -702,7 +707,9 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
   };
 
   useEffect(() => {
-    if (isOpen) {
+    // Defer ke microtask: hindari setState sinkron di dalam effect
+    Promise.resolve().then(() => {
+      if (!isOpen) return;
       if (editData) {
         setForm({
           vehicle_id: editData.vehicle_id || '',
@@ -746,7 +753,7 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
           renter_name: '',
           renter_phone: '+62 ',
           renter_id_number: '',
-          start_date: new Date().toISOString().split('T')[0],
+          start_date: getLocalDateStr(), // tanggal LOKAL/WITA, bukan UTC
           end_date: '',
           deposit: '',
           discount: '',
@@ -763,11 +770,16 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
         setSelectedOptionId(null);
         setAppliedGross(null);
       }
-    }
+    });
   }, [editData, isOpen]);
 
-  // Recalculate price automatically with smart recommendations
-  useEffect(() => {
+  // Recalculate price automatically with smart recommendations — pola resmi React
+  // "adjust state during render" (menggantikan useEffect + setState sinkron).
+  // vehicles.length ikut di key agar recalc jalan setelah daftar motor selesai dimuat.
+  const priceKey = [form.vehicle_id, form.start_date, form.end_date, form.discount, appliedGross, selectedOptionId, vehicles.length].join('|');
+  const [prevPriceKey, setPrevPriceKey] = useState(null);
+  if (priceKey !== prevPriceKey) {
+    setPrevPriceKey(priceKey);
     if (form.vehicle_id && form.start_date && form.end_date) {
       const vehicle = vehicles.find(v => v.id === form.vehicle_id);
       if (vehicle) {
@@ -812,7 +824,7 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
         }
       }
     }
-  }, [form.vehicle_id, form.start_date, form.end_date, form.discount, appliedGross, selectedOptionId, vehicles]);
+  }
 
   const handleSelectPricingOption = (optionId, grossAmount) => {
     setSelectedOptionId(optionId);
@@ -1225,12 +1237,16 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
 
   const paymentMeta = getPaymentMethodMeta(tx?.payment_method);
 
-  useEffect(() => {
-    if (isOpen && tx) {
-      const generated = generateInvoiceText(tx, vehicle, paymentMeta);
-      setCustomMsg(generated);
+  // Generate pesan invoice saat modal dibuka — pola resmi React
+  // "adjust state during render" (menggantikan useEffect + setState sinkron)
+  const [prevInvoiceKey, setPrevInvoiceKey] = useState(null);
+  const invoiceKey = isOpen && tx ? tx.id : null;
+  if (invoiceKey !== prevInvoiceKey) {
+    setPrevInvoiceKey(invoiceKey);
+    if (invoiceKey) {
+      setCustomMsg(generateInvoiceText(tx, vehicle, paymentMeta));
     }
-  }, [isOpen, tx, vehicle, paymentMeta]);
+  }
 
   if (!isOpen || !tx) return null;
 
@@ -1449,13 +1465,18 @@ function CompleteModal({ isOpen, onClose, onConfirm, tx }) {
   const [issuesReported, setIssuesReported] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && tx) {
+  // Prefill form saat modal dibuka — pola resmi React
+  // "adjust state during render" (menggantikan useEffect + setState sinkron)
+  const [prevCompleteKey, setPrevCompleteKey] = useState(null);
+  const completeKey = isOpen && tx ? tx.id : null;
+  if (completeKey !== prevCompleteKey) {
+    setPrevCompleteKey(completeKey);
+    if (completeKey) {
       setKmEnd(tx.km_end || tx.km_start || '');
       setDamageFee(tx.damage_fee || '');
       setIssuesReported(tx.issues_reported || '');
     }
-  }, [isOpen, tx]);
+  }
 
   if (!isOpen || !tx) return null;
 
@@ -1646,7 +1667,7 @@ export default function TransactionsPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => { Promise.resolve().then(fetchAll); }, [fetchAll]);
 
   const handleSubmit = async (formData) => {
     const isEdit = !!editData;

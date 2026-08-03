@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { getWhatsAppShareUrl, getWaGatewayConfig, sendWhatsAppGateway } from '@/lib/countryCodes';
 import { updateFavicon } from '@/lib/favicon';
+import { getLocalDateStr } from '@/lib/finance';
 
 function formatRupiah(amount) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount || 0);
@@ -252,13 +253,15 @@ export default function SharpSquareBusinessWebsitePage() {
   ];
 
   useEffect(() => {
-    // Default dates: Today to 3 days later
+    // Defer ke microtask: hindari setState sinkron di dalam effect
+    Promise.resolve().then(() => {
+    // Default dates: Today to 3 days later (tanggal LOKAL/WITA, bukan UTC)
     const today = new Date();
     const threeDaysLater = new Date(today);
     threeDaysLater.setDate(today.getDate() + 3);
 
-    setStartDate(today.toISOString().split('T')[0]);
-    setEndDate(threeDaysLater.toISOString().split('T')[0]);
+    setStartDate(getLocalDateStr(today));
+    setEndDate(getLocalDateStr(threeDaysLater));
 
     // Load admin business settings & CMS landing page data from localStorage if available
     try {
@@ -315,6 +318,7 @@ export default function SharpSquareBusinessWebsitePage() {
     }
 
     fetchVehicles();
+    }); // end Promise.resolve().then
   }, []);
 
   const calculateEstimate = (vehicle) => {
@@ -919,7 +923,7 @@ export default function SharpSquareBusinessWebsitePage() {
                   </span>
                 </div>
                 <p style={{ fontSize: '13px', color: '#334155', lineHeight: 1.5, margin: 0, fontStyle: 'italic' }}>
-                  "{rev.comment}"
+                  &quot;{rev.comment}&quot;
                 </p>
                 <div style={{ marginTop: 'auto', borderTop: '1px solid #0F172A', paddingTop: '10px', fontWeight: 900, fontSize: '12px', color: '#0F172A' }}>
                   {rev.name}

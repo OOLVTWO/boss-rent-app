@@ -5,6 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from 'recharts';
+import { getLocalDateStr, toLocalDateStr, isPaidTransaction } from '@/lib/finance';
 
 function formatRupiah(amount) {
   if (amount >= 1000000) return `Rp ${(amount / 1000000).toFixed(1)}jt`;
@@ -44,31 +45,31 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function DashboardCharts({ transactions, vehicles }) {
-  const safeTx = Array.isArray(transactions) ? transactions : [];
-  const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
-
   // Revenue 7 hari terakhir
   const { revenueData, total7DaysRevenue } = useMemo(() => {
+    const safeTx = Array.isArray(transactions) ? transactions : [];
     const days = [];
     let sum = 0;
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = getLocalDateStr(d); // tanggal lokal (WITA), bukan UTC
       const label = d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric' });
 
+      // Hanya transaksi terbayar — konsisten dengan Dashboard & Laporan
       const rev = safeTx
-        .filter(t => t.created_at?.startsWith(dateStr) && t.status !== 'cancelled')
+        .filter(t => toLocalDateStr(t.created_at) === dateStr && isPaidTransaction(t))
         .reduce((s, t) => s + Number(t.total_price || 0), 0);
 
       sum += rev;
       days.push({ label, revenue: rev });
     }
     return { revenueData: days, total7DaysRevenue: sum };
-  }, [safeTx]);
+  }, [transactions]);
 
   // Status motor
   const vehicleStats = useMemo(() => {
+    const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
     const total = safeVehicles.length;
     const available = safeVehicles.filter(v => v.status === 'available').length;
     const rented = safeVehicles.filter(v => v.status === 'rented').length;
@@ -81,7 +82,7 @@ export default function DashboardCharts({ transactions, vehicles }) {
     ].filter(d => d.value > 0);
 
     return { total, available, rented, maintenance, chartData };
-  }, [safeVehicles]);
+  }, [vehicles]);
 
   return (
     <div className="bento-charts-stack mb-6">

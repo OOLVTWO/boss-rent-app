@@ -1,8 +1,8 @@
-/* eslint-disable react-hooks/set-state-in-effect, @next/next/no-img-element */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { exportFinancesToExcel } from '@/lib/excel';
+import { getLocalDateStr } from '@/lib/finance';
 
 function formatRupiah(amount) {
   const cleanAmount = Math.round(Number(amount || 0));
@@ -64,32 +64,35 @@ function FinanceModal({ isOpen, onClose, onSubmit, editData, defaultType = 'expe
     title: '',
     categoryKey: 'service',
     amount: '',
-    expense_date: new Date().toISOString().split('T')[0],
+    expense_date: getLocalDateStr(),
     notes: '',
   });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (editData) {
-      const isInc = checkIsIncome(editData);
-      setForm({
-        type: isInc ? 'income' : 'expense',
-        title: editData.title || '',
-        categoryKey: getCleanCategoryKey(editData.category),
-        amount: editData.amount || '',
-        expense_date: editData.expense_date || new Date().toISOString().split('T')[0],
-        notes: editData.notes || '',
-      });
-    } else {
-      setForm({
-        type: defaultType,
-        title: '',
-        categoryKey: defaultType === 'income' ? 'other_income' : 'service',
-        amount: '',
-        expense_date: new Date().toISOString().split('T')[0],
-        notes: '',
-      });
-    }
+    // Defer ke microtask: hindari setState sinkron di dalam effect
+    Promise.resolve().then(() => {
+      if (editData) {
+        const isInc = checkIsIncome(editData);
+        setForm({
+          type: isInc ? 'income' : 'expense',
+          title: editData.title || '',
+          categoryKey: getCleanCategoryKey(editData.category),
+          amount: editData.amount || '',
+          expense_date: editData.expense_date || getLocalDateStr(),
+          notes: editData.notes || '',
+        });
+      } else {
+        setForm({
+          type: defaultType,
+          title: '',
+          categoryKey: defaultType === 'income' ? 'other_income' : 'service',
+          amount: '',
+          expense_date: getLocalDateStr(),
+          notes: '',
+        });
+      }
+    });
   }, [editData, isOpen, defaultType]);
 
   const handleTypeSwitch = (newType) => {
@@ -434,7 +437,7 @@ export default function FinancesPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchRecords(); }, [fetchRecords]);
+  useEffect(() => { Promise.resolve().then(fetchRecords); }, [fetchRecords]);
 
   // Filtering records
   const filtered = Array.isArray(records) ? records.filter(item => {

@@ -1,17 +1,8 @@
 import * as XLSX from 'xlsx';
+import { formatRupiah } from '@/lib/finance';
 
-/**
- * Format angka sebagai Rupiah
- */
-export function formatRupiah(amount) {
-  const cleanAmount = Math.round(Number(amount || 0));
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(cleanAmount);
-}
+// Re-export agar import lama dari '@/lib/excel' tetap berfungsi
+export { formatRupiah };
 
 /**
  * Export transaksi ke file Excel (.xlsx)

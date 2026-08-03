@@ -5,16 +5,7 @@ import StatCards from '@/components/dashboard/StatCards';
 import DashboardCharts from '@/components/dashboard/DashboardCharts';
 import Link from 'next/link';
 import { analyzeVehicleHealth } from '@/lib/aiDiagnostic';
-
-function formatRupiah(amount) {
-  const cleanAmount = Math.round(Number(amount || 0));
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(cleanAmount);
-}
+import { calcFinancialSummary, formatRupiah } from '@/lib/finance';
 
 const statusBadge = (status, paymentStatus) => {
   if (status === 'active' && paymentStatus === 'unpaid') {
@@ -67,49 +58,18 @@ export default function DashboardClient({ transactions, vehicles }) {
   const diagnostics = safeVehicles.map(v => analyzeVehicleHealth(v, safeTx));
   const urgentVehicles = diagnostics.filter(d => d.healthScore < 60 || d.recentIssues.length > 0);
 
-  // Financial calculations
-  const checkIsIncome = (e) => {
-    if (!e) return false;
-    if (e.type === 'income') return true;
-    if (typeof e.category === 'string' && (e.category.startsWith('income_') || e.category.includes('income'))) return true;
-    return false;
-  };
-
-  // ── Revenue: hitung semua transaksi yang sudah dibayar ──
-  // Aturan:
-  //   - status=completed → selalu masuk revenue
-  //   - status=active + payment_status='paid' (atau null/undefined untuk data lama) → langsung masuk revenue
-  //   - status=active + payment_status='unpaid' → TIDAK masuk revenue
-  const isPaidTx = (t) =>
-    t.status === 'completed' ||
-    (t.status === 'active' && (t.payment_status === 'paid' || !t.payment_status));
-
-  const paidTx = safeTx.filter(isPaidTx);
-
-  const rentalRevenue = paidTx.reduce((s, t) => s + Number(t.total_price || 0), 0);
-  const depositClaimIncome = safeTx.filter(t => t.status === 'completed').reduce((s, t) => s + Number(t.damage_fee || 0), 0);
-  const financialIncome = safeExpenses.filter(e => checkIsIncome(e)).reduce((s, e) => s + Number(e.amount || 0), 0);
-  const totalRevenue = rentalRevenue + depositClaimIncome + financialIncome;
-  const totalExpenses = safeExpenses.filter(e => !checkIsIncome(e)).reduce((s, e) => s + Number(e.amount || 0), 0);
-
-  // ── Potongan Investor: hitung bagi hasil per transaksi ──
-  // Untuk tiap transaksi yang sudah bayar, jika motornya milik investor,
-  // bagian investor = total_price × (revenue_share_percentage / 100)
-  const investorDeduction = paidTx.reduce((sum, t) => {
-    const vehicle = safeVehicles.find(v => v.id === t.vehicle_id);
-    if (vehicle?.owner_type === 'investor') {
-      const investorShare = (Number(vehicle.revenue_share_percentage) || 70) / 100;
-      return sum + Number(t.total_price || 0) * investorShare;
-    }
-    return sum;
-  }, 0);
-
-  // ── Laba Bersih: sudah bersih setelah investor + pengeluaran ──
-  const netProfit = totalRevenue - investorDeduction - totalExpenses;
+  // ── Financial calculations via Shared Finance Engine (@/lib/finance) ──
+  // Konsisten dengan halaman Laporan: revenue cash-basis (completed / active+paid),
+  // bagi hasil investor basis NET per motor (omset − biaya servis motor investor).
+  const summary = calcFinancialSummary({ transactions: safeTx, expenses: safeExpenses, vehicles: safeVehicles });
+  const totalRevenue = summary.totalRevenue;
+  const totalExpenses = summary.totalExpenses;
+  const investorDeduction = summary.investorPayout;
+  const netProfit = summary.netProfit;
 
   // Unpaid summary (untuk info)
-  const unpaidTx = safeTx.filter(t => t.status === 'active' && t.payment_status === 'unpaid');
-  const totalUnpaid = unpaidTx.reduce((s, t) => s + Number(t.total_price || 0), 0);
+  const unpaidTx = summary.unpaidTx;
+  const totalUnpaid = summary.totalUnpaid;
 
   // Deposit calculations
   const activeTx = safeTx.filter(t => t.status === 'active');

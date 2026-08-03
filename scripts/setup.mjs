@@ -1,10 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://eedrziblypwrufdzctvd.supabase.co';
-const SERVICE_KEY = 'sb_secret_eENyau7M99jlO2J9iCLSyQ_0P4qGgBl';
-const ANON_KEY = 'sb_publishable_zUqMMF85DjjkO4HMiiZcvQ_ZWdKiFpF';
-const ADMIN_EMAIL = 'admin@bossrent.com';
-const ADMIN_PASS = 'BossRent2024!';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://eedrziblypwrufdzctvd.supabase.co';
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_zUqMMF85DjjkO4HMiiZcvQ_ZWdKiFpF';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@bossrent.com';
+const ADMIN_PASS = process.env.ADMIN_PASSWORD;
+
+if (!SERVICE_KEY) {
+  console.error('❌ Env SUPABASE_SERVICE_ROLE_KEY belum di-set. Jalankan dulu:');
+  console.error('   $env:SUPABASE_SERVICE_ROLE_KEY="sb_secret_..."  (PowerShell)');
+  process.exit(1);
+}
+if (!ADMIN_PASS) {
+  console.error('❌ Env ADMIN_PASSWORD belum di-set (dipakai untuk membuat user admin baru).');
+  process.exit(1);
+}
 
 const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false }
@@ -91,8 +101,8 @@ async function main() {
   console.log('\n=====================================');
   console.log('🎉 SETUP SELESAI! Buka browser dan login di:');
   console.log('   URL     : http://localhost:3000');
-  console.log('   Email   : admin@bossrent.com');
-  console.log('   Password: BossRent2024!');
+  console.log('   Email   :', ADMIN_EMAIL);
+  console.log('   Password: (sesuai env ADMIN_PASSWORD)');
   console.log('=====================================\n');
 }
 

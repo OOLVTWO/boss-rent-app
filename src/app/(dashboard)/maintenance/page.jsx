@@ -28,8 +28,13 @@ function ResolveMaintenanceModal({ isOpen, onClose, onConfirm, vehicle }) {
         { id: 'poles_bodi_std', label: 'Perbaikan Bodi Lecet / Poles Bodi', category: 'Bodi & Estetika', estimatedCost: 150000, reason: 'Perbaikan kosmetik', recommended: false }
       ];
 
-  useEffect(() => {
-    if (isOpen && vehicle) {
+  // Reset form saat modal dibuka untuk motor tertentu — pola resmi React
+  // "adjust state during render" (menggantikan useEffect + setState sinkron)
+  const [prevModalKey, setPrevModalKey] = useState(null);
+  const modalKey = isOpen && vehicle ? (vehicle.vehicleId ?? vehicle.id ?? 'open') : null;
+  if (modalKey !== prevModalKey) {
+    setPrevModalKey(modalKey);
+    if (modalKey) {
       setNotes('');
       setCost('0'); // Default 0 (Opsional)
 
@@ -38,7 +43,7 @@ function ResolveMaintenanceModal({ isOpen, onClose, onConfirm, vehicle }) {
       const initialChecked = recItems.length > 0 ? recItems : actionItems.slice(0, 2).map(i => i.id);
       setSelectedItems(initialChecked);
     }
-  }, [isOpen, vehicle?.vehicleId]);
+  }
 
   if (!isOpen || !vehicle) return null;
 
@@ -409,7 +414,7 @@ export default function MaintenancePage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { Promise.resolve().then(fetchData); }, [fetchData]);
 
   // Auto refresh every 60s
   useEffect(() => {
@@ -949,7 +954,7 @@ export default function MaintenancePage() {
                     </div>
 
                     <div style={{ background: 'var(--bg-card)', padding: '10px 14px', borderRadius: '6px', borderLeft: '3px solid #F59E0B', fontSize: '13px', color: '#F59E0B', fontStyle: 'italic' }}>
-                      "{t.issues_reported}"
+                      &quot;{t.issues_reported}&quot;
                     </div>
                   </div>
                 );

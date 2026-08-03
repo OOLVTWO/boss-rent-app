@@ -165,7 +165,8 @@ export default function CustomersPage() {
   }, [supabase]);
 
   useEffect(() => {
-    loadCustomerData();
+    // Defer ke microtask: hindari setState sinkron di dalam effect
+    Promise.resolve().then(loadCustomerData);
   }, [loadCustomerData]);
 
   const showNotification = (msg, type = 'success') => {

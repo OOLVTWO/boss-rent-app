@@ -11,11 +11,41 @@ export default function VuiVoiceControl() {
   const router = useRouter();
   const recognitionRef = useRef(null);
 
+  // Dipindah SEBELUM useEffect: callback recognition (onresult) dipasang di dalam
+  // effect, sehingga fungsi ini harus sudah terdeklarasi saat effect berjalan.
+  const processVoiceCommand = (cmd) => {
+    if (cmd.includes('transaksi') || cmd.includes('sewa')) {
+      setFeedback('Navigasi ke Halaman Transaksi...');
+      setTimeout(() => { router.push('/transactions'); setFeedback(''); setTranscript(''); }, 1000);
+    } else if (cmd.includes('motor') || cmd.includes('armada')) {
+      setFeedback('Navigasi ke Data Motor...');
+      setTimeout(() => { router.push('/vehicles'); setFeedback(''); setTranscript(''); }, 1000);
+    } else if (cmd.includes('ketersediaan') || cmd.includes('stok')) {
+      setFeedback('Navigasi ke Ketersediaan...');
+      setTimeout(() => { router.push('/availability'); setFeedback(''); setTranscript(''); }, 1000);
+    } else if (cmd.includes('tracking') || cmd.includes('lacak')) {
+      setFeedback('Navigasi ke Tracking Sewa...');
+      setTimeout(() => { router.push('/tracking'); setFeedback(''); setTranscript(''); }, 1000);
+    } else if (cmd.includes('pengaturan') || cmd.includes('setting')) {
+      setFeedback('Navigasi ke Pengaturan...');
+      setTimeout(() => { router.push('/settings'); setFeedback(''); setTranscript(''); }, 1000);
+    } else if (cmd.includes('pengeluaran') || cmd.includes('biaya')) {
+      setFeedback('Navigasi ke Pengeluaran...');
+      setTimeout(() => { router.push('/expenses'); setFeedback(''); setTranscript(''); }, 1000);
+    } else if (cmd.includes('dashboard') || cmd.includes('beranda')) {
+      setFeedback('Navigasi ke Dashboard...');
+      setTimeout(() => { router.push('/dashboard'); setFeedback(''); setTranscript(''); }, 1000);
+    } else if (cmd.includes('bantuan') || cmd.includes('tolong')) {
+      setFeedback('Perintah suara: Sebutkan "Transaksi", "Data Motor", "Ketersediaan", "Tracking", "Pengaturan"');
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        setSupported(false);
+        // Defer ke microtask: hindari setState sinkron di dalam effect
+        Promise.resolve().then(() => setSupported(false));
         return;
       }
 
@@ -44,34 +74,11 @@ export default function VuiVoiceControl() {
 
       recognitionRef.current = recog;
     }
+    // processVoiceCommand sengaja tidak jadi dependency: ia hanya dipanggil dari
+    // callback async recognition (onresult), dan versi render pertama sudah cukup
+    // karena isinya statis (hanya router.push + setState).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const processVoiceCommand = (cmd) => {
-    if (cmd.includes('transaksi') || cmd.includes('sewa')) {
-      setFeedback('Navigasi ke Halaman Transaksi...');
-      setTimeout(() => { router.push('/transactions'); setFeedback(''); setTranscript(''); }, 1000);
-    } else if (cmd.includes('motor') || cmd.includes('armada')) {
-      setFeedback('Navigasi ke Data Motor...');
-      setTimeout(() => { router.push('/vehicles'); setFeedback(''); setTranscript(''); }, 1000);
-    } else if (cmd.includes('ketersediaan') || cmd.includes('stok')) {
-      setFeedback('Navigasi ke Ketersediaan...');
-      setTimeout(() => { router.push('/availability'); setFeedback(''); setTranscript(''); }, 1000);
-    } else if (cmd.includes('tracking') || cmd.includes('lacak')) {
-      setFeedback('Navigasi ke Tracking Sewa...');
-      setTimeout(() => { router.push('/tracking'); setFeedback(''); setTranscript(''); }, 1000);
-    } else if (cmd.includes('pengaturan') || cmd.includes('setting')) {
-      setFeedback('Navigasi ke Pengaturan...');
-      setTimeout(() => { router.push('/settings'); setFeedback(''); setTranscript(''); }, 1000);
-    } else if (cmd.includes('pengeluaran') || cmd.includes('biaya')) {
-      setFeedback('Navigasi ke Pengeluaran...');
-      setTimeout(() => { router.push('/expenses'); setFeedback(''); setTranscript(''); }, 1000);
-    } else if (cmd.includes('dashboard') || cmd.includes('beranda')) {
-      setFeedback('Navigasi ke Dashboard...');
-      setTimeout(() => { router.push('/dashboard'); setFeedback(''); setTranscript(''); }, 1000);
-    } else if (cmd.includes('bantuan') || cmd.includes('tolong')) {
-      setFeedback('Perintah suara: Sebutkan "Transaksi", "Data Motor", "Ketersediaan", "Tracking", "Pengaturan"');
-    }
-  };
 
   const toggleListening = () => {
     if (!recognitionRef.current) {
@@ -110,7 +117,7 @@ export default function VuiVoiceControl() {
             <span className="vui-pulse-dot"></span>
             <strong>VUI Voice Assistant</strong>
           </div>
-          {transcript && <div className="vui-transcript">"{transcript}"</div>}
+          {transcript && <div className="vui-transcript">&quot;{transcript}&quot;</div>}
           {feedback && <div className="vui-feedback">{feedback}</div>}
         </div>
       )}

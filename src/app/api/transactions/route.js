@@ -15,8 +15,9 @@ export async function GET(request) {
     .order('created_at', { ascending: false });
 
   if (status && status !== 'all') query = query.eq('status', status);
-  if (startDate) query = query.gte('created_at', `${startDate}T00:00:00Z`);
-  if (endDate) query = query.lte('created_at', `${endDate}T23:59:59Z`);
+  // Terima ISO penuh (sudah tz-aware dari client) atau tanggal polos YYYY-MM-DD (legacy, dianggap UTC)
+  if (startDate) query = query.gte('created_at', startDate.includes('T') ? startDate : `${startDate}T00:00:00Z`);
+  if (endDate) query = query.lte('created_at', endDate.includes('T') ? endDate : `${endDate}T23:59:59Z`);
 
   const { data, error } = await query;
   if (error) return NextResponse.json([], { status: 200 });

@@ -1,27 +1,22 @@
 'use client';
 
 import { useMemo } from 'react';
-
-function formatRupiah(amount) {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(amount || 0);
-}
+import { formatRupiah, getLocalDateStr, getLocalMonthStr, toLocalDateStr, isPaidTransaction } from '@/lib/finance';
 
 export default function StatCards({ transactions, vehicles }) {
   const stats = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const thisMonth = new Date().toISOString().substring(0, 7);
+    // Tanggal lokal (WITA) — bukan UTC — agar "hari ini" akurat
+    const today = getLocalDateStr();
+    const thisMonth = getLocalMonthStr();
 
+    // Hanya transaksi terbayar yang diakui sebagai pendapatan (konsisten dgn Laporan)
     const todayTx = transactions.filter(
-      (t) => t.created_at?.startsWith(today) && t.status !== 'cancelled'
+      (t) => toLocalDateStr(t.created_at) === today && isPaidTransaction(t)
     );
     const todayRevenue = todayTx.reduce((s, t) => s + Number(t.total_price || 0), 0);
 
     const monthTx = transactions.filter(
-      (t) => t.created_at?.startsWith(thisMonth) && t.status !== 'cancelled'
+      (t) => toLocalDateStr(t.created_at).startsWith(thisMonth) && isPaidTransaction(t)
     );
     const monthRevenue = monthTx.reduce((s, t) => s + Number(t.total_price || 0), 0);
 

@@ -3,11 +3,22 @@ import { readFileSync } from 'fs';
 
 const { Client } = pg;
 
+// Password database dibaca dari env agar tidak ada secret di repository
+const DB_PASSWORD = process.env.SUPABASE_DB_PASSWORD;
+
+if (!DB_PASSWORD) {
+  console.error('❌ Env SUPABASE_DB_PASSWORD belum di-set. Jalankan dulu:');
+  console.error('   $env:SUPABASE_DB_PASSWORD="password-db-kamu"  (PowerShell)');
+  process.exit(1);
+}
+
+const encodedPass = encodeURIComponent(DB_PASSWORD);
+
 // Supabase Direct / Pooler connection string formats
 const connectionStrings = [
-  'postgres://postgres:BossRent2024!@db.eedrziblypwrufdzctvd.supabase.co:5432/postgres',
-  'postgres://postgres.eedrziblypwrufdzctvd:BossRent2024!@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres',
-  'postgres://postgres.eedrziblypwrufdzctvd:BossRent2024!@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres'
+  `postgres://postgres:${encodedPass}@db.eedrziblypwrufdzctvd.supabase.co:5432/postgres`,
+  `postgres://postgres.eedrziblypwrufdzctvd:${encodedPass}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres`,
+  `postgres://postgres.eedrziblypwrufdzctvd:${encodedPass}@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres`
 ];
 
 async function run() {
