@@ -1,0 +1,18 @@
+
+> boss-rent-app@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.10 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.10:3000
+✓ Ready in 658ms
+
+○ Compiling /login ...
+ GET /login 200 in 5.0s (next.js: 4.7s, application-code: 325ms)
+ GET /api/vehicles 401 in 1574ms (next.js: 1538ms, application-code: 37ms)
+ GET /api/transactions 401 in 1283ms (next.js: 1262ms, application-code: 21ms)
+ GET /api/expenses 401 in 1379ms (next.js: 1362ms, application-code: 16ms)
+ POST /api/transactions 401 in 15ms (next.js: 3ms, application-code: 12ms)
+ PUT /api/vehicles/fake-id 401 in 2.2s (next.js: 2.2s, application-code: 14ms)
+ DELETE /api/expenses/fake-id 401 in 1865ms (next.js: 1846ms, application-code: 19ms)
+[?25h

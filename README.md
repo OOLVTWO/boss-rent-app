@@ -79,6 +79,7 @@ Panel kendali khusus pengelola rental yang dilindungi oleh autentikasi **Supabas
 ## 🔒 ASPEK KEAMANAN (SECURITY POSTURE)
 
 - **Supabase Auth Guard**: Rute manajemen terlindungi oleh pengecekan sesi server `supabase.auth.getUser()`. User tanpa login otomatis di-redirect ke `/login`.
+- **API Route Protection**: Semua endpoint `/api/*` (vehicles, transactions, expenses) wajib lolos guard `requireAuth()` (`src/lib/apiAuth.js`). Request tanpa sesi login valid ditolak dengan **HTTP 401** — wajib karena route memakai service role (bypass RLS).
 - **HTTP Security Headers**: Ditambahkan pada level Next.js & Vercel edge:
   - `X-Frame-Options: SAMEORIGIN` (Proteksi Clickjacking & iframe embedding ilegal).
   - `X-Content-Type-Options: nosniff` (Proteksi MIME-type sniffing).

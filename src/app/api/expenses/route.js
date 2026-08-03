@@ -1,8 +1,12 @@
 import { createAdminClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/apiAuth';
 import { NextResponse } from 'next/server';
 
 // GET /api/expenses
 export async function GET(request) {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const supabase = await createAdminClient();
   const { searchParams } = new URL(request.url);
   const startDate = searchParams.get('start_date');
@@ -52,6 +56,9 @@ export async function GET(request) {
 
 // POST /api/expenses
 export async function POST(request) {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const supabase = await createAdminClient();
   const body = await request.json();
 

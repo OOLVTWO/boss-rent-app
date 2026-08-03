@@ -1,8 +1,12 @@
 import { createAdminClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/apiAuth';
 import { NextResponse } from 'next/server';
 
 // GET /api/vehicles/[id]
 export async function GET(request, { params }) {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const { id } = await params;
   const supabase = await createAdminClient();
   const { data, error } = await supabase
@@ -17,6 +21,9 @@ export async function GET(request, { params }) {
 
 // PUT /api/vehicles/[id]
 export async function PUT(request, { params }) {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const { id } = await params;
   const supabase = await createAdminClient();
   const body = await request.json();
@@ -68,6 +75,9 @@ export async function DELETE(request, { params }) {
   const { id } = await params;
   const { searchParams } = new URL(request.url);
   const cascade = searchParams.get('cascade') === 'true';
+
+  const authError = await requireAuth();
+  if (authError) return authError;
 
   const supabase = await createAdminClient();
 

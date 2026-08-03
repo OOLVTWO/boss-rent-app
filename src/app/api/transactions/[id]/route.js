@@ -1,8 +1,12 @@
 import { createAdminClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/apiAuth';
 import { NextResponse } from 'next/server';
 
 // PUT /api/transactions/[id]
 export async function PUT(request, { params }) {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const { id } = await params;
   const supabase = await createAdminClient();
   const body = await request.json();
@@ -75,6 +79,9 @@ export async function PUT(request, { params }) {
 
 // DELETE /api/transactions/[id]
 export async function DELETE(request, { params }) {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const { id } = await params;
   const supabase = await createAdminClient();
 
