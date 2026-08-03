@@ -44,4 +44,4 @@ next-env.d.ts
 .netlify/
 
 # local build output
-build.log
+*.log
