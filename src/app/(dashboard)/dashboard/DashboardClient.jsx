@@ -1,11 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import StatCards from '@/components/dashboard/StatCards';
 import DashboardCharts from '@/components/dashboard/DashboardCharts';
 import Link from 'next/link';
 import { analyzeVehicleHealth } from '@/lib/aiDiagnostic';
-import { calcFinancialSummary, formatRupiah } from '@/lib/finance';
+import { calcFinancialSummary, formatRupiah, getLocalMonthStr, toLocalDateStr } from '@/lib/finance';
+
+const MONTH_NAMES = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+];
 
 const statusBadge = (status, paymentStatus) => {
   if (status === 'active' && paymentStatus === 'unpaid') {
@@ -38,6 +43,14 @@ const statusBadge = (status, paymentStatus) => {
 export default function DashboardClient({ transactions, vehicles }) {
   const [expenses, setExpenses] = useState([]);
 
+  // ── Filter Periode: dashboard default = BULAN BERJALAN ──
+  // Permintaan client: tiap awal bulan dashboard otomatis "mulai dari 0".
+  // Data lama TIDAK dihapus — hanya tampilan yang difilter per periode,
+  // dan user bisa membaca laporan bulan/tahun lain lewat pemilih periode.
+  const [periodMode, setPeriodMode] = useState('month'); // 'month' | 'year'
+  const [selectedMonth, setSelectedMonth] = useState(getLocalMonthStr()); // 'YYYY-MM' (lokal/WITA)
+  const [selectedYear, setSelectedYear] = useState(getLocalMonthStr().substring(0, 4));
+
   useEffect(() => {
     fetch('/api/expenses')
       .then(res => res.json())
@@ -52,28 +65,80 @@ export default function DashboardClient({ transactions, vehicles }) {
   const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
   const safeExpenses = Array.isArray(expenses) ? expenses : [];
 
-  const recentTx = safeTx.slice(0, 5);
+  // Rentang tanggal periode terpilih (tanggal lokal YYYY-MM-DD, aman timezone WITA)
+  const periodRange = useMemo(() => {
+    const currentYear = getLocalMonthStr().substring(0, 4);
+    if (periodMode === 'year') {
+      return {
+        start: `${selectedYear}-01-01`,
+        end: `${selectedYear}-12-31`,
+        label: `Tahun ${selectedYear}`,
+        isCurrent: selectedYear === currentYear,
+      };
+    }
+    const [y, m] = selectedMonth.split('-').map(Number);
+    const lastDay = new Date(y, m, 0).getDate();
+    return {
+      start: `${selectedMonth}-01`,
+      end: `${selectedMonth}-${String(lastDay).padStart(2, '0')}`,
+      label: `${MONTH_NAMES[m - 1]} ${y}`,
+      isCurrent: selectedMonth === getLocalMonthStr(),
+    };
+  }, [periodMode, selectedMonth, selectedYear]);
 
-  // AI Diagnostic Warnings Calculation
+  // Data yang difilter per periode — inilah dasar "reset bulanan" dashboard
+  // serta laporan per bulan / per tahun yang diminta client.
+  const filteredTx = safeTx.filter(t => {
+    const d = toLocalDateStr(t.created_at);
+    return d >= periodRange.start && d <= periodRange.end;
+  });
+  const filteredExpenses = safeExpenses.filter(e => {
+    const d = e.expense_date || toLocalDateStr(e.created_at);
+    return d >= periodRange.start && d <= periodRange.end;
+  });
+
+  // Opsi tahun = dari tahun transaksi paling awal s/d tahun berjalan
+  const yearOptions = useMemo(() => {
+    const arr = Array.isArray(transactions) ? transactions : [];
+    const years = new Set([Number(getLocalMonthStr().substring(0, 4))]);
+    arr.forEach(t => {
+      const y = Number(toLocalDateStr(t.created_at).substring(0, 4));
+      if (y) years.add(y);
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [transactions]);
+
+  const handleResetPeriod = () => {
+    setSelectedMonth(getLocalMonthStr());
+    setSelectedYear(getLocalMonthStr().substring(0, 4));
+  };
+
+  const recentTx = filteredTx.slice(0, 5);
+
+  // AI Diagnostic: kesehatan motor = kondisi SAAT INI → pakai SELURUH riwayat (tanpa filter periode)
   const diagnostics = safeVehicles.map(v => analyzeVehicleHealth(v, safeTx));
   const urgentVehicles = diagnostics.filter(d => d.healthScore < 60 || d.recentIssues.length > 0);
 
   // ── Financial calculations via Shared Finance Engine (@/lib/finance) ──
   // Konsisten dengan halaman Laporan: revenue cash-basis (completed / active+paid),
   // bagi hasil investor basis NET per motor (omset − biaya servis motor investor).
-  const summary = calcFinancialSummary({ transactions: safeTx, expenses: safeExpenses, vehicles: safeVehicles });
+  // Semua angka dihitung dari data PERIODE TERPILIH (default: bulan berjalan).
+  const summary = calcFinancialSummary({ transactions: filteredTx, expenses: filteredExpenses, vehicles: safeVehicles });
   const totalRevenue = summary.totalRevenue;
   const totalExpenses = summary.totalExpenses;
   const investorDeduction = summary.investorPayout;
   const netProfit = summary.netProfit;
 
-  // Unpaid summary (untuk info)
-  const unpaidTx = summary.unpaidTx;
-  const totalUnpaid = summary.totalUnpaid;
+  // Piutang belum dibayar = kondisi SAAT INI → seluruh transaksi aktif unpaid
+  // (sengaja TANPA filter periode agar tunggakan bulan lalu tetap terlihat)
+  const unpaidTx = safeTx.filter(t => t.status === 'active' && t.payment_status === 'unpaid');
+  const totalUnpaid = unpaidTx.reduce((s, t) => s + Number(t.total_price || 0), 0);
 
   // Deposit calculations
+  // "Ditahan" = uang deposit yang dipegang SAAT INI (semua sewa aktif, tanpa filter periode).
+  // "Klaim denda" & "Dikembalikan" = kejadian pada PERIODE TERPILIH.
   const activeTx = safeTx.filter(t => t.status === 'active');
-  const completedTx = safeTx.filter(t => t.status === 'completed');
+  const completedTx = filteredTx.filter(t => t.status === 'completed');
   const totalDepositHeld = activeTx.reduce((s, t) => s + Number(t.deposit || 0), 0);
   const totalDepositDamage = completedTx.reduce((s, t) => s + Number(t.damage_fee || 0), 0);
   const totalDepositReturned = completedTx.reduce((s, t) => {
@@ -87,7 +152,94 @@ export default function DashboardClient({ transactions, vehicles }) {
       {/* Bento Header */}
       <div className="page-header mb-6">
         <h2><i className="fa-solid fa-border-all" style={{ marginRight: '8px', color: 'var(--brand-primary)' }}></i> Dashboard Bento Analytics</h2>
-        <p>Ringkasan performa finansial, status armada, dan ketersediaan sewa motor Boss Rent Pererenan</p>
+        <p>Ringkasan performa finansial, status armada, dan ketersediaan sewa motor Boss Rent Pererenan — {periodRange.label}</p>
+      </div>
+
+      {/* ── Pemilih Periode: baca laporan per bulan / per tahun ── */}
+      <div className="card mb-6">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'flex-end' }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <span className="form-label"><i className="fa-solid fa-filter" style={{ marginRight: '6px' }}></i> Mode Periode</span>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${periodMode === 'month' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setPeriodMode('month')}
+                  style={{ borderRadius: '8px', padding: '6px 14px', fontSize: '12.5px', fontWeight: 600, whiteSpace: 'nowrap' }}
+                >
+                  <i className="fa-solid fa-calendar-day" style={{ marginRight: '4px' }}></i> Bulanan
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${periodMode === 'year' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setPeriodMode('year')}
+                  style={{ borderRadius: '8px', padding: '6px 14px', fontSize: '12.5px', fontWeight: 600, whiteSpace: 'nowrap' }}
+                >
+                  <i className="fa-solid fa-calendar" style={{ marginRight: '4px' }}></i> Tahunan
+                </button>
+              </div>
+            </div>
+
+            {periodMode === 'month' && (
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" htmlFor="dash-period-month">
+                  <i className="fa-solid fa-calendar-days" style={{ marginRight: '6px' }}></i> Bulan
+                </label>
+                <select
+                  id="dash-period-month"
+                  className="form-control"
+                  value={selectedMonth.substring(5, 7)}
+                  onChange={e => setSelectedMonth(`${selectedMonth.substring(0, 4)}-${e.target.value}`)}
+                >
+                  {MONTH_NAMES.map((name, i) => (
+                    <option key={name} value={String(i + 1).padStart(2, '0')}>{name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" htmlFor="dash-period-year">
+                <i className="fa-solid fa-calendar-days" style={{ marginRight: '6px' }}></i> Tahun
+              </label>
+              <select
+                id="dash-period-year"
+                className="form-control"
+                value={periodMode === 'year' ? selectedYear : selectedMonth.substring(0, 4)}
+                onChange={e => {
+                  if (periodMode === 'year') setSelectedYear(e.target.value);
+                  else setSelectedMonth(`${e.target.value}-${selectedMonth.substring(5, 7)}`);
+                }}
+              >
+                {yearOptions.map(y => <option key={y} value={String(y)}>{y}</option>)}
+              </select>
+            </div>
+
+            {!periodRange.isCurrent && (
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={handleResetPeriod}
+              >
+                <i className="fa-solid fa-rotate-left" style={{ marginRight: '4px' }}></i> Kembali ke Periode Berjalan
+              </button>
+            )}
+          </div>
+
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700, marginBottom: '4px' }}>
+              Periode Ditampilkan
+            </div>
+            <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--brand-primary-light)' }}>
+              <i className="fa-solid fa-calendar-check" style={{ marginRight: '6px' }}></i>{periodRange.label}
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+              <i className="fa-solid fa-circle-info" style={{ marginRight: '4px' }}></i>
+              Dashboard otomatis mulai dari 0 setiap awal bulan
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* AI Diagnostic Warning Bento Alert */}
@@ -149,7 +301,7 @@ export default function DashboardClient({ transactions, vehicles }) {
             <div style={{ margin: '0 0 12px 0', padding: '8px 12px', background: 'rgba(245,158,11,0.08)', borderRadius: '8px', border: '1px solid rgba(245,158,11,0.3)', fontSize: '12px', color: '#F59E0B', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <i className="fa-solid fa-clock"></i>
-                <span><strong>{unpaidTx.length}</strong> transaksi belum bayar</span>
+                <span><strong>{unpaidTx.length}</strong> transaksi belum bayar (semua periode)</span>
               </div>
               <strong>{formatRupiah(totalUnpaid)}</strong>
             </div>
@@ -224,7 +376,7 @@ export default function DashboardClient({ transactions, vehicles }) {
               <div className="dep-box-val" style={{ color: '#A855F7' }}>+{formatRupiah(totalDepositDamage)}</div>
               <div className="dep-box-sub">
                 <span style={{ color: '#A855F7', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                  <i className="fa-solid fa-circle-plus"></i> Masuk Pemasukan & Laba
+                  <i className="fa-solid fa-circle-plus"></i> Masuk Pemasukan & Laba periode ini
                 </span>
               </div>
             </div>
@@ -237,7 +389,7 @@ export default function DashboardClient({ transactions, vehicles }) {
               <div className="dep-box-val" style={{ color: '#3B82F6' }}>{formatRupiah(totalDepositReturned)}</div>
               <div className="dep-box-sub">
                 <span style={{ color: '#3B82F6', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                  <i className="fa-solid fa-arrow-rotate-left"></i> Pengembalian Kas ke Customer
+                  <i className="fa-solid fa-arrow-rotate-left"></i> Pengembalian Kas periode ini
                 </span>
               </div>
             </div>
@@ -245,11 +397,22 @@ export default function DashboardClient({ transactions, vehicles }) {
         </div>
       </div>
 
-      {/* 3. Metrics Stat Bento Cards */}
-      <StatCards transactions={safeTx} vehicles={safeVehicles} />
+      {/* 3. Metrics Stat Bento Cards (per periode terpilih) */}
+      <StatCards
+        transactions={filteredTx}
+        vehicles={safeVehicles}
+        periodLabel={periodRange.label}
+        isCurrentPeriod={periodRange.isCurrent}
+        periodMode={periodMode}
+      />
 
-      {/* 4. Analytics Bento Grid (Charts) */}
-      <DashboardCharts transactions={safeTx} vehicles={safeVehicles} />
+      {/* 4. Analytics Bento Grid (Charts, per periode terpilih) */}
+      <DashboardCharts
+        transactions={filteredTx}
+        vehicles={safeVehicles}
+        periodMode={periodMode}
+        periodRange={periodRange}
+      />
 
       {/* 5. Recent Transactions Table Bento Card */}
       <div className="bento-card bento-table-card">
@@ -259,7 +422,7 @@ export default function DashboardClient({ transactions, vehicles }) {
               <i className="fa-solid fa-receipt" style={{ color: 'var(--brand-primary)' }}></i>
               Transaksi Terbaru
             </div>
-            <div className="card-subtitle">5 riwayat transaksi sewa motor terkini</div>
+            <div className="card-subtitle">5 transaksi terkini pada periode {periodRange.label}</div>
           </div>
           <Link href="/transactions" className="btn btn-secondary btn-sm">
             Lihat Semua <i className="fa-solid fa-arrow-right" style={{ marginLeft: '4px' }}></i>
@@ -269,7 +432,7 @@ export default function DashboardClient({ transactions, vehicles }) {
         {recentTx.length === 0 ? (
           <div className="table-empty" style={{ padding: '40px 16px' }}>
             <div className="table-empty-icon"><i className="fa-solid fa-receipt"></i></div>
-            <p>Belum ada transaksi terdaftar. <Link href="/transactions">Catat transaksi pertama</Link></p>
+            <p>Belum ada transaksi pada periode {periodRange.label}. <Link href="/transactions">Catat transaksi baru</Link></p>
           </div>
         ) : (
           <div className="table-wrapper">

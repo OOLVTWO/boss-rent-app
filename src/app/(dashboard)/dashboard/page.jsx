@@ -9,7 +9,9 @@ export default async function DashboardPage() {
       .from('transactions')
       .select(`*, vehicles(name, plate_number, rate_per_day)`)
       .order('created_at', { ascending: false })
-      .limit(100),
+      // Ambil seluruh riwayat (batas default Supabase) agar filter periode
+      // bulanan/tahunan, deposit aktif & diagnosa AI tetap akurat di client.
+      .limit(1000),
     supabase.from('vehicles').select('*'),
   ]);
 

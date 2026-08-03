@@ -1,24 +1,20 @@
 'use client';
 
 import { useMemo } from 'react';
-import { formatRupiah, getLocalDateStr, getLocalMonthStr, toLocalDateStr, isPaidTransaction } from '@/lib/finance';
+import { formatRupiah, getLocalDateStr, toLocalDateStr, isPaidTransaction } from '@/lib/finance';
 
-export default function StatCards({ transactions, vehicles }) {
+export default function StatCards({ transactions, vehicles, periodLabel, isCurrentPeriod, periodMode }) {
   const stats = useMemo(() => {
     // Tanggal lokal (WITA) — bukan UTC — agar "hari ini" akurat
     const today = getLocalDateStr();
-    const thisMonth = getLocalMonthStr();
 
+    // `transactions` sudah difilter per periode oleh DashboardClient.
     // Hanya transaksi terbayar yang diakui sebagai pendapatan (konsisten dgn Laporan)
-    const todayTx = transactions.filter(
-      (t) => toLocalDateStr(t.created_at) === today && isPaidTransaction(t)
-    );
-    const todayRevenue = todayTx.reduce((s, t) => s + Number(t.total_price || 0), 0);
+    const paidTx = transactions.filter(isPaidTransaction);
+    const periodRevenue = paidTx.reduce((s, t) => s + Number(t.total_price || 0), 0);
 
-    const monthTx = transactions.filter(
-      (t) => toLocalDateStr(t.created_at).startsWith(thisMonth) && isPaidTransaction(t)
-    );
-    const monthRevenue = monthTx.reduce((s, t) => s + Number(t.total_price || 0), 0);
+    const todayTx = paidTx.filter((t) => toLocalDateStr(t.created_at) === today);
+    const todayRevenue = todayTx.reduce((s, t) => s + Number(t.total_price || 0), 0);
 
     const activeCount = vehicles.filter((v) => v.status === 'rented').length;
     const availableCount = vehicles.filter((v) => v.status === 'available').length;
@@ -27,7 +23,8 @@ export default function StatCards({ transactions, vehicles }) {
 
     return {
       todayRevenue,
-      monthRevenue,
+      periodRevenue,
+      paidCount: paidTx.length,
       activeCount,
       availableCount,
       maintenanceCount,
@@ -36,15 +33,22 @@ export default function StatCards({ transactions, vehicles }) {
     };
   }, [transactions, vehicles]);
 
+  // Kartu pendapatan: mode bulan berjalan → tampilkan "Hari Ini" (real-time).
+  // Mode lain (bulan lampau / tahunan) → tampilkan total pendapatan periode tsb.
+  const showToday = isCurrentPeriod && periodMode === 'month';
+  const revenueCard = {
+    iconClass: 'fa-solid fa-sack-dollar',
+    label: showToday ? 'Pendapatan Hari Ini' : `Pendapatan ${periodLabel}`,
+    value: formatRupiah(showToday ? stats.todayRevenue : stats.periodRevenue),
+    iconBg: 'linear-gradient(135deg, rgba(232,93,4,0.2), rgba(250,163,7,0.15))',
+    iconColor: '#FAA307',
+    change: showToday
+      ? `${periodLabel}: ${formatRupiah(stats.periodRevenue)}`
+      : `${stats.paidCount} transaksi terbayar`,
+  };
+
   const cards = [
-    {
-      iconClass: 'fa-solid fa-sack-dollar',
-      label: 'Pendapatan Hari Ini',
-      value: formatRupiah(stats.todayRevenue),
-      iconBg: 'linear-gradient(135deg, rgba(232,93,4,0.2), rgba(250,163,7,0.15))',
-      iconColor: '#FAA307',
-      change: `Bulan ini: ${formatRupiah(stats.monthRevenue)}`,
-    },
+    revenueCard,
     {
       iconClass: 'fa-solid fa-key',
       label: 'Motor Sedang Disewa',
