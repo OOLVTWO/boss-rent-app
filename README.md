@@ -115,6 +115,11 @@ Seluruh skema database tersimpan pada file **`supabase/schema.sql`** (Master Sch
    npx next build
    ```
 
+4. **Jalankan Unit Test** (finance engine & helper tanggal):
+   ```bash
+   npm test
+   ```
+
 ---
 
 *Dikembangkan secara khusus & eksklusif untuk Boss Rent Pererenan.*
