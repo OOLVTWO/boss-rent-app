@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import DashboardClient from './DashboardClient';
 
 // Ambil SEMUA baris dengan pagination (Supabase JS default limit = 1000 baris,
@@ -21,9 +21,9 @@ async function fetchAllRows(query, pageSize = 1000) {
 }
 
 export default async function DashboardPage() {
-  // Admin client (service role) — halaman ini sudah diproteksi layout (auth),
-  // jadi data dijamin lengkap & konsisten terlepas dari RLS.
-  const supabase = await createAdminClient();
+  // Session user (bukan service role) — layout sudah proteksi auth + RLS
+  // policy "authenticated = full access" (migration 001) menjamin data lengkap.
+  const supabase = await createClient();
 
   const [transactions, vehicles] = await Promise.all([
     fetchAllRows(
