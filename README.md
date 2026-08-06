@@ -10,9 +10,7 @@ Aplikasi ini dikembangkan menggunakan stack teknologi terbaik: **Next.js 16 (App
 
 - 🌐 **Katalog Utama Publik Customer**: [https://bossrentpererenan.vercel.app](https://bossrentpererenan.vercel.app)
 - 🔑 **Portal Login Admin Dashboard**: [https://bossrentpererenan.vercel.app/login](https://bossrentpererenan.vercel.app/login) (atau tambahkan `/dashboard`)
-- 👤 **Kredensial Login Admin Default**:
-  - **Email**: `admin@bossrent.com`
-  - **Password**: ``
+- 🔒 **Akses admin dikelola via Supabase Auth** — kredensial TIDAK disimpan di repo. Hubungi pemilik untuk akun.
 
 ---
 

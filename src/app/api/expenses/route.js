@@ -1,10 +1,10 @@
 import { createAdminClient } from '@/lib/supabase/server';
-import { requireAuth } from '@/lib/apiAuth';
+import { requireAuth, readJsonBody, missingFields } from '@/lib/apiAuth';
 import { NextResponse } from 'next/server';
 
 // GET /api/expenses
 export async function GET(request) {
-  const authError = await requireAuth();
+  const authError = await requireAuth(request);
   if (authError) return authError;
 
   const supabase = await createAdminClient();
@@ -31,8 +31,12 @@ export async function GET(request) {
 
   const { data, error } = await query;
   if (error) {
-    console.warn('Expenses query error:', error.message);
-    return NextResponse.json([], { status: 200 });
+    // PERUBAHAN: jangan sembunyikan error sebagai []
+    console.error('Expenses query error:', error.message);
+    return NextResponse.json(
+      { error: 'Gagal mengambil data keuangan.', detail: error.message },
+      { status: 500 }
+    );
   }
 
   // Ensure type is properly normalized even if type column is missing in Supabase schema
@@ -45,10 +49,7 @@ export async function GET(request) {
         type = 'expense';
       }
     }
-    return {
-      ...item,
-      type
-    };
+    return { ...item, type };
   });
 
   return NextResponse.json(normalizedData);
@@ -56,11 +57,17 @@ export async function GET(request) {
 
 // POST /api/expenses
 export async function POST(request) {
-  const authError = await requireAuth();
+  const authError = await requireAuth(request);
   if (authError) return authError;
 
   const supabase = await createAdminClient();
-  const body = await request.json();
+  const body = await readJsonBody(request);
+  if (!body) return NextResponse.json({ error: 'Body request bukan JSON valid.' }, { status: 400 });
+
+  const missing = missingFields(body, ['title']);
+  if (missing.length > 0) {
+    return NextResponse.json({ error: `Field wajib kosong: ${missing.join(', ')}` }, { status: 400 });
+  }
 
   // Check if table exists first
   const { error: checkError } = await supabase.from('expenses').select('id').limit(1);
@@ -71,11 +78,19 @@ export async function POST(request) {
     }, { status: 503 });
   }
 
+  // Validasi jumlah: harus angka positif (cegah nilai negatif / 0)
+  const rawAmount = Number(String(body.amount || '0').replace(/[,.]/g, ''));
+  const amount = Math.round(rawAmount);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return NextResponse.json({ error: 'Jumlah (amount) harus angka lebih dari 0.' }, { status: 400 });
+  }
+
+  const type = body.type === 'income' ? 'income' : 'expense';
   const payload = {
-    type: body.type || 'expense',
-    title: body.title,
-    category: body.category || (body.type === 'income' ? 'other_income' : 'service'),
-    amount: Math.round(Number(String(body.amount || 0).replace(/[,.]/g, ''))) || 0,
+    type,
+    title: String(body.title).trim(),
+    category: body.category || (type === 'income' ? 'other_income' : 'service'),
+    amount,
     expense_date: body.expense_date || new Date().toISOString().split('T')[0],
     notes: body.notes || ''
   };
@@ -97,10 +112,13 @@ export async function POST(request) {
       .insert([fallbackPayload])
       .select()
       .single();
-    data = retry.data ? { ...retry.data, type: payload.type } : null;
+    data = retry.data;
     error = retry.error;
   }
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('POST /api/expenses error:', error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   return NextResponse.json(data, { status: 201 });
 }
