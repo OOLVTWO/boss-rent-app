@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 // PUT /api/expenses/[id]
 export async function PUT(request, { params }) {
-  const authError = await requireAuth();
+  const authError = await requireAuth(request);
   if (authError) return authError;
 
   const { id } = await params;
@@ -45,7 +45,7 @@ export async function PUT(request, { params }) {
 
 // DELETE /api/expenses/[id]
 export async function DELETE(request, { params }) {
-  const authError = await requireAuth();
+  const authError = await requireAuth(request);
   if (authError) return authError;
 
   const { id } = await params;

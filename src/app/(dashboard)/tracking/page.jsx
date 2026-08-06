@@ -431,20 +431,33 @@ export default function TrackingPage() {
 
   const handleCompleteTracking = useCallback(async (txId, vehicleId) => {
     try {
-      // Mark transaction as completed
-      await fetch(`/api/transactions/${txId}`, {
+      // Coba via API route dulu
+      const txRes = await fetch(`/api/transactions/${txId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'completed', km_end: 0 }),
       });
-      // Set vehicle back to available
-      if (vehicleId) {
-        await fetch(`/api/vehicles/${vehicleId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'available' }),
-        });
+
+      if (!txRes.ok) {
+        // Fallback: update langsung via Supabase jika API gagal
+        console.warn('API PUT gagal, fallback ke direct Supabase update');
+        const supabase = createClient();
+        const { error: txError } = await supabase
+          .from('transactions')
+          .update({ status: 'completed', km_end: 0 })
+          .eq('id', txId);
+        if (txError) throw txError;
+        // Update vehicle status langsung
+        if (vehicleId) {
+          const { error: vError } = await supabase
+            .from('vehicles')
+            .update({ status: 'available' })
+            .eq('id', vehicleId);
+          if (vError) console.warn('Vehicle fallback update error:', vError);
+        }
       }
+      // Jika API berhasil, vehicle status sudah di-update oleh route [id]
+
       // Reload tracking data
       await loadData();
     } catch (err) {

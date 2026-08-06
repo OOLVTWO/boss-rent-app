@@ -6,6 +6,7 @@ import {
   calcFinancialSummary, calcInvestorPayouts, isIncomeEntry, isPaidTransaction,
   isInvestorVehicle, expenseMatchesVehicle, getLocalDateStr,
 } from '@/lib/finance';
+import { createClient } from '@/lib/supabase/client';
 
 const statusBadge = (status) => {
   const map = {
@@ -66,9 +67,36 @@ export default function ReportsPage() {
       const expData = await expRes.json();
       const vehData = await vehRes.json();
 
-      setTransactions(Array.isArray(txData) ? txData : []);
-      setExpenses(Array.isArray(expData) ? expData : []);
-      setVehicles(Array.isArray(vehData) ? vehData : []);
+      let txArr = Array.isArray(txData) ? txData : [];
+      let expArr = Array.isArray(expData) ? expData : [];
+      let vehArr = Array.isArray(vehData) ? vehData : [];
+
+      // Fallback: jika API gagal (non-array), ambil langsung dari Supabase
+      if (!Array.isArray(txData) || !Array.isArray(expData) || !Array.isArray(vehData)) {
+        try {
+          const supabase = createClient();
+          if (!Array.isArray(txData)) {
+            let q = supabase.from('transactions').select('*, vehicles(id, name, plate_number, rate_per_day, category)');
+            if (statusFilter !== 'all') q = q.eq('status', statusFilter);
+            const { data: txFallback } = await q.order('created_at', { ascending: false });
+            txArr = txFallback || [];
+          }
+          if (!Array.isArray(expData)) {
+            const { data: expFallback } = await supabase.from('expenses').select('*').order('expense_date', { ascending: false });
+            expArr = expFallback || [];
+          }
+          if (!Array.isArray(vehData)) {
+            const { data: vehFallback } = await supabase.from('vehicles').select('*');
+            vehArr = vehFallback || [];
+          }
+        } catch (fbErr) {
+          console.warn('Supabase fallback (reports) gagal:', fbErr);
+        }
+      }
+
+      setTransactions(txArr);
+      setExpenses(expArr);
+      setVehicles(vehArr);
     } catch (err) {
       console.error('Fetch report error:', err);
       setTransactions([]);

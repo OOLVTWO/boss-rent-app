@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { exportFinancesToExcel } from '@/lib/excel';
 import { getLocalDateStr } from '@/lib/finance';
+import { createClient } from '@/lib/supabase/client';
 
 function formatRupiah(amount) {
   const cleanAmount = Math.round(Number(amount || 0));
@@ -410,8 +411,31 @@ export default function FinancesPage() {
         fetch('/api/transactions').then(r => r.json()).catch(() => [])
       ]);
 
-      const manualRecords = Array.isArray(expRes) ? expRes : [];
-      const txRecords = Array.isArray(txRes) ? txRes : [];
+      let manualRecords = Array.isArray(expRes) ? expRes : [];
+      let txRecords = Array.isArray(txRes) ? txRes : [];
+
+      // Fallback: jika API gagal (non-array), ambil langsung dari Supabase
+      if (!Array.isArray(expRes) || !Array.isArray(txRes)) {
+        try {
+          const supabase = createClient();
+          if (!Array.isArray(expRes)) {
+            const { data: expData } = await supabase
+              .from('expenses')
+              .select('*')
+              .order('expense_date', { ascending: false });
+            manualRecords = expData || [];
+          }
+          if (!Array.isArray(txRes)) {
+            const { data: txData } = await supabase
+              .from('transactions')
+              .select('*, vehicles(id, name, plate_number, rate_per_day)')
+              .order('created_at', { ascending: false });
+            txRecords = txData || [];
+          }
+        } catch (fbErr) {
+          console.warn('Supabase fallback (expenses) gagal:', fbErr);
+        }
+      }
 
       // Generate auto income rows for completed rental transactions with deposit damage fee > 0
       const autoDepositIncomes = txRecords

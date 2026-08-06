@@ -642,10 +642,31 @@ export default function SettingsPage() {
       const tData = await tRes.json();
       const eData = await eRes.json();
 
+      let vCount = Array.isArray(vData) ? vData.length : 0;
+      let tCount = Array.isArray(tData) ? tData.length : 0;
+      let eCount = Array.isArray(eData) ? eData.length : 0;
+
+      // Fallback: jika API gagal (non-array), ambil langsung dari Supabase
+      if (!Array.isArray(vData) || !Array.isArray(tData) || !Array.isArray(eData)) {
+        try {
+          const supabase = createClient();
+          const [vFb, tFb, eFb] = await Promise.all([
+            supabase.from('vehicles').select('id'),
+            supabase.from('transactions').select('id'),
+            supabase.from('expenses').select('id'),
+          ]);
+          if (!Array.isArray(vData)) vCount = vFb.data?.length || 0;
+          if (!Array.isArray(tData)) tCount = tFb.data?.length || 0;
+          if (!Array.isArray(eData)) eCount = eFb.data?.length || 0;
+        } catch (fbErr) {
+          console.warn('Supabase fallback (settings stats) gagal:', fbErr);
+        }
+      }
+
       setStats({
-        vehicles: Array.isArray(vData) ? vData.length : 0,
-        transactions: Array.isArray(tData) ? tData.length : 0,
-        expenses: Array.isArray(eData) ? eData.length : 0,
+        vehicles: vCount,
+        transactions: tCount,
+        expenses: eCount,
       });
     } catch {
       // ignore

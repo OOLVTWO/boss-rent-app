@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 // GET /api/vehicles/[id]
 export async function GET(request, { params }) {
-  const authError = await requireAuth();
+  const authError = await requireAuth(request);
   if (authError) return authError;
 
   const { id } = await params;
@@ -21,7 +21,7 @@ export async function GET(request, { params }) {
 
 // PUT /api/vehicles/[id]
 export async function PUT(request, { params }) {
-  const authError = await requireAuth();
+  const authError = await requireAuth(request);
   if (authError) return authError;
 
   const { id } = await params;
@@ -76,7 +76,7 @@ export async function DELETE(request, { params }) {
   const { searchParams } = new URL(request.url);
   const cascade = searchParams.get('cascade') === 'true';
 
-  const authError = await requireAuth();
+  const authError = await requireAuth(request);
   if (authError) return authError;
 
   const supabase = await createAdminClient();
