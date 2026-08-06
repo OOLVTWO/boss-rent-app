@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import StatCards from '@/components/dashboard/StatCards';
 import DashboardCharts from '@/components/dashboard/DashboardCharts';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 import { analyzeVehicleHealth } from '@/lib/aiDiagnostic';
 import { calcFinancialSummary, formatRupiah, getLocalMonthStr, toLocalDateStr } from '@/lib/finance';
 
@@ -52,13 +53,35 @@ export default function DashboardClient({ transactions, vehicles }) {
   const [selectedYear, setSelectedYear] = useState(getLocalMonthStr().substring(0, 4));
 
   useEffect(() => {
-    fetch('/api/expenses')
-      .then(res => res.json())
-      .then(data => setExpenses(Array.isArray(data) ? data : []))
-      .catch(err => {
-        console.error('Fetch expenses error:', err);
-        setExpenses([]);
-      });
+    (async () => {
+      let list = null;
+      // Jalur utama: API route. Jika gagal → fallback LANGSUNG ke Supabase
+      // supaya Pengeluaran & Laba Bersih TIDAK pernah tampak "hilang".
+      try {
+        const res = await fetch('/api/expenses');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) list = data;
+        } else {
+          console.warn('API /api/expenses HTTP ' + res.status + ' — fallback ke Supabase langsung.');
+        }
+      } catch (err) {
+        console.error('Fetch expenses via API error:', err);
+      }
+      if (list === null) {
+        try {
+          const supabase = createClient();
+          const { data, error } = await supabase
+            .from('expenses')
+            .select('*')
+            .order('expense_date', { ascending: false });
+          if (!error) list = data || [];
+        } catch (err) {
+          console.error('Fetch expenses via Supabase error:', err);
+        }
+      }
+      setExpenses(list || []);
+    })();
   }, []);
 
   const safeTx = Array.isArray(transactions) ? transactions : [];

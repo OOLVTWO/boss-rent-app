@@ -20,9 +20,10 @@ export function rateLimit(request, { windowMs = DEFAULT_WINDOW_MS, max = DEFAULT
     }
   }
 
+  // request bisa undefined (route [id] memanggil requireAuth() tanpa arg) — jangan crash
   const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    request.headers.get('x-real-ip') ||
+    request?.headers?.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    request?.headers?.get('x-real-ip') ||
     'unknown';
 
   const bucket = hits.get(ip);

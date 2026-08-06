@@ -246,11 +246,12 @@ create policy "settings_admin_all"
 revoke all on public.transactions, public.expenses, public.customers from anon;
 
 -- ============================================================
--- SANITASI DATA LAMA (opsional tapi disarankan):
--- Transaksi 'active' tanpa payment_status → tandai 'unpaid'
--- supaya revenue tidak menggelembung (sesuai finance.js baru).
+-- CATATAN SANITASI DATA LAMA (dinonaktifkan):
+-- Sebelumnya mengubah transaksi 'active' + payment_status null menjadi
+-- 'unpaid'. TIDAK disarankan: aplikasi memperlakukan null sebagai lunas
+-- (perilaku historis cash basis) — lihat isPaidTransaction() di finance.js.
 -- ============================================================
-update public.transactions
-   set payment_status = 'unpaid'
- where status = 'active'
-   and (payment_status is null or payment_status = '');
+-- update public.transactions
+--    set payment_status = 'unpaid'
+--  where status = 'active'
+--    and (payment_status is null or payment_status = '');

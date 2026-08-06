@@ -1656,14 +1656,59 @@ export default function TransactionsPage() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    const [txRes, vRes] = await Promise.all([
-      fetch('/api/transactions'),
-      fetch('/api/vehicles'),
-    ]);
-    const txData = await txRes.json();
-    const vData = await vRes.json();
-    setTransactions(Array.isArray(txData) ? txData : []);
-    setVehicles(Array.isArray(vData) ? vData : []);
+    let txList = null;
+    let vList = null;
+
+    // Jalur utama: API route. Jika gagal (401/500/network) → fallback LANGSUNG
+    // ke Supabase (sama seperti halaman Ketersediaan/Tracking) supaya data
+    // transaksi & motor TIDAK pernah tampak "hilang".
+    try {
+      const [txRes, vRes] = await Promise.all([
+        fetch('/api/transactions'),
+        fetch('/api/vehicles'),
+      ]);
+      const txData = txRes.ok ? await txRes.json() : null;
+      const vData = vRes.ok ? await vRes.json() : null;
+      if (Array.isArray(txData)) txList = txData;
+      if (Array.isArray(vData)) vList = vData;
+      if (txList === null || vList === null) {
+        console.warn('API /api/transactions|/api/vehicles gagal — fallback ke Supabase langsung.');
+      }
+    } catch (err) {
+      console.error('Fetch via API error:', err);
+    }
+
+    if (txList === null || vList === null) {
+      try {
+        const supabase = createClient();
+        if (txList === null) {
+          let txQ = await supabase
+            .from('transactions')
+            .select('*, vehicles(id, name, plate_number, rate_per_day)')
+            .order('created_at', { ascending: false });
+          if (txQ.error) {
+            // Relasi/kolom bermasalah → ambil polos lalu gabung manual
+            const txPlain = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
+            const vehAll = await supabase.from('vehicles').select('*');
+            const vehMap = (vehAll.data || []).reduce((m, v) => { m[v.id] = v; return m; }, {});
+            txList = (txPlain.data || []).map(t => ({ ...t, vehicles: vehMap[t.vehicle_id] || null }));
+          } else {
+            txList = txQ.data || [];
+          }
+        }
+        if (vList === null) {
+          const vQ = await supabase.from('vehicles').select('*').order('created_at', { ascending: false });
+          vList = vQ.error ? [] : (vQ.data || []);
+        }
+      } catch (err) {
+        console.error('Fetch via Supabase error:', err);
+        if (txList === null) txList = [];
+        if (vList === null) vList = [];
+      }
+    }
+
+    setTransactions(txList);
+    setVehicles(vList);
     setLoading(false);
   }, []);
 

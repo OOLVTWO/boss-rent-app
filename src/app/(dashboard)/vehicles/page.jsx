@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { compressImage } from '@/lib/imageCompressor';
+import { createClient } from '@/lib/supabase/client';
 
 function formatRupiah(amount) {
   return new Intl.NumberFormat('id-ID', {
@@ -245,7 +246,7 @@ function ImageAdjusterModal({ isOpen, imageSrc, onConfirm, onCancel }) {
           <canvas ref={canvasRef} style={{ display: 'none' }} />
 
           {/* Controls Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: '20px', alignItems: 'flex-start' }}>
+          <div className="adj-controls" style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: '20px', alignItems: 'flex-start' }}>
             {/* Sliders */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
@@ -914,14 +915,36 @@ export default function VehiclesPage() {
 
   const fetchVehicles = useCallback(async () => {
     setLoading(true);
+    let list = null;
+    // Jalur utama: API route. Jika gagal (401/500/network) → fallback LANGSUNG
+    // ke Supabase (sama seperti halaman Ketersediaan/Tracking) supaya data
+    // motor TIDAK pernah tampak "hilang".
     try {
       const res = await fetch('/api/vehicles');
-      const data = await res.json();
-      setVehicles(Array.isArray(data) ? data : []);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) list = data;
+      } else {
+        console.warn('API /api/vehicles HTTP ' + res.status + ' — fallback ke Supabase langsung.');
+      }
     } catch (err) {
-      console.error('Fetch vehicles error:', err);
-      setVehicles([]);
+      console.error('Fetch vehicles via API error:', err);
     }
+    if (list === null) {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from('vehicles')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        list = data || [];
+      } catch (err) {
+        console.error('Fetch vehicles via Supabase error:', err);
+        list = [];
+      }
+    }
+    setVehicles(list);
     setLoading(false);
   }, []);
 

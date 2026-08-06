@@ -66,7 +66,12 @@ export function isIncomeEntry(e) {
 export function isPaidTransaction(t) {
   if (!t) return false;
   if (t.status === 'completed') return true; // selesai = sudah dibayar
-  if (t.status === 'active') return t.payment_status === 'paid';
+  if (t.status === 'active') {
+    // payment_status null/undefined (data lama sebelum kolom ada) → dianggap
+    // lunas, konsisten dengan perilaku historis aplikasi (cash basis).
+    // Hanya 'unpaid' eksplisit yang TIDAK diakui.
+    return t.payment_status !== 'unpaid';
+  }
   return false; // cancelled / lainnya → tidak pernah diakui
 }
 

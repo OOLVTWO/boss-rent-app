@@ -3837,3 +3837,60 @@ textarea {
   color: #94A3B8;
   font-weight: 900;
 }
+
+/* ============================================================
+   RESPONSIVE ENHANCEMENTS — Boss Rent Pererenan
+   Menyesuaikan grid & tata letak di SEMUA halaman agar rapi di
+   tablet & HP — tanpa mengubah desain desktop / identitas brand.
+   ============================================================ */
+
+/* Grid kontrol Image Adjuster (vehicles page) */
+.adj-controls {
+  display: grid !important;
+  grid-template-columns: 1fr 220px !important;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+@media (max-width: 768px) {
+  .adj-controls {
+    grid-template-columns: 1fr !important;
+  }
+  .page-actions {
+    flex-wrap: wrap !important;
+  }
+  .filter-bar {
+    flex-wrap: wrap !important;
+  }
+  .bento-grid-container {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+  .page-header .page-actions {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid-4,
+  .grid-3 {
+    grid-template-columns: 1fr !important;
+  }
+  .filter-bar > * {
+    min-width: 100% !important;
+  }
+  .modal-content,
+  .modal-body {
+    padding: 16px !important;
+  }
+}
