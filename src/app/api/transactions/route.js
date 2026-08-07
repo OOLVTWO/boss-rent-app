@@ -104,9 +104,10 @@ export async function POST(request) {
     }, { status: 400 });
   }
 
+  // FIX: duration_days adalah GENERATED column di database (otomatis dihitung dari
+  // start_date & end_date) — jangan dikirim ke insert, database yang isi sendiri.
   const payload = {
     ...insertData,
-    duration_days: toNonNegativeNumber(duration_days, 1) || 1,
     deposit: toNonNegativeNumber(deposit, 0),
     total_price: toNonNegativeNumber(total_price, 0),
     damage_fee: toNonNegativeNumber(damage_fee, 0),
