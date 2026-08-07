@@ -1637,6 +1637,132 @@ function CompleteModal({ isOpen, onClose, onConfirm, tx }) {
   );
 }
 
+// ===== MODAL KONFIRMASI TANDAI LUNAS =====
+function ConfirmLunasModal({ isOpen, onClose, onConfirm, tx }) {
+  if (!isOpen || !tx) return null;
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal modal-sm" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+        <div className="modal-header" style={{ borderBottom: '1px solid var(--bg-border)', paddingBottom: '16px' }}>
+          <div className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '16px', fontWeight: 800 }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <i className="fa-solid fa-money-bill-wave" style={{ color: '#22C55E', fontSize: '16px' }}></i>
+            </div>
+            Konfirmasi Pembayaran Lunas
+          </div>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        <div style={{ padding: '20px 0 4px' }}>
+          {/* Info penyewa */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--bg-elevated)', borderRadius: '10px', border: '1px solid var(--bg-border)', marginBottom: '16px' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--bg-card-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <i className="fa-solid fa-user" style={{ color: 'var(--brand-primary)', fontSize: '16px' }}></i>
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)' }}>{tx.renter_name}</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                <i className="fa-solid fa-motorcycle" style={{ marginRight: '5px', fontSize: '11px' }}></i>
+                {tx.vehicles?.name || '-'} · {tx.vehicles?.plate_number || '-'}
+              </div>
+            </div>
+          </div>
+
+          {/* Pesan konfirmasi */}
+          <div style={{ padding: '12px 14px', background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '8px', marginBottom: '8px' }}>
+            <p style={{ fontSize: '13.5px', color: 'var(--text-primary)', margin: 0, lineHeight: 1.6 }}>
+              Tandai transaksi ini sebagai <strong style={{ color: '#22C55E' }}>LUNAS</strong>? Pembayaran akan langsung masuk ke laporan pendapatan.
+            </p>
+          </div>
+
+          <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '8px 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <i className="fa-solid fa-circle-info" style={{ fontSize: '11px' }}></i>
+            Tindakan ini tidak dapat dibatalkan secara otomatis.
+          </p>
+        </div>
+
+        <div className="modal-footer" style={{ marginTop: '20px' }}>
+          <button className="btn btn-secondary" onClick={onClose}>Batal</button>
+          <button
+            className="btn btn-success"
+            onClick={() => { onConfirm(tx); onClose(); }}
+            style={{ background: '#22C55E', borderColor: '#22C55E', color: '#fff', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <i className="fa-solid fa-circle-check"></i> Ya, Tandai Lunas
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ===== TOAST NOTIFIKASI SUKSES LUNAS =====
+function LunasSuccessToast({ isOpen, onClose, renterName }) {
+  useEffect(() => {
+    if (isOpen) {
+      const t = setTimeout(onClose, 3500);
+      return () => clearTimeout(t);
+    }
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: '28px', right: '28px', zIndex: 9999,
+      display: 'flex', alignItems: 'center', gap: '14px',
+      padding: '14px 20px',
+      background: 'linear-gradient(135deg, #064e3b, #065f46)',
+      border: '1px solid rgba(34,197,94,0.45)',
+      borderRadius: '14px',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px rgba(34,197,94,0.15)',
+      minWidth: '300px', maxWidth: '380px',
+      animation: 'toastSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+    }}>
+      <style>{`
+        @keyframes toastSlideIn {
+          from { opacity: 0; transform: translateX(60px) scale(0.9); }
+          to   { opacity: 1; transform: translateX(0) scale(1); }
+        }
+      `}</style>
+
+      {/* Icon */}
+      <div style={{
+        width: '42px', height: '42px', borderRadius: '50%',
+        background: 'rgba(34,197,94,0.2)', border: '2px solid rgba(34,197,94,0.45)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+      }}>
+        <i className="fa-solid fa-circle-check" style={{ color: '#4ade80', fontSize: '20px' }}></i>
+      </div>
+
+      {/* Text */}
+      <div style={{ flex: 1 }}>
+        <div style={{ fontWeight: 800, fontSize: '14px', color: '#f0fdf4', letterSpacing: '-0.2px' }}>
+          Pembayaran Dikonfirmasi! 🎉
+        </div>
+        <div style={{ fontSize: '12px', color: '#86efac', marginTop: '2px' }}>
+          Transaksi <strong style={{ color: '#f0fdf4' }}>{renterName}</strong> sudah lunas & masuk ke laporan pendapatan.
+        </div>
+      </div>
+
+      {/* Close */}
+      <button
+        onClick={onClose}
+        style={{ background: 'none', border: 'none', color: '#86efac', cursor: 'pointer', fontSize: '16px', padding: '4px', lineHeight: 1, flexShrink: 0 }}
+      >
+        <i className="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+  );
+}
+
+
+
+
+
+
+
 function SuccessModal({ isOpen, onClose, message }) {
   if (!isOpen) return null;
   return (
@@ -1689,6 +1815,8 @@ export default function TransactionsPage() {
   const [waModal, setWaModal] = useState({ open: false, tx: null });
   const [deleteModal, setDeleteModal] = useState({ open: false, txId: null });
   const [successModal, setSuccessModal] = useState({ open: false, message: '' });
+  const [lunasModal, setLunasModal] = useState({ open: false, tx: null });
+  const [lunasToast, setLunasToast] = useState({ open: false, renterName: '' });
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -1832,6 +1960,16 @@ export default function TransactionsPage() {
     }
   };
 
+  const handleTandaiLunas = async (tx) => {
+  await fetch(`/api/transactions/${tx.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ payment_status: 'paid' }),
+  });
+  setLunasToast({ open: true, renterName: tx.renter_name });
+  fetchAll();
+};
+
   const filtered = transactions.filter(tx => {
     const matchSearch =
       tx.renter_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -1873,7 +2011,7 @@ export default function TransactionsPage() {
           >
             <option value="all">Semua Status</option>
             <option value="active">Sewa Aktif</option>
-            <option value="belum_bayar">⏳ Belum Bayar</option>
+            <option value="belum_bayar">Belum Bayar</option>
             <option value="completed">Selesai</option>
             <option value="cancelled">Dibatalkan</option>
           </select>
@@ -2033,23 +2171,15 @@ export default function TransactionsPage() {
 
                         {/* Tandai Lunas button for unpaid active transactions */}
                         {tx.status === 'active' && tx.payment_status === 'unpaid' && (
-                          <button
-                            className="btn btn-sm"
-                            title="Tandai Lunas — Masukkan ke Pendapatan"
-                            style={{ padding: '7px 10px', background: 'rgba(34,197,94,0.15)', border: '1px solid #22C55E', color: '#22C55E', fontWeight: 700 }}
-                            onClick={async () => {
-                              if (!confirm(`Tandai transaksi ${tx.renter_name} sebagai LUNAS? Pembayaran akan langsung masuk ke laporan pendapatan.`)) return;
-                              await fetch(`/api/transactions/${tx.id}`, {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ payment_status: 'paid' }),
-                              });
-                              fetchAll();
-                            }}
-                          >
-                            <i className="fa-solid fa-money-bill-wave"></i>
-                          </button>
-                        )}
+                        <button
+                        className="btn btn-sm"
+                        title="Tandai Lunas — Masukkan ke Pendapatan"
+                        style={{ padding: '7px 10px', background: 'rgba(34,197,94,0.15)', border: '1px solid #22C55E', color: '#22C55E', fontWeight: 700 }}
+                        onClick={() => setLunasModal({ open: true, tx })}
+                      >
+                        <i className="fa-solid fa-money-bill-wave"></i>
+                      </button>
+                    )}
 
                         {tx.status === 'active' && (
                           <button
@@ -2115,6 +2245,20 @@ export default function TransactionsPage() {
         onClose={() => setSuccessModal({ open: false, message: '' })}
         message={successModal.message}
       />
+
+      <ConfirmLunasModal
+      isOpen={lunasModal.open}
+      onClose={() => setLunasModal({ open: false, tx: null })}
+      onConfirm={handleTandaiLunas}
+      tx={lunasModal.tx}
+    />
+    
+    <LunasSuccessToast
+      isOpen={lunasToast.open}
+      onClose={() => setLunasToast({ open: false, renterName: '' })}
+      renterName={lunasToast.renterName}
+    />
+      
 
       <ConfirmDeleteModal
         isOpen={deleteModal.open}
