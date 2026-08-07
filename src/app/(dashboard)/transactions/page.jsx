@@ -687,6 +687,7 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
   const [selectedOptionId, setSelectedOptionId] = useState(null);
   const [appliedGross, setAppliedGross] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   const handleSelectCustomer = (cust) => {
@@ -855,7 +856,7 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
     }
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     // FIX: trim() untuk antisipasi whitespace tersembunyi dari pemilihan motor
     const cleanVehicleId = (form.vehicle_id || '').trim();
@@ -863,6 +864,13 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
       alert('Silakan pilih unit motor terlebih dahulu!');
       return;
     }
+    // Tampilkan konfirmasi dulu sebelum simpan
+    setShowConfirm(true);
+  };
+
+  const handleConfirmSave = async () => {
+    const cleanVehicleId = (form.vehicle_id || '').trim();
+    setShowConfirm(false);
     setLoading(true);
     await onSubmit({ ...form, vehicle_id: cleanVehicleId, total_price: totalPrice });
     setLoading(false);
@@ -1261,6 +1269,72 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
           </div>
         </form>
       </div>
+
+      {/* Modal Konfirmasi Simpan */}
+      {showConfirm && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }} onClick={() => setShowConfirm(false)}>
+          <div className="modal modal-sm" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div className="modal-header" style={{ borderBottom: '1px solid var(--bg-border)', paddingBottom: '16px' }}>
+              <div className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '16px', fontWeight: 800 }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <i className="fa-solid fa-floppy-disk" style={{ color: '#6366F1', fontSize: '16px' }}></i>
+                </div>
+                {editData ? 'Konfirmasi Perubahan' : 'Konfirmasi Transaksi Baru'}
+              </div>
+              <button className="modal-close" onClick={() => setShowConfirm(false)}>✕</button>
+            </div>
+
+            <div style={{ padding: '20px 0 4px' }}>
+              {/* Info ringkasan */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--bg-elevated)', borderRadius: '10px', border: '1px solid var(--bg-border)', marginBottom: '16px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--bg-card-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <i className="fa-solid fa-user" style={{ color: 'var(--brand-primary)', fontSize: '16px' }}></i>
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)' }}>
+                    {form.renter_name || '—'}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    <i className="fa-solid fa-motorcycle" style={{ marginRight: '5px', fontSize: '11px' }}></i>
+                    {vehicles.find(v => v.id === (form.vehicle_id || '').trim())?.name || '—'}
+                    {totalPrice > 0 && (
+                      <span style={{ marginLeft: '8px', color: '#22C55E', fontWeight: 700 }}>
+                        · {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(totalPrice)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ padding: '12px 14px', background: 'rgba(99,102,241,0.07)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: '8px', marginBottom: '8px' }}>
+                <p style={{ fontSize: '13.5px', color: 'var(--text-primary)', margin: 0, lineHeight: 1.6 }}>
+                  {editData
+                    ? 'Simpan perubahan data transaksi ini?'
+                    : 'Tambahkan transaksi baru ini ke sistem?'}
+                </p>
+              </div>
+
+              <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '8px 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <i className="fa-solid fa-circle-info" style={{ fontSize: '11px' }}></i>
+                Data akan langsung tersimpan ke database.
+              </p>
+            </div>
+
+            <div className="modal-footer" style={{ marginTop: '20px' }}>
+              <button className="btn btn-secondary" onClick={() => setShowConfirm(false)}>Batal</button>
+              <button
+                className="btn btn-primary"
+                onClick={handleConfirmSave}
+                style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <i className="fa-solid fa-floppy-disk"></i>
+                {editData ? 'Ya, Simpan Perubahan' : 'Ya, Tambah Transaksi'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
     </div>
   );
 }
@@ -1759,7 +1833,101 @@ function LunasSuccessToast({ isOpen, onClose, renterName }) {
 
 
 
+// ===== TOAST NOTIFIKASI SUKSES SIMPAN TRANSAKSI =====
+function SaveSuccessToast({ isOpen, onClose, isEdit, renterName }) {
+  useEffect(() => {
+    if (isOpen) {
+      const t = setTimeout(onClose, 3500);
+      return () => clearTimeout(t);
+    }
+  }, [isOpen, onClose]);
 
+  if (!isOpen) return null;
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: '28px', right: '28px', zIndex: 9999,
+      display: 'flex', alignItems: 'center', gap: '14px',
+      padding: '14px 20px',
+      background: 'linear-gradient(135deg, #1e1b4b, #312e81)',
+      border: '1px solid rgba(99,102,241,0.45)',
+      borderRadius: '14px',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px rgba(99,102,241,0.15)',
+      minWidth: '300px', maxWidth: '380px',
+      animation: 'toastSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+    }}>
+      <div style={{
+        width: '42px', height: '42px', borderRadius: '50%',
+        background: 'rgba(99,102,241,0.2)', border: '2px solid rgba(99,102,241,0.45)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+      }}>
+        <i className="fa-solid fa-floppy-disk" style={{ color: '#a5b4fc', fontSize: '18px' }}></i>
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontWeight: 800, fontSize: '14px', color: '#eef2ff', letterSpacing: '-0.2px' }}>
+          {isEdit ? 'Transaksi Diperbarui! ✏️' : 'Transaksi Tersimpan! 🎉'}
+        </div>
+        <div style={{ fontSize: '12px', color: '#a5b4fc', marginTop: '2px' }}>
+          Data <strong style={{ color: '#eef2ff' }}>{renterName}</strong> berhasil {isEdit ? 'diperbarui' : 'ditambahkan'} ke sistem.
+        </div>
+      </div>
+      <button
+        onClick={onClose}
+        style={{ background: 'none', border: 'none', color: '#a5b4fc', cursor: 'pointer', fontSize: '16px', padding: '4px', lineHeight: 1, flexShrink: 0 }}
+      >
+        <i className="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+  );
+}
+
+// ===== TOAST NOTIFIKASI ERROR =====
+function ErrorToast({ isOpen, onClose, message }) {
+  useEffect(() => {
+    if (isOpen) {
+      const t = setTimeout(onClose, 4000);
+      return () => clearTimeout(t);
+    }
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: '28px', right: '28px', zIndex: 9999,
+      display: 'flex', alignItems: 'center', gap: '14px',
+      padding: '14px 20px',
+      background: 'linear-gradient(135deg, #450a0a, #7f1d1d)',
+      border: '1px solid rgba(239,68,68,0.45)',
+      borderRadius: '14px',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px rgba(239,68,68,0.15)',
+      minWidth: '300px', maxWidth: '400px',
+      animation: 'toastSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+    }}>
+      <div style={{
+        width: '42px', height: '42px', borderRadius: '50%',
+        background: 'rgba(239,68,68,0.2)', border: '2px solid rgba(239,68,68,0.45)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+      }}>
+        <i className="fa-solid fa-circle-exclamation" style={{ color: '#fca5a5', fontSize: '20px' }}></i>
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontWeight: 800, fontSize: '14px', color: '#fee2e2', letterSpacing: '-0.2px' }}>
+          Gagal Menyimpan ⚠️
+        </div>
+        <div style={{ fontSize: '12px', color: '#fca5a5', marginTop: '2px' }}>
+          {message}
+        </div>
+      </div>
+      <button
+        onClick={onClose}
+        style={{ background: 'none', border: 'none', color: '#fca5a5', cursor: 'pointer', fontSize: '16px', padding: '4px', lineHeight: 1, flexShrink: 0 }}
+      >
+        <i className="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+  );
+}
 
 
 
@@ -1817,6 +1985,8 @@ export default function TransactionsPage() {
   const [successModal, setSuccessModal] = useState({ open: false, message: '' });
   const [lunasModal, setLunasModal] = useState({ open: false, tx: null });
   const [lunasToast, setLunasToast] = useState({ open: false, renterName: '' });
+  const [saveToast, setSaveToast] = useState({ open: false, isEdit: false, renterName: '' });
+  const [errorToast, setErrorToast] = useState({ open: false, message: '' });
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -1878,7 +2048,7 @@ export default function TransactionsPage() {
 
   useEffect(() => { Promise.resolve().then(fetchAll); }, [fetchAll]);
 
-  const handleSubmit = async (formData) => {
+const handleSubmit = async (formData) => {
     const isEdit = !!editData;
     const url = isEdit ? `/api/transactions/${editData.id}` : '/api/transactions';
     const method = isEdit ? 'PUT' : 'POST';
@@ -1904,9 +2074,10 @@ export default function TransactionsPage() {
       setShowModal(false);
       setEditData(null);
       fetchAll();
+      setSaveToast({ open: true, isEdit, renterName: formData.renter_name });
     } else {
       const err = await res.json();
-      alert(`Gagal: ${err.error}`);
+      setErrorToast({ open: true, message: err.error || 'Terjadi kesalahan, coba lagi.' });
     }
   };
 
@@ -2217,6 +2388,9 @@ export default function TransactionsPage() {
         </div>
       </div>
 
+
+
+      
       {/* Modals */}
       <TransactionModal
         isOpen={showModal}
@@ -2258,7 +2432,19 @@ export default function TransactionsPage() {
       onClose={() => setLunasToast({ open: false, renterName: '' })}
       renterName={lunasToast.renterName}
     />
-      
+
+      <SaveSuccessToast
+  isOpen={saveToast.open}
+  onClose={() => setSaveToast({ open: false, isEdit: false, renterName: '' })}
+  isEdit={saveToast.isEdit}
+  renterName={saveToast.renterName}
+/>
+
+<ErrorToast
+  isOpen={errorToast.open}
+  onClose={() => setErrorToast({ open: false, message: '' })}
+  message={errorToast.message}
+/>
 
       <ConfirmDeleteModal
         isOpen={deleteModal.open}
