@@ -661,6 +661,10 @@ function CustomerPickerCombobox({ onSelectCustomer }) {
 }
 
 // ===== TRANSACTION MODAL =====
+// ===== TRANSACTION MODAL =====
+// Ganti seluruh function TransactionModal dari baris 9568 sampai 10170
+// (dari "function TransactionModal" sampai "}" penutupnya, sebelum "// ===== MODAL KIRIM INVOICE WHATSAPP =====")
+
 function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
   const [form, setForm] = useState({
     vehicle_id: '',
@@ -684,46 +688,42 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
   const [countryCode, setCountryCode] = useState('+62');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [totalPrice, setTotalPrice] = useState(0);
-  const [showOptional, setShowOptional] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showOptional, setShowOptional] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // ── Kalkulasi harga otomatis: pilih kombinasi termurah daily/weekly/monthly ──
-const calcBestPrice = (vehicle, startDate, endDate) => {
-  if (!vehicle || !startDate || !endDate) return 0;
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  if (isNaN(start) || isNaN(end) || end < start) return 0;
+  const calcBestPrice = (vehicle, startDate, endDate) => {
+    if (!vehicle || !startDate || !endDate) return 0;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (isNaN(start) || isNaN(end) || end < start) return 0;
 
-  const days = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
-  const daily   = Number(vehicle.rate_per_day)   || 0;
-  const weekly  = Number(vehicle.rate_per_week)  || 0;
-  const monthly = Number(vehicle.rate_per_month) || 0;
+    const days   = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+    const daily  = Number(vehicle.rate_per_day)   || 0;
+    const weekly = Number(vehicle.rate_per_week)  || 0;
+    const monthly= Number(vehicle.rate_per_month) || 0;
 
-  let best = days * daily; // fallback: pure daily
+    let best = days * daily;
 
-  if (weekly > 0) {
-    const weeks   = Math.floor(days / 7);
-    const remDays = days % 7;
-    const mix     = weeks * weekly + remDays * daily;
-    const flat    = Math.ceil(days / 7) * weekly;
-    best = Math.min(best, mix, flat);
-  }
+    if (weekly > 0) {
+      const mix  = Math.floor(days / 7) * weekly + (days % 7) * daily;
+      const flat = Math.ceil(days / 7) * weekly;
+      best = Math.min(best, mix, flat);
+    }
 
-  if (monthly > 0) {
-    const months   = Math.floor(days / 30);
-    const remDays2 = days % 30;
-    const effWeek  = weekly > 0 ? weekly : daily * 7;
-    const remWeeks = Math.floor(remDays2 / 7);
-    const remFinal = remDays2 % 7;
-    const mix2     = months * monthly + remWeeks * effWeek + remFinal * daily;
-    const flat2    = Math.ceil(days / 30) * monthly;
-    best = Math.min(best, mix2, flat2);
-  }
+    if (monthly > 0) {
+      const months   = Math.floor(days / 30);
+      const remDays  = days % 30;
+      const effWeek  = weekly > 0 ? weekly : daily * 7;
+      const mix2     = months * monthly + Math.floor(remDays / 7) * effWeek + (remDays % 7) * daily;
+      const flat2    = Math.ceil(days / 30) * monthly;
+      best = Math.min(best, mix2, flat2);
+    }
 
-  return best;
-};
+    return best;
+  };
 
   const handleSelectCustomer = (cust) => {
     setForm(prev => ({
@@ -748,7 +748,6 @@ const calcBestPrice = (vehicle, startDate, endDate) => {
   };
 
   useEffect(() => {
-    // Defer ke microtask: hindari setState sinkron di dalam effect
     Promise.resolve().then(() => {
       if (!isOpen) return;
       if (editData) {
@@ -771,10 +770,8 @@ const calcBestPrice = (vehicle, startDate, endDate) => {
           notes: editData.notes || '',
         });
         setTotalPrice(editData.total_price || 0);
-        setSelectedOptionId(null);
-        setAppliedGross(null);
+        setShowOptional(false);
 
-        // Parse phone country code
         if (editData.renter_phone) {
           const parts = editData.renter_phone.trim().split(' ');
           if (parts.length > 1 && parts[0].startsWith('+')) {
@@ -794,11 +791,13 @@ const calcBestPrice = (vehicle, startDate, endDate) => {
           renter_name: '',
           renter_phone: '+62 ',
           renter_id_number: '',
-          start_date: getLocalDateStr(), // tanggal LOKAL/WITA, bukan UTC
+          renter_address: '',
+          start_date: getLocalDateStr(),
           end_date: '',
           deposit: '',
           discount: '',
           customer_image_url: '',
+          handover_image_url: '',
           km_start: '',
           payment_method: 'cash',
           payment_status: 'paid',
@@ -808,34 +807,32 @@ const calcBestPrice = (vehicle, startDate, endDate) => {
         setCountryCode('+62');
         setPhoneNumber('');
         setTotalPrice(0);
-        setSelectedOptionId(null);
-        setAppliedGross(null);
+        setShowOptional(false);
       }
     });
   }, [editData, isOpen]);
 
-  // Recalculate price automatically with smart recommendations — pola resmi React
-  // "adjust state during render" (menggantikan useEffect + setState sinkron).
-  // vehicles.length ikut di key agar recalc jalan setelah daftar motor selesai dimuat.
-const priceKey = [form.vehicle_id, form.start_date, form.end_date, form.discount, vehicles.length].join('|');
-const [prevPriceKey, setPrevPriceKey] = useState(null);
-if (priceKey !== prevPriceKey) {
-  setPrevPriceKey(priceKey);
-  if (form.vehicle_id && form.start_date && form.end_date) {
-    const vehicle = vehicles.find(v => v.id === form.vehicle_id);
-    if (vehicle) {
-      const gross = calcBestPrice(vehicle, form.start_date, form.end_date);
-      const disc = parseFloat(form.discount) || 0;
-      setTotalPrice(Math.max(0, gross - disc));
+  // ── Recalculate harga saat motor / tanggal / diskon berubah ──
+  const priceKey = [form.vehicle_id, form.start_date, form.end_date, form.discount, vehicles.length].join('|');
+  const [prevPriceKey, setPrevPriceKey] = useState(null);
+  if (priceKey !== prevPriceKey) {
+    setPrevPriceKey(priceKey);
+    if (form.vehicle_id && form.start_date && form.end_date) {
+      const vehicle = vehicles.find(v => v.id === form.vehicle_id);
+      if (vehicle) {
+        const gross = calcBestPrice(vehicle, form.start_date, form.end_date);
+        const disc  = parseFloat(form.discount) || 0;
+        setTotalPrice(Math.max(0, gross - disc));
+
+        // Auto-fill KM awal dari data motor jika belum diisi
+        if (!form.km_start && vehicle.current_km) {
+          setForm(prev => ({ ...prev, km_start: vehicle.current_km }));
+        }
+      }
+    } else {
+      setTotalPrice(0);
     }
-  } else {
-    setTotalPrice(0);
   }
-}
-  const handleSelectPricingOption = (optionId, grossAmount) => {
-    setSelectedOptionId(optionId);
-    setAppliedGross(grossAmount);
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -856,15 +853,13 @@ if (priceKey !== prevPriceKey) {
     }
   };
 
-const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // FIX: trim() untuk antisipasi whitespace tersembunyi dari pemilihan motor
     const cleanVehicleId = (form.vehicle_id || '').trim();
     if (!cleanVehicleId) {
       alert('Silakan pilih unit motor terlebih dahulu!');
       return;
     }
-    // Tampilkan konfirmasi dulu sebelum simpan
     setShowConfirm(true);
   };
 
@@ -878,15 +873,10 @@ const handleSubmit = async (e) => {
 
   if (!isOpen) return null;
 
-  // FIX: Tampilkan motor yang 'available' ATAU motor yang sedang diedit (edit mode).
-  // Motor berstatus 'rented' atau 'maintenance' tidak ditampilkan agar tidak bisa dipilih dobel.
   const availableVehicles = vehicles.filter(v =>
     v.status === 'available' || (editData && v.id === editData.vehicle_id)
   );
-
-  // Jika daftar kosong (semua motor sedang disewa/maintenance), beri tahu user
   const noVehiclesAvailable = availableVehicles.length === 0;
-
   const selectedVehicleObj = vehicles.find(v => v.id === form.vehicle_id);
 
   return (
@@ -906,342 +896,343 @@ const handleSubmit = async (e) => {
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
 
-  <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}>
 
-  {/* ── Auto-fill Customer ── */}
-  {!editData && (
-    <CustomerPickerCombobox onSelectCustomer={handleSelectCustomer} />
-  )}
-
-  {/* ── Pilih Motor ── */}
-  {noVehiclesAvailable && !editData ? (
-    <div style={{ padding: '16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px', marginBottom: '16px', fontSize: '13px', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '8px' }}>
-      <i className="fa-solid fa-triangle-exclamation"></i>
-      Semua motor sedang disewa atau dalam perawatan. Tidak ada unit tersedia.
-    </div>
-  ) : (
-    <div className="form-group">
-      <label className="form-label" htmlFor="tx-vehicle">
-        <i className="fa-solid fa-motorcycle" style={{ marginRight: '6px' }}></i> Unit Motor <span className="required">*</span>
-      </label>
-      <select id="tx-vehicle" name="vehicle_id" className="form-control" value={form.vehicle_id} onChange={handleChange} required>
-        <option value="">-- Pilih Motor --</option>
-        {availableVehicles.map(v => (
-          <option key={v.id} value={v.id}>
-            {v.name} ({v.plate_number}) — Rp {Number(v.rate_per_day).toLocaleString('id-ID')}/hari
-          </option>
-        ))}
-      </select>
-    </div>
-  )}
-
-  {/* ── Nama & No. HP ── */}
-  <div className="form-row cols-2">
-    <div className="form-group">
-      <label className="form-label" htmlFor="tx-name">
-        <i className="fa-solid fa-user" style={{ marginRight: '6px' }}></i> Nama Penyewa <span className="required">*</span>
-      </label>
-      <input id="tx-name" name="renter_name" type="text" className="form-control" placeholder="Nama lengkap penyewa" value={form.renter_name} onChange={handleChange} required />
-    </div>
-    <div className="form-group">
-      <label className="form-label" htmlFor="tx-phone">
-        <i className="fa-solid fa-phone" style={{ marginRight: '6px' }}></i> No. WhatsApp / HP <span className="required">*</span>
-      </label>
-      <div style={{ display: 'flex', gap: '6px' }}>
-        <select
-          className="form-control"
-          value={countryCode}
-          onChange={e => setCountryCode(e.target.value)}
-          style={{ width: '110px', flexShrink: 0 }}
-        >
-          {COUNTRY_CODES.map(c => (
-            <option key={c.code + c.iso} value={c.code}>{c.code} {c.iso}</option>
-          ))}
-        </select>
-        <input
-          id="tx-phone"
-          type="tel"
-          className="form-control"
-          placeholder="812-3456-7890"
-          value={phoneNumber}
-          onChange={e => {
-            setPhoneNumber(e.target.value);
-            setForm(prev => ({ ...prev, renter_phone: `${countryCode} ${e.target.value}` }));
-          }}
-        />
-      </div>
-    </div>
-  </div>
-
-  {/* ── Tanggal Mulai & Selesai ── */}
-  <div className="form-row cols-2">
-    <div className="form-group">
-      <label className="form-label" htmlFor="tx-start">
-        <i className="fa-solid fa-calendar-plus" style={{ marginRight: '6px' }}></i> Tanggal Mulai <span className="required">*</span>
-      </label>
-      <input id="tx-start" name="start_date" type="date" className="form-control" value={form.start_date} onChange={handleChange} required />
-    </div>
-    <div className="form-group">
-      <label className="form-label" htmlFor="tx-end">
-        <i className="fa-solid fa-calendar-check" style={{ marginRight: '6px' }}></i> Tanggal Selesai <span className="required">*</span>
-      </label>
-      <input id="tx-end" name="end_date" type="date" className="form-control" value={form.end_date} onChange={handleChange} min={form.start_date} required />
-    </div>
-  </div>
-
-  {/* ── Info Harga Otomatis ── */}
-  {totalPrice > 0 && (
-    <div style={{ padding: '12px 16px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '10px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <i className="fa-solid fa-calculator" style={{ color: '#22C55E' }}></i>
-        Total Harga Terbaik
-        {form.discount > 0 && <span style={{ fontSize: '11px', color: '#F59E0B' }}>(setelah diskon)</span>}
-      </div>
-      <strong style={{ fontSize: '18px', color: '#22C55E', letterSpacing: '-0.5px' }}>
-        {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(totalPrice)}
-      </strong>
-    </div>
-  )}
-
-  {/* ── Alamat ── */}
-  <div className="form-group">
-    <label className="form-label" htmlFor="tx-address">
-      <i className="fa-solid fa-location-dot" style={{ marginRight: '6px' }}></i> Alamat / Penginapan
-    </label>
-    <input id="tx-address" name="renter_address" type="text" className="form-control" placeholder="Nama villa, hotel, atau alamat di Bali" value={form.renter_address || ''} onChange={handleChange} />
-  </div>
-
-  {/* ── Diskon | Deposit | Metode Bayar ── */}
-  <div className="form-row cols-3">
-    <div className="form-group">
-      <label className="form-label" htmlFor="tx-discount">
-        <i className="fa-solid fa-tags" style={{ marginRight: '6px' }}></i> Diskon (Rp)
-      </label>
-      <input id="tx-discount" name="discount" type="number" className="form-control" placeholder="0" value={form.discount} onChange={handleChange} min="0" />
-    </div>
-    <div className="form-group">
-      <label className="form-label" htmlFor="tx-deposit">
-        <i className="fa-solid fa-vault" style={{ marginRight: '6px' }}></i> Deposit (Rp)
-      </label>
-      <input id="tx-deposit" name="deposit" type="number" className="form-control" placeholder="0" value={form.deposit} onChange={handleChange} min="0" />
-    </div>
-    <div className="form-group">
-      <label className="form-label" htmlFor="tx-payment">
-        <i className="fa-solid fa-credit-card" style={{ marginRight: '6px' }}></i> Metode Bayar
-      </label>
-      <select id="tx-payment" name="payment_method" className="form-control" value={form.payment_method} onChange={handleChange}>
-        {getPaymentMethods().filter(m => m.active).map(m => (
-          <option key={m.id} value={m.id}>{m.label}</option>
-        ))}
-      </select>
-    </div>
-  </div>
-
-  {/* ── Status Pembayaran ── */}
-  <div className="form-group" style={{ marginBottom: '16px' }}>
-    <label className="form-label">
-      <i className="fa-solid fa-money-bill-wave" style={{ marginRight: '6px', color: '#22C55E' }}></i>
-      Status Pembayaran <span className="required">*</span>
-    </label>
-    <div style={{ display: 'flex', gap: '10px' }}>
-      <button type="button" onClick={() => setForm(prev => ({ ...prev, payment_status: 'paid' }))}
-        style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', border: `2px solid ${form.payment_status !== 'unpaid' ? '#22C55E' : 'var(--bg-border)'}`, background: form.payment_status !== 'unpaid' ? 'rgba(34,197,94,0.15)' : 'var(--bg-elevated)', color: form.payment_status !== 'unpaid' ? '#22C55E' : 'var(--text-secondary)', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-        <i className="fa-solid fa-circle-check"></i> Lunas / Paid
-      </button>
-      <button type="button" onClick={() => setForm(prev => ({ ...prev, payment_status: 'unpaid' }))}
-        style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', border: `2px solid ${form.payment_status === 'unpaid' ? '#F59E0B' : 'var(--bg-border)'}`, background: form.payment_status === 'unpaid' ? 'rgba(245,158,11,0.15)' : 'var(--bg-elevated)', color: form.payment_status === 'unpaid' ? '#F59E0B' : 'var(--text-secondary)', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-        <i className="fa-solid fa-clock"></i> Belum Bayar
-      </button>
-    </div>
-    {form.payment_status === 'unpaid' && (
-      <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(245,158,11,0.08)', borderRadius: '8px', border: '1px solid rgba(245,158,11,0.3)', fontSize: '12px', color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <i className="fa-solid fa-triangle-exclamation"></i>
-        Motor tetap tidak tersedia. Pembayaran <strong>belum masuk</strong> ke laporan pendapatan.
-      </div>
-    )}
-  </div>
-
-  {/* ── Catatan ── */}
-  <div className="form-group">
-    <label className="form-label" htmlFor="tx-notes">
-      <i className="fa-regular fa-note-sticky" style={{ marginRight: '6px' }}></i> Catatan Tambahan
-    </label>
-    <textarea id="tx-notes" name="notes" className="form-control" rows={2} placeholder="Catatan khusus, permintaan khusus, dll..." value={form.notes} onChange={handleChange} style={{ resize: 'vertical' }} />
-  </div>
-
-  {/* ── Toggle Data Opsional ── */}
-  <button
-    type="button"
-    onClick={() => setShowOptional(prev => !prev)}
-    style={{ width: '100%', padding: '10px', background: 'var(--bg-elevated)', border: '1px dashed var(--bg-border)', borderRadius: '10px', color: 'var(--text-muted)', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '4px' }}
-  >
-    <i className={`fa-solid fa-chevron-${showOptional ? 'up' : 'down'}`} style={{ fontSize: '11px' }}></i>
-    {showOptional ? 'Sembunyikan Data Opsional' : 'Tampilkan Data Opsional (KTP, Foto, KM Awal)'}
-  </button>
-
-  {/* ── Data Opsional (collapsed) ── */}
-  {showOptional && (
-    <div style={{ padding: '16px', background: 'var(--bg-elevated)', borderRadius: '10px', border: '1px solid var(--bg-border)', marginTop: '8px', marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '0px' }}>
-
-      {/* No. KTP & KM Awal */}
-      <div className="form-row cols-2">
-        <div className="form-group">
-          <label className="form-label" htmlFor="tx-id-num">
-            <i className="fa-solid fa-id-card" style={{ marginRight: '6px' }}></i> No. KTP / Paspor / SIM
-          </label>
-          <input id="tx-id-num" name="renter_id_number" type="text" className="form-control" placeholder="Nomor identitas" value={form.renter_id_number} onChange={handleChange} />
-        </div>
-        <div className="form-group">
-          <label className="form-label" htmlFor="tx-km-start">
-            <i className="fa-solid fa-gauge-high" style={{ marginRight: '6px' }}></i> KM Awal Odometer
-          </label>
-          <input id="tx-km-start" name="km_start" type="number" className="form-control" placeholder="e.g. 18500" value={form.km_start} onChange={handleChange} min="0" />
-        </div>
-      </div>
-
-      {/* Dual Photo Upload */}
-      <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--brand-primary-light)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <i className="fa-solid fa-camera-retro"></i> Upload Dokumentasi Foto (Opsional)
-      </div>
-      <div className="form-row cols-2" style={{ gap: '14px' }}>
-        {/* Foto KTP */}
-        <div className="form-group mb-0">
-          <label className="form-label" style={{ fontSize: '12px' }}>
-            <i className="fa-solid fa-id-card" style={{ marginRight: '6px', color: 'var(--brand-primary)' }}></i> Foto KTP / Paspor / SIM
-          </label>
-          {form.customer_image_url ? (
-            <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #22C55E' }}>
-              <img src={form.customer_image_url} alt="KTP" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <button type="button" onClick={() => setForm(p => ({ ...p, customer_image_url: '' }))}
-                style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(239,68,68,0.9)', color: '#FFF', border: 'none', borderRadius: '50%', width: '26px', height: '26px', cursor: 'pointer', fontWeight: 800, fontSize: '12px' }}>✕</button>
-            </div>
-          ) : (
-            <div>
-              <input type="file" accept="image/*" id="tx-id-photo-input" onChange={(e) => handleImageFile(e, 'customer_image_url')} style={{ display: 'none' }} />
-              <label htmlFor="tx-id-photo-input" className="custom-file-btn"
-                style={{ height: '100px', flexDirection: 'column', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed var(--brand-primary)', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', cursor: 'pointer', padding: '12px', textAlign: 'center' }}>
-                <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '22px', color: 'var(--brand-primary)' }}></i>
-                <span style={{ fontSize: '11px', fontWeight: 700, marginTop: '6px' }}>Upload Foto KTP / Paspor</span>
-              </label>
-            </div>
+          {/* ── Auto-fill Customer ── */}
+          {!editData && (
+            <CustomerPickerCombobox onSelectCustomer={handleSelectCustomer} />
           )}
-        </div>
 
-        {/* Foto Handover */}
-        <div className="form-group mb-0">
-          <label className="form-label" style={{ fontSize: '12px' }}>
-            <i className="fa-solid fa-motorcycle" style={{ marginRight: '6px', color: '#3B82F6' }}></i> Foto Orang + Motor (Handover)
-          </label>
-          {form.handover_image_url ? (
-            <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #3B82F6' }}>
-              <img src={form.handover_image_url} alt="Handover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <button type="button" onClick={() => setForm(p => ({ ...p, handover_image_url: '' }))}
-                style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(239,68,68,0.9)', color: '#FFF', border: 'none', borderRadius: '50%', width: '26px', height: '26px', cursor: 'pointer', fontWeight: 800, fontSize: '12px' }}>✕</button>
-            </div>
-          ) : (
-            <div>
-              <input type="file" accept="image/*" id="tx-handover-photo-input" onChange={(e) => handleImageFile(e, 'handover_image_url')} style={{ display: 'none' }} />
-              <label htmlFor="tx-handover-photo-input" className="custom-file-btn"
-                style={{ height: '100px', flexDirection: 'column', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed #3B82F6', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', cursor: 'pointer', padding: '12px', textAlign: 'center' }}>
-                <i className="fa-solid fa-camera" style={{ fontSize: '22px', color: '#3B82F6' }}></i>
-                <span style={{ fontSize: '11px', fontWeight: 700, marginTop: '6px' }}>Foto Serah Terima</span>
-              </label>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {uploading && (
-        <div style={{ fontSize: '11px', color: 'var(--brand-primary-light)', marginTop: '8px', textAlign: 'center' }}>
-          <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '4px' }}></i> Mengompresi gambar...
-        </div>
-      )}
-    </div>
-  )}
-
-  {/* ── Footer ── */}
-  <div className="modal-footer">
-    <button type="button" className="btn btn-secondary" onClick={onClose}>Batal</button>
-    <button type="submit" className="btn btn-primary" disabled={loading || uploading}>
-      {loading ? (
-        <><i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '4px' }}></i> Menyimpan...</>
-      ) : (
-        <><i className="fa-solid fa-floppy-disk" style={{ marginRight: '4px' }}></i> Simpan Transaksi</>
-      )}
-    </button>
-  </div>
-
-</form>
-      </div>
-
-      {/* Modal Konfirmasi Simpan */}
-      {showConfirm && (
-        <div className="modal-overlay" style={{ zIndex: 1100 }} onClick={() => setShowConfirm(false)}>
-          <div className="modal modal-sm" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
-            <div className="modal-header" style={{ borderBottom: '1px solid var(--bg-border)', paddingBottom: '16px' }}>
-              <div className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '16px', fontWeight: 800 }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <i className="fa-solid fa-floppy-disk" style={{ color: '#6366F1', fontSize: '16px' }}></i>
+          {/* ── Pilih Motor ── */}
+          {noVehiclesAvailable && !editData ? (
+            <div style={{ padding: '16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.35)', borderRadius: '12px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#EF4444' }}>
+              <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: '18px', flexShrink: 0 }}></i>
+              <div>
+                <strong>Semua motor sedang disewa atau dalam perawatan.</strong>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  Selesaikan transaksi aktif terlebih dahulu, atau ubah status motor di halaman Kendaraan.
                 </div>
-                {editData ? 'Konfirmasi Perubahan' : 'Konfirmasi Transaksi Baru'}
               </div>
-              <button className="modal-close" onClick={() => setShowConfirm(false)}>✕</button>
             </div>
+          ) : (
+            <VehicleCombobox
+              vehicles={availableVehicles}
+              value={form.vehicle_id}
+              onChange={(id) => setForm(prev => ({ ...prev, vehicle_id: (id || '').trim() }))}
+            />
+          )}
 
-            <div style={{ padding: '20px 0 4px' }}>
-              {/* Info ringkasan */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--bg-elevated)', borderRadius: '10px', border: '1px solid var(--bg-border)', marginBottom: '16px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--bg-card-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <i className="fa-solid fa-user" style={{ color: 'var(--brand-primary)', fontSize: '16px' }}></i>
+          {/* ── Info harga otomatis (muncul setelah motor + tanggal dipilih) ── */}
+          {totalPrice > 0 && (
+            <div style={{ padding: '12px 16px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '10px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <i className="fa-solid fa-calculator" style={{ color: '#22C55E' }}></i>
+                Harga Terbaik Otomatis
+                {form.discount > 0 && <span style={{ fontSize: '11px', color: '#F59E0B' }}>(sudah potong diskon)</span>}
+              </div>
+              <strong style={{ fontSize: '20px', color: '#22C55E', letterSpacing: '-0.5px' }}>
+                {formatRupiah(totalPrice)}
+              </strong>
+            </div>
+          )}
+
+          {/* ── Nama & No. HP ── */}
+          <div className="form-row cols-2">
+            <div className="form-group">
+              <label className="form-label" htmlFor="tx-name">
+                <i className="fa-solid fa-user" style={{ marginRight: '6px' }}></i> Nama Penyewa <span className="required">*</span>
+              </label>
+              <input id="tx-name" name="renter_name" type="text" className="form-control" placeholder="Nama lengkap penyewa" value={form.renter_name} onChange={handleChange} required />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="tx-phone">
+                <i className="fa-solid fa-globe" style={{ marginRight: '6px' }}></i> No. WhatsApp <span className="required">*</span>
+              </label>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap' }}>
+                <CountryCodePicker
+                  value={countryCode}
+                  onChange={(newCode) => {
+                    setCountryCode(newCode);
+                    setForm(prev => ({ ...prev, renter_phone: `${newCode} ${phoneNumber}` }));
+                  }}
+                />
+                <input
+                  id="tx-phone"
+                  name="phone_number"
+                  type="tel"
+                  className="form-control"
+                  style={{ flex: 1, minWidth: 0 }}
+                  placeholder="812345678"
+                  value={phoneNumber}
+                  onChange={e => {
+                    const newNum = e.target.value;
+                    setPhoneNumber(newNum);
+                    setForm(prev => ({ ...prev, renter_phone: `${countryCode} ${newNum}` }));
+                  }}
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ── Tanggal Mulai, Selesai & KM Awal ── */}
+          <div className="form-row cols-3">
+            <div className="form-group">
+              <label className="form-label" htmlFor="tx-start">
+                <i className="fa-solid fa-calendar-plus" style={{ marginRight: '6px' }}></i> Tanggal Mulai <span className="required">*</span>
+              </label>
+              <input id="tx-start" name="start_date" type="date" className="form-control" value={form.start_date} onChange={handleChange} required />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="tx-end">
+                <i className="fa-solid fa-calendar-check" style={{ marginRight: '6px' }}></i> Tanggal Selesai <span className="required">*</span>
+              </label>
+              <input id="tx-end" name="end_date" type="date" className="form-control" value={form.end_date} onChange={handleChange} min={form.start_date} required />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="tx-km-start">
+                <i className="fa-solid fa-gauge-high" style={{ marginRight: '6px' }}></i> KM Awal Odometer
+              </label>
+              <input
+                id="tx-km-start"
+                name="km_start"
+                type="number"
+                className="form-control"
+                placeholder="e.g. 18500"
+                value={form.km_start}
+                onChange={handleChange}
+                min="0"
+                style={{ MozAppearance: 'textfield' }}
+              />
+            </div>
+          </div>
+
+          {/* ── Alamat ── */}
+          <div className="form-group">
+            <label className="form-label" htmlFor="tx-address">
+              <i className="fa-solid fa-location-dot" style={{ marginRight: '6px', color: 'var(--brand-primary)' }}></i> Alamat / Villa / Hotel
+            </label>
+            <input id="tx-address" name="renter_address" type="text" className="form-control" placeholder="e.g. Villa Bamboo, Jl. Pererenan" value={form.renter_address || ''} onChange={handleChange} />
+          </div>
+
+          {/* ── Diskon | Deposit | Metode Bayar ── */}
+          <div className="form-row cols-3">
+            <div className="form-group">
+              <label className="form-label" htmlFor="tx-discount">
+                <i className="fa-solid fa-tags" style={{ marginRight: '6px' }}></i> Diskon (Rp)
+              </label>
+              <input id="tx-discount" name="discount" type="number" className="form-control" placeholder="0" value={form.discount} onChange={handleChange} min="0" style={{ MozAppearance: 'textfield' }} />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="tx-deposit">
+                <i className="fa-solid fa-vault" style={{ marginRight: '6px' }}></i> Deposit (Rp)
+              </label>
+              <input id="tx-deposit" name="deposit" type="number" className="form-control" placeholder="0" value={form.deposit} onChange={handleChange} min="0" style={{ MozAppearance: 'textfield' }} />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="tx-payment">
+                <i className="fa-solid fa-credit-card" style={{ marginRight: '6px' }}></i> Metode Bayar
+              </label>
+              <select id="tx-payment" name="payment_method" className="form-control" value={form.payment_method} onChange={handleChange}>
+                {getPaymentMethods().filter(m => m.active).map(m => (
+                  <option key={m.id} value={m.id}>{m.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* ── Status Pembayaran ── */}
+          <div className="form-group" style={{ marginBottom: '16px' }}>
+            <label className="form-label">
+              <i className="fa-solid fa-money-bill-wave" style={{ marginRight: '6px', color: '#22C55E' }}></i>
+              Status Pembayaran <span className="required">*</span>
+            </label>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button type="button" onClick={() => setForm(prev => ({ ...prev, payment_status: 'paid' }))}
+                style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', border: `2px solid ${form.payment_status !== 'unpaid' ? '#22C55E' : 'var(--bg-border)'}`, background: form.payment_status !== 'unpaid' ? 'rgba(34,197,94,0.15)' : 'var(--bg-elevated)', color: form.payment_status !== 'unpaid' ? '#22C55E' : 'var(--text-secondary)', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <i className="fa-solid fa-circle-check"></i> Lunas / Paid
+              </button>
+              <button type="button" onClick={() => setForm(prev => ({ ...prev, payment_status: 'unpaid' }))}
+                style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', border: `2px solid ${form.payment_status === 'unpaid' ? '#F59E0B' : 'var(--bg-border)'}`, background: form.payment_status === 'unpaid' ? 'rgba(245,158,11,0.15)' : 'var(--bg-elevated)', color: form.payment_status === 'unpaid' ? '#F59E0B' : 'var(--text-secondary)', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <i className="fa-solid fa-clock"></i> Belum Bayar
+              </button>
+            </div>
+            {form.payment_status === 'unpaid' && (
+              <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(245,158,11,0.08)', borderRadius: '8px', border: '1px solid rgba(245,158,11,0.3)', fontSize: '12px', color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <i className="fa-solid fa-triangle-exclamation"></i>
+                Motor tetap tidak tersedia. Pembayaran <strong>belum masuk</strong> ke laporan pendapatan.
+              </div>
+            )}
+          </div>
+
+          {/* ── Catatan ── */}
+          <div className="form-group">
+            <label className="form-label" htmlFor="tx-notes">
+              <i className="fa-regular fa-note-sticky" style={{ marginRight: '6px' }}></i> Catatan Tambahan
+            </label>
+            <textarea id="tx-notes" name="notes" className="form-control" rows={2} placeholder="Catatan khusus, permintaan khusus, dll..." value={form.notes} onChange={handleChange} style={{ resize: 'vertical' }} />
+          </div>
+
+          {/* ── Toggle Data Opsional ── */}
+          <button
+            type="button"
+            onClick={() => setShowOptional(prev => !prev)}
+            style={{ width: '100%', padding: '10px', background: 'var(--bg-elevated)', border: '1px dashed var(--bg-border)', borderRadius: '10px', color: 'var(--text-muted)', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}
+          >
+            <i className={`fa-solid fa-chevron-${showOptional ? 'up' : 'down'}`} style={{ fontSize: '11px' }}></i>
+            {showOptional ? 'Sembunyikan Data Opsional' : 'Data Opsional: No. KTP & Foto Dokumentasi'}
+          </button>
+
+          {/* ── Data Opsional (collapsed) ── */}
+          {showOptional && (
+            <div style={{ padding: '16px', background: 'var(--bg-elevated)', borderRadius: '10px', border: '1px solid var(--bg-border)', marginBottom: '12px' }}>
+
+              {/* No. KTP */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="tx-id-num">
+                  <i className="fa-solid fa-id-card" style={{ marginRight: '6px' }}></i> No. KTP / Paspor / SIM
+                </label>
+                <input id="tx-id-num" name="renter_id_number" type="text" className="form-control" placeholder="Nomor identitas" value={form.renter_id_number} onChange={handleChange} />
+              </div>
+
+              {/* Dual Photo Upload */}
+              <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--brand-primary-light)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <i className="fa-solid fa-camera-retro"></i> Upload Dokumentasi Foto (Opsional)
+              </div>
+              <div className="form-row cols-2" style={{ gap: '14px' }}>
+                {/* Foto KTP */}
+                <div className="form-group mb-0">
+                  <label className="form-label" style={{ fontSize: '12px' }}>
+                    <i className="fa-solid fa-id-card" style={{ marginRight: '6px', color: 'var(--brand-primary)' }}></i> Foto KTP / Paspor / SIM
+                  </label>
+                  {form.customer_image_url ? (
+                    <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #22C55E' }}>
+                      <img src={form.customer_image_url} alt="KTP" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <button type="button" onClick={() => setForm(p => ({ ...p, customer_image_url: '' }))}
+                        style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(239,68,68,0.9)', color: '#FFF', border: 'none', borderRadius: '50%', width: '26px', height: '26px', cursor: 'pointer', fontWeight: 800, fontSize: '12px' }}>✕</button>
+                      <span style={{ position: 'absolute', bottom: '6px', left: '6px', background: 'rgba(15,23,42,0.9)', color: '#22C55E', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 800 }}>✓ Foto Dimuat</span>
+                    </div>
+                  ) : (
+                    <div>
+                      <input type="file" accept="image/*" id="tx-id-photo-input" onChange={(e) => handleImageFile(e, 'customer_image_url')} style={{ display: 'none' }} />
+                      <label htmlFor="tx-id-photo-input" className="custom-file-btn"
+                        style={{ height: '100px', flexDirection: 'column', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed var(--brand-primary)', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', cursor: 'pointer', padding: '12px', textAlign: 'center' }}>
+                        <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '22px', color: 'var(--brand-primary)' }}></i>
+                        <span style={{ fontSize: '11px', fontWeight: 700, marginTop: '6px' }}>Upload Foto KTP / Paspor</span>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Klik / Ambil dari Kamera</span>
+                      </label>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)' }}>
-                    {form.renter_name || '—'}
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    <i className="fa-solid fa-motorcycle" style={{ marginRight: '5px', fontSize: '11px' }}></i>
-                    {vehicles.find(v => v.id === (form.vehicle_id || '').trim())?.name || '—'}
-                    {totalPrice > 0 && (
-                      <span style={{ marginLeft: '8px', color: '#22C55E', fontWeight: 700 }}>
-                        · {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(totalPrice)}
-                      </span>
-                    )}
-                  </div>
+
+                {/* Foto Handover */}
+                <div className="form-group mb-0">
+                  <label className="form-label" style={{ fontSize: '12px' }}>
+                    <i className="fa-solid fa-motorcycle" style={{ marginRight: '6px', color: '#3B82F6' }}></i> Foto Orang + Motor (Handover)
+                  </label>
+                  {form.handover_image_url ? (
+                    <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #3B82F6' }}>
+                      <img src={form.handover_image_url} alt="Handover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <button type="button" onClick={() => setForm(p => ({ ...p, handover_image_url: '' }))}
+                        style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(239,68,68,0.9)', color: '#FFF', border: 'none', borderRadius: '50%', width: '26px', height: '26px', cursor: 'pointer', fontWeight: 800, fontSize: '12px' }}>✕</button>
+                      <span style={{ position: 'absolute', bottom: '6px', left: '6px', background: 'rgba(15,23,42,0.9)', color: '#3B82F6', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 800 }}>✓ Foto Dimuat</span>
+                    </div>
+                  ) : (
+                    <div>
+                      <input type="file" accept="image/*" id="tx-handover-photo-input" onChange={(e) => handleImageFile(e, 'handover_image_url')} style={{ display: 'none' }} />
+                      <label htmlFor="tx-handover-photo-input" className="custom-file-btn"
+                        style={{ height: '100px', flexDirection: 'column', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed #3B82F6', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', cursor: 'pointer', padding: '12px', textAlign: 'center' }}>
+                        <i className="fa-solid fa-camera" style={{ fontSize: '22px', color: '#3B82F6' }}></i>
+                        <span style={{ fontSize: '11px', fontWeight: 700, marginTop: '6px' }}>Foto Serah Terima</span>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Dokumentasi Orang + Motor</span>
+                      </label>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div style={{ padding: '12px 14px', background: 'rgba(99,102,241,0.07)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: '8px', marginBottom: '8px' }}>
-                <p style={{ fontSize: '13.5px', color: 'var(--text-primary)', margin: 0, lineHeight: 1.6 }}>
-                  {editData
-                    ? 'Simpan perubahan data transaksi ini?'
-                    : 'Tambahkan transaksi baru ini ke sistem?'}
+              {uploading && (
+                <div style={{ fontSize: '11px', color: 'var(--brand-primary-light)', marginTop: '8px', textAlign: 'center' }}>
+                  <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '4px' }}></i> Mengompresi gambar...
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Footer ── */}
+          <div className="modal-footer">
+            <button type="button" className="btn btn-secondary" onClick={onClose}>Batal</button>
+            <button type="submit" className="btn btn-primary" disabled={loading || uploading}>
+              {loading ? (
+                <><i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '4px' }}></i> Menyimpan...</>
+              ) : (
+                <><i className="fa-solid fa-floppy-disk" style={{ marginRight: '4px' }}></i> Simpan Transaksi</>
+              )}
+            </button>
+          </div>
+
+        </form>
+
+        {/* ── Modal Konfirmasi Simpan ── */}
+        {showConfirm && (
+          <div className="modal-overlay" style={{ zIndex: 1100 }} onClick={() => setShowConfirm(false)}>
+            <div className="modal modal-sm" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+              <div className="modal-header" style={{ borderBottom: '1px solid var(--bg-border)', paddingBottom: '16px' }}>
+                <div className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '16px', fontWeight: 800 }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <i className="fa-solid fa-floppy-disk" style={{ color: '#6366F1', fontSize: '16px' }}></i>
+                  </div>
+                  {editData ? 'Konfirmasi Perubahan' : 'Konfirmasi Transaksi Baru'}
+                </div>
+                <button className="modal-close" onClick={() => setShowConfirm(false)}>✕</button>
+              </div>
+
+              <div style={{ padding: '20px 0 4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--bg-elevated)', borderRadius: '10px', border: '1px solid var(--bg-border)', marginBottom: '16px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--bg-card-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <i className="fa-solid fa-user" style={{ color: 'var(--brand-primary)', fontSize: '16px' }}></i>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)' }}>{form.renter_name || '—'}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      <i className="fa-solid fa-motorcycle" style={{ marginRight: '5px', fontSize: '11px' }}></i>
+                      {vehicles.find(v => v.id === (form.vehicle_id || '').trim())?.name || '—'}
+                      {totalPrice > 0 && (
+                        <span style={{ marginLeft: '8px', color: '#22C55E', fontWeight: 700 }}>· {formatRupiah(totalPrice)}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ padding: '12px 14px', background: 'rgba(99,102,241,0.07)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: '8px', marginBottom: '8px' }}>
+                  <p style={{ fontSize: '13.5px', color: 'var(--text-primary)', margin: 0, lineHeight: 1.6 }}>
+                    {editData ? 'Simpan perubahan data transaksi ini?' : 'Tambahkan transaksi baru ini ke sistem?'}
+                  </p>
+                </div>
+
+                <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '8px 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <i className="fa-solid fa-circle-info" style={{ fontSize: '11px' }}></i>
+                  Data akan langsung tersimpan ke database.
                 </p>
               </div>
 
-              <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '8px 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <i className="fa-solid fa-circle-info" style={{ fontSize: '11px' }}></i>
-                Data akan langsung tersimpan ke database.
-              </p>
-            </div>
-
-            <div className="modal-footer" style={{ marginTop: '20px' }}>
-              <button className="btn btn-secondary" onClick={() => setShowConfirm(false)}>Batal</button>
-              <button
-                className="btn btn-primary"
-                onClick={handleConfirmSave}
-                style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}
-              >
-                <i className="fa-solid fa-floppy-disk"></i>
-                {editData ? 'Ya, Simpan Perubahan' : 'Ya, Tambah Transaksi'}
-              </button>
+              <div className="modal-footer" style={{ marginTop: '20px' }}>
+                <button className="btn btn-secondary" onClick={() => setShowConfirm(false)}>Batal</button>
+                <button className="btn btn-primary" onClick={handleConfirmSave}
+                  style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <i className="fa-solid fa-floppy-disk"></i>
+                  {editData ? 'Ya, Simpan Perubahan' : 'Ya, Tambah Transaksi'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      
+        )}
+
+      </div>
     </div>
   );
 }
+
 
 // ===== MODAL KIRIM INVOICE WHATSAPP =====
 function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
