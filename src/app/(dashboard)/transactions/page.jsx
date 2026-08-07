@@ -922,20 +922,6 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
             />
           )}
 
-          {/* ── Info harga otomatis (muncul setelah motor + tanggal dipilih) ── */}
-          {totalPrice > 0 && (
-            <div style={{ padding: '12px 16px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '10px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <i className="fa-solid fa-calculator" style={{ color: '#22C55E' }}></i>
-                Harga Terbaik Otomatis
-                {form.discount > 0 && <span style={{ fontSize: '11px', color: '#F59E0B' }}>(sudah potong diskon)</span>}
-              </div>
-              <strong style={{ fontSize: '20px', color: '#22C55E', letterSpacing: '-0.5px' }}>
-                {formatRupiah(totalPrice)}
-              </strong>
-            </div>
-          )}
-
           {/* ── Nama & No. HP ── */}
           <div className="form-row cols-2">
             <div className="form-group">
@@ -1041,6 +1027,20 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
             </div>
           </div>
 
+{/* ── Info harga otomatis (muncul setelah motor + tanggal dipilih) ── */}
+          {totalPrice > 0 && (
+            <div style={{ padding: '12px 16px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '10px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <i className="fa-solid fa-calculator" style={{ color: '#22C55E' }}></i>
+                Harga Terbaik Otomatis
+                {form.discount > 0 && <span style={{ fontSize: '11px', color: '#F59E0B' }}>(sudah potong diskon)</span>}
+              </div>
+              <strong style={{ fontSize: '20px', color: '#22C55E', letterSpacing: '-0.5px' }}>
+                {formatRupiah(totalPrice)}
+              </strong>
+            </div>
+          )}
+          
           {/* ── Status Pembayaran ── */}
           <div className="form-group" style={{ marginBottom: '16px' }}>
             <label className="form-label">
