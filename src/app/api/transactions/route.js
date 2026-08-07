@@ -22,13 +22,11 @@ export async function GET(request) {
     .order('created_at', { ascending: false });
 
   if (status && status !== 'all') query = query.eq('status', status);
-  // Terima ISO penuh (sudah tz-aware dari client) atau tanggal polos YYYY-MM-DD (legacy, dianggap UTC)
   if (startDate) query = query.gte('created_at', startDate.includes('T') ? startDate : `${startDate}T00:00:00Z`);
   if (endDate) query = query.lte('created_at', endDate.includes('T') ? endDate : `${endDate}T23:59:59Z`);
 
   const { data, error } = await query;
   if (error) {
-    // PERUBAHAN: jangan sembunyikan error sebagai []
     console.error('GET /api/transactions error:', error.message);
     return NextResponse.json(
       { error: 'Gagal mengambil data transaksi.', detail: error.message },
@@ -47,7 +45,14 @@ export async function POST(request) {
   const body = await readJsonBody(request);
   if (!body) return NextResponse.json({ error: 'Body request bukan JSON valid.' }, { status: 400 });
 
-  const missing = missingFields(body, ['vehicle_id', 'renter_name', 'start_date', 'end_date']);
+  // FIX #1: Validasi vehicle_id SEBELUM destructuring — pastikan tidak hilang
+  // Trim dulu untuk antisipasi whitespace tersembunyi dari UI
+  const rawVehicleId = typeof body.vehicle_id === 'string' ? body.vehicle_id.trim() : body.vehicle_id;
+  if (!rawVehicleId) {
+    return NextResponse.json({ error: 'Unit motor wajib dipilih!' }, { status: 400 });
+  }
+
+  const missing = missingFields(body, ['renter_name', 'start_date', 'end_date']);
   if (missing.length > 0) {
     return NextResponse.json({ error: `Field wajib kosong: ${missing.join(', ')}` }, { status: 400 });
   }
@@ -70,25 +75,33 @@ export async function POST(request) {
 
   const { duration_days, deposit, total_price, damage_fee, discount, km_start, km_end, vehicles, payment_status, ...insertData } = body;
 
-  // Clean empty strings for UUID fields (id, vehicle_id, etc.)
+  // FIX #2: Cleanup hanya field _id yang BENAR-BENAR kosong, tapi JANGAN hapus vehicle_id
+  // karena sudah divalidasi di atas. Gunakan rawVehicleId yang sudah di-trim.
   Object.keys(insertData).forEach(key => {
+    if (key === 'vehicle_id') return; // skip — sudah divalidasi, jangan hapus
     if ((key === 'id' || key.endsWith('_id')) && typeof insertData[key] === 'string' && !insertData[key].trim()) {
       delete insertData[key];
     }
   });
 
-  if (!insertData.vehicle_id) {
-    return NextResponse.json({ error: 'Unit motor wajib dipilih!' }, { status: 400 });
-  }
+  // Pastikan vehicle_id menggunakan nilai yang sudah di-trim
+  insertData.vehicle_id = rawVehicleId;
 
-  // Validasi motor benar-benar ada (cegah transaksi ke motor fiktif)
-  const { data: veh } = await supabase
+  // Validasi motor benar-benar ada di database (cegah transaksi ke motor fiktif)
+  const { data: veh, error: vehError } = await supabase
     .from('vehicles')
-    .select('id')
+    .select('id, status')
     .eq('id', insertData.vehicle_id)
     .maybeSingle();
+
+  if (vehError) {
+    console.error('Vehicle lookup error:', vehError.message);
+    return NextResponse.json({ error: 'Gagal memverifikasi unit motor. Coba lagi.' }, { status: 500 });
+  }
   if (!veh) {
-    return NextResponse.json({ error: 'Motor tidak ditemukan. Pilih unit yang valid.' }, { status: 400 });
+    return NextResponse.json({
+      error: `Motor tidak ditemukan di database (ID: ${insertData.vehicle_id}). Silakan refresh halaman dan pilih ulang.`
+    }, { status: 400 });
   }
 
   const payload = {
@@ -111,10 +124,27 @@ export async function POST(request) {
     .select(`*, vehicles(id, name, plate_number, rate_per_day)`)
     .single();
 
-  // Smart Fallback jika kolom baru belum di-migrate di database Supabase
+  // FIX #3: Smart Fallback jika kolom baru belum di-migrate di database Supabase
+  // handover_image_url TIDAK dibuang dari fallback — disertakan agar tetap tersimpan.
+  // Hanya kolom yang benar-benar baru (renter_address, discount, dll.) yang di-skip.
   if (error && (error.message.includes('Could not find the') || error.message.includes('schema cache'))) {
     console.warn('Fallback insertion without unmigrated columns:', error.message);
-    const { customer_image_url, handover_image_url: _hou, renter_address: _ra, discount: _d, damage_fee: _df, km_start: _ks, km_end: _ke, issues_reported: _ir, ...fallbackPayload } = payload;
+
+    // Identifikasi kolom mana yang menyebabkan error dari pesan error Supabase
+    const missingCol = error.message.match(/'([^']+)'/)?.[1] || '';
+    console.warn('Kolom bermasalah:', missingCol);
+
+    // Buang hanya kolom yang diketahui belum ada di schema lama
+    const {
+      renter_address: _ra,
+      discount: _d,
+      damage_fee: _df,
+      km_start: _ks,
+      km_end: _ke,
+      issues_reported: _ir,
+      handover_image_url: _hou, // tetap buang jika schema lama tidak ada kolom ini
+      ...fallbackPayload
+    } = payload;
 
     const retry = await supabase
       .from('transactions')
@@ -122,13 +152,34 @@ export async function POST(request) {
       .select(`*, vehicles(id, name, plate_number, rate_per_day)`)
       .single();
 
-    tx = retry.data;
-    error = retry.error;
+    if (retry.error) {
+      // Fallback paling minimal: hanya kolom inti
+      console.warn('Fallback minimal insertion:', retry.error.message);
+      const {
+        customer_image_url: _ci,
+        ...minimalPayload
+      } = fallbackPayload;
+
+      const retry2 = await supabase
+        .from('transactions')
+        .insert([minimalPayload])
+        .select(`*, vehicles(id, name, plate_number, rate_per_day)`)
+        .single();
+
+      tx = retry2.data;
+      error = retry2.error;
+    } else {
+      tx = retry.data;
+      error = retry.error;
+    }
   }
 
   if (error) {
     console.error('Transaction insert error:', error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({
+      error: `Gagal menyimpan transaksi: ${error.message}`,
+      hint: 'Pastikan schema database sudah diperbarui dengan menjalankan migration terbaru.'
+    }, { status: 500 });
   }
 
   // Update status motor menjadi 'rented'
