@@ -62,18 +62,22 @@ function VehicleCombobox({ vehicles, value, onChange }) {
 
   const selected = vehicles.find(v => v.id === value);
 
+  // FIX: Motor tanpa category ditampilkan di bucket 'other' bukan default 'honda',
+  // supaya tidak tersembunyi dan user tetap bisa memilihnya.
+  const getVehicleCategory = (v) => (v.category && v.category.trim() !== '') ? v.category : 'other';
+
   // Adjust state saat render (pola resmi React) — menggantikan useEffect
   const [prevSelectedId, setPrevSelectedId] = useState(null);
   const selectedId = selected?.id ?? null;
   if (selectedId !== prevSelectedId) {
     setPrevSelectedId(selectedId);
     if (selected && !selectedBrand) {
-      setSelectedBrand(selected.category || null);
+      setSelectedBrand(getVehicleCategory(selected));
     }
   }
 
   const brandVehicles = selectedBrand
-    ? vehicles.filter(v => (v.category || 'honda') === selectedBrand)
+    ? vehicles.filter(v => getVehicleCategory(v) === selectedBrand)
     : [];
 
   const filteredVehicles = brandVehicles.filter(v => {
@@ -88,7 +92,8 @@ function VehicleCombobox({ vehicles, value, onChange }) {
     setQuery('');
     if (value) {
       const currentVehicle = vehicles.find(v => v.id === value);
-      if (currentVehicle && (currentVehicle.category || 'honda') !== key) {
+      // FIX: gunakan getVehicleCategory agar konsisten dengan filter di atas
+      if (currentVehicle && getVehicleCategory(currentVehicle) !== key) {
         onChange('');
       }
     }
@@ -113,7 +118,7 @@ function VehicleCombobox({ vehicles, value, onChange }) {
         </div>
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
           {BRANDS.map(brand => {
-            const count = vehicles.filter(v => (v.category || 'honda') === brand.key).length;
+            const count = vehicles.filter(v => getVehicleCategory(v) === brand.key).length;
             const isActive = selectedBrand === brand.key;
             return (
               <button
@@ -852,20 +857,27 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.vehicle_id) {
+    // FIX: trim() untuk antisipasi whitespace tersembunyi dari pemilihan motor
+    const cleanVehicleId = (form.vehicle_id || '').trim();
+    if (!cleanVehicleId) {
       alert('Silakan pilih unit motor terlebih dahulu!');
       return;
     }
     setLoading(true);
-    await onSubmit({ ...form, total_price: totalPrice });
+    await onSubmit({ ...form, vehicle_id: cleanVehicleId, total_price: totalPrice });
     setLoading(false);
   };
 
   if (!isOpen) return null;
 
+  // FIX: Tampilkan motor yang 'available' ATAU motor yang sedang diedit (edit mode).
+  // Motor berstatus 'rented' atau 'maintenance' tidak ditampilkan agar tidak bisa dipilih dobel.
   const availableVehicles = vehicles.filter(v =>
     v.status === 'available' || (editData && v.id === editData.vehicle_id)
   );
+
+  // Jika daftar kosong (semua motor sedang disewa/maintenance), beri tahu user
+  const noVehiclesAvailable = availableVehicles.length === 0;
 
   const selectedVehicleObj = vehicles.find(v => v.id === form.vehicle_id);
 
@@ -893,15 +905,39 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
           )}
 
           {/* Searchable Vehicle Picker */}
-          <VehicleCombobox
-            vehicles={availableVehicles}
-            value={form.vehicle_id}
-            onChange={(id) => {
-              setForm(prev => ({ ...prev, vehicle_id: id }));
-              setSelectedOptionId(null);
-              setAppliedGross(null);
-            }}
-          />
+          {/* FIX: Tampilkan warning jika tidak ada motor tersedia */}
+          {noVehiclesAvailable && !editData ? (
+            <div style={{
+              padding: '16px',
+              background: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
+              borderRadius: '12px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              fontSize: '13px',
+              color: '#EF4444'
+            }}>
+              <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: '18px', flexShrink: 0 }}></i>
+              <div>
+                <strong>Semua motor sedang disewa atau dalam perawatan.</strong>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  Selesaikan transaksi aktif terlebih dahulu, atau ubah status motor di halaman Kendaraan.
+                </div>
+              </div>
+            </div>
+          ) : (
+            <VehicleCombobox
+              vehicles={availableVehicles}
+              value={form.vehicle_id}
+              onChange={(id) => {
+                setForm(prev => ({ ...prev, vehicle_id: (id || '').trim() }));
+                setSelectedOptionId(null);
+                setAppliedGross(null);
+              }}
+            />
+          )}
 
           <div className="form-row cols-2">
             <div className="form-group">
