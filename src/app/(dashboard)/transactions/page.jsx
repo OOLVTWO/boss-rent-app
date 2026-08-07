@@ -1001,6 +1001,31 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
             <input id="tx-address" name="renter_address" type="text" className="form-control" placeholder="e.g. Villa Bamboo, Jl. Pererenan" value={form.renter_address || ''} onChange={handleChange} />
           </div>
 
+               {/* ── Status Pembayaran ── */}
+          <div className="form-group" style={{ marginBottom: '16px' }}>
+            <label className="form-label">
+              <i className="fa-solid fa-money-bill-wave" style={{ marginRight: '6px', color: '#22C55E' }}></i>
+              Status Pembayaran <span className="required">*</span>
+            </label>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button type="button" onClick={() => setForm(prev => ({ ...prev, payment_status: 'paid' }))}
+                style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', border: `2px solid ${form.payment_status !== 'unpaid' ? '#22C55E' : 'var(--bg-border)'}`, background: form.payment_status !== 'unpaid' ? 'rgba(34,197,94,0.15)' : 'var(--bg-elevated)', color: form.payment_status !== 'unpaid' ? '#22C55E' : 'var(--text-secondary)', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <i className="fa-solid fa-circle-check"></i> Lunas / Paid
+              </button>
+              <button type="button" onClick={() => setForm(prev => ({ ...prev, payment_status: 'unpaid' }))}
+                style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', border: `2px solid ${form.payment_status === 'unpaid' ? '#F59E0B' : 'var(--bg-border)'}`, background: form.payment_status === 'unpaid' ? 'rgba(245,158,11,0.15)' : 'var(--bg-elevated)', color: form.payment_status === 'unpaid' ? '#F59E0B' : 'var(--text-secondary)', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <i className="fa-solid fa-clock"></i> Belum Bayar
+              </button>
+            </div>
+            {form.payment_status === 'unpaid' && (
+              <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(245,158,11,0.08)', borderRadius: '8px', border: '1px solid rgba(245,158,11,0.3)', fontSize: '12px', color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <i className="fa-solid fa-triangle-exclamation"></i>
+                Motor tetap tidak tersedia. Pembayaran <strong>belum masuk</strong> ke laporan pendapatan.
+              </div>
+            )}
+          </div>
+
+
           {/* ── Diskon | Deposit | Metode Bayar ── */}
           <div className="form-row cols-3">
             <div className="form-group">
@@ -1041,30 +1066,7 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
             </div>
           )}
           
-          {/* ── Status Pembayaran ── */}
-          <div className="form-group" style={{ marginBottom: '16px' }}>
-            <label className="form-label">
-              <i className="fa-solid fa-money-bill-wave" style={{ marginRight: '6px', color: '#22C55E' }}></i>
-              Status Pembayaran <span className="required">*</span>
-            </label>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button type="button" onClick={() => setForm(prev => ({ ...prev, payment_status: 'paid' }))}
-                style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', border: `2px solid ${form.payment_status !== 'unpaid' ? '#22C55E' : 'var(--bg-border)'}`, background: form.payment_status !== 'unpaid' ? 'rgba(34,197,94,0.15)' : 'var(--bg-elevated)', color: form.payment_status !== 'unpaid' ? '#22C55E' : 'var(--text-secondary)', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                <i className="fa-solid fa-circle-check"></i> Lunas / Paid
-              </button>
-              <button type="button" onClick={() => setForm(prev => ({ ...prev, payment_status: 'unpaid' }))}
-                style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', border: `2px solid ${form.payment_status === 'unpaid' ? '#F59E0B' : 'var(--bg-border)'}`, background: form.payment_status === 'unpaid' ? 'rgba(245,158,11,0.15)' : 'var(--bg-elevated)', color: form.payment_status === 'unpaid' ? '#F59E0B' : 'var(--text-secondary)', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                <i className="fa-solid fa-clock"></i> Belum Bayar
-              </button>
-            </div>
-            {form.payment_status === 'unpaid' && (
-              <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(245,158,11,0.08)', borderRadius: '8px', border: '1px solid rgba(245,158,11,0.3)', fontSize: '12px', color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <i className="fa-solid fa-triangle-exclamation"></i>
-                Motor tetap tidak tersedia. Pembayaran <strong>belum masuk</strong> ke laporan pendapatan.
-              </div>
-            )}
-          </div>
-
+     
           {/* ── Catatan ── */}
           <div className="form-group">
             <label className="form-label" htmlFor="tx-notes">
