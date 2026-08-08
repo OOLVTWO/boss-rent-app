@@ -136,7 +136,7 @@ export default function Sidebar({ user, mobileOpen, onClose }) {
       </div>
 
       {/* Nav sections */}
-      <nav className="sidebar-nav" style={{ flex: 1, overflowY: 'auto' }}>
+      <nav className="sidebar-nav sidebar-nav-scroll">
         {NAV_SECTIONS.map((section) => (
           <div key={section.label} className="sidebar-section">
             <div className="sidebar-section-label">{section.label}</div>

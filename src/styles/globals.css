@@ -254,22 +254,8 @@ a:hover {
   display: flex;
   flex-direction: column;
   z-index: 100;
-  overflow-y: auto;
-  /* Completely hide scrollbar on all browsers */
-  scrollbar-width: none;       /* Firefox */
-  -ms-overflow-style: none;    /* IE/Edge */
-}
-.sidebar::-webkit-scrollbar {
-  width: 0 !important;         /* Chrome/Safari — override global 6px */
-  display: none !important;
-}
-.sidebar::-webkit-scrollbar-track {
-  display: none !important;
-  background: transparent !important;
-}
-.sidebar::-webkit-scrollbar-thumb {
-  display: none !important;
-  background: transparent !important;
+  /* Scrolling happens inside .sidebar-nav-scroll, not here */
+  overflow: hidden;
 }
 
 /* Logo area */
@@ -368,6 +354,23 @@ a:hover {
   display: flex;
   flex-direction: column;
   gap: 1px;
+}
+
+/* Nav scroll container — this is the ACTUAL scrolling element
+   (nav has overflow-y:auto, not .sidebar) — kill its scrollbar too */
+.sidebar-nav-scroll {
+  overflow-y: auto;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.sidebar-nav-scroll::-webkit-scrollbar,
+.sidebar-nav-scroll::-webkit-scrollbar-track,
+.sidebar-nav-scroll::-webkit-scrollbar-thumb,
+.sidebar-nav-scroll::-webkit-scrollbar-corner {
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+  display: none !important;
 }
 
 .sidebar-section-label {
