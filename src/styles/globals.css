@@ -4418,3 +4418,122 @@ select.form-control option { background: var(--bg-surface); color: var(--text-pr
   color: #A29BFE;
   background: rgba(108,92,231,0.15);
 }
+
+/* =========================================
+   PERIOD BAR V4 — inline filter (dashboard)
+   ========================================= */
+.period-bar-v4 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+/* Pill tabs wrapper */
+.period-tabs-v4 {
+  display: flex;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--bg-border);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.ptab-v4 {
+  padding: 5px 16px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  transition: all 0.14s;
+}
+.ptab-v4.on {
+  background: var(--brand-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(108,92,231,0.3);
+}
+.ptab-v4:not(.on):hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+/* Dropdown select */
+.period-select-v4 {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1.5px solid var(--bg-border);
+  border-radius: 9px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.14s;
+}
+.period-select-v4:focus {
+  border-color: var(--brand-primary);
+}
+
+/* Chip periode aktif */
+.period-chip-v4 {
+  margin-left: auto;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--bg-border);
+  border-radius: 100px;
+  padding: 5px 15px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.period-chip-v4 i { color: var(--brand-primary); }
+
+/* Reset button */
+.period-reset-v4 {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1.5px solid var(--bg-border);
+  font-family: inherit;
+  transition: all 0.14s;
+}
+.period-reset-v4:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--bg-border-strong);
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] .period-tabs-v4 {
+  background: var(--bg-card);
+  border-color: rgba(255,255,255,0.08);
+}
+[data-theme="dark"] .period-select-v4 {
+  background: var(--bg-elevated);
+  border-color: rgba(255,255,255,0.08);
+  color: var(--text-primary);
+}
+[data-theme="dark"] .period-chip-v4 {
+  background: var(--bg-card);
+  border-color: rgba(255,255,255,0.08);
+}
+[data-theme="dark"] .period-reset-v4 {
+  background: var(--bg-elevated);
+  border-color: rgba(255,255,255,0.08);
+}

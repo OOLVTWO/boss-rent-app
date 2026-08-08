@@ -176,68 +176,63 @@ export default function DashboardClient({ transactions, vehicles }) {
         <p>Ringkasan performa finansial, status armada, dan ketersediaan sewa motor Boss Rent Pererenan — {periodRange.label}</p>
       </div>
 
-      {/* ── 1. Filter Periode ── */}
-      <div className="card mb-6">
-        <div className="card-header" style={{ flexWrap: 'wrap', gap: '10px' }}>
-          <div>
-            <div className="card-title">
-              <i className="fa-solid fa-filter" style={{ marginRight: '6px' }}></i> Filter Periode Dashboard
-            </div>
-            <div className="card-subtitle">Otomatis mulai dari 0 setiap awal bulan — pilih periode untuk membaca laporan bulan / tahun lain</div>
-          </div>
-          {!periodRange.isCurrent && (
-            <button type="button" className="btn btn-secondary btn-sm" onClick={handleResetPeriod}>
-              <i className="fa-solid fa-rotate-left" style={{ marginRight: '4px' }}></i> Periode Berjalan
-            </button>
-          )}
-        </div>
-
-        <div className="scrollable-tabs-bar">
-          <button type="button" className={`scrollable-tab-btn ${periodMode === 'month' ? 'active' : ''}`} onClick={() => setPeriodMode('month')}>
-            <i className="fa-solid fa-calendar-day"></i> Bulanan
+      {/* ── 1. Filter Periode — v4 style ── */}
+      <div className="period-bar-v4">
+        {/* Pill tabs: Bulanan / Tahunan */}
+        <div className="period-tabs-v4">
+          <button
+            type="button"
+            className={`ptab-v4 ${periodMode === 'month' ? 'on' : ''}`}
+            onClick={() => setPeriodMode('month')}
+          >
+            Bulanan
           </button>
-          <button type="button" className={`scrollable-tab-btn ${periodMode === 'year' ? 'active' : ''}`} onClick={() => setPeriodMode('year')}>
-            <i className="fa-solid fa-calendar"></i> Tahunan
+          <button
+            type="button"
+            className={`ptab-v4 ${periodMode === 'year' ? 'on' : ''}`}
+            onClick={() => setPeriodMode('year')}
+          >
+            Tahunan
           </button>
         </div>
 
-        <div className={`form-row ${periodMode === 'month' ? 'cols-3' : 'cols-2'}`} style={{ marginTop: '4px' }}>
-          {periodMode === 'month' && (
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <span className="form-label"><i className="fa-solid fa-calendar-days" style={{ marginRight: '6px' }}></i> Bulan</span>
-              <select
-                className="form-control"
-                value={selectedMonth.substring(5, 7)}
-                onChange={e => setSelectedMonth(`${selectedMonth.substring(0, 4)}-${e.target.value}`)}
-              >
-                {MONTH_NAMES.map((name, i) => (
-                  <option key={i} value={String(i + 1).padStart(2, '0')}>{name}</option>
-                ))}
-              </select>
-            </div>
-          )}
+        {/* Select bulan (hanya tampil di mode bulanan) */}
+        {periodMode === 'month' && (
+          <select
+            className="period-select-v4"
+            value={selectedMonth.substring(5, 7)}
+            onChange={e => setSelectedMonth(`${selectedMonth.substring(0, 4)}-${e.target.value}`)}
+          >
+            {MONTH_NAMES.map((name, i) => (
+              <option key={i} value={String(i + 1).padStart(2, '0')}>{name}</option>
+            ))}
+          </select>
+        )}
 
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <span className="form-label"><i className="fa-solid fa-calendar" style={{ marginRight: '6px' }}></i> Tahun</span>
-            <select
-              className="form-control"
-              value={periodMode === 'year' ? selectedYear : selectedMonth.substring(0, 4)}
-              onChange={e => {
-                if (periodMode === 'year') setSelectedYear(e.target.value);
-                else setSelectedMonth(`${e.target.value}-${selectedMonth.substring(5, 7)}`);
-              }}
-            >
-              {yearOptions.map(y => <option key={y} value={String(y)}>{y}</option>)}
-            </select>
-          </div>
+        {/* Select tahun */}
+        <select
+          className="period-select-v4"
+          value={periodMode === 'year' ? selectedYear : selectedMonth.substring(0, 4)}
+          onChange={e => {
+            if (periodMode === 'year') setSelectedYear(e.target.value);
+            else setSelectedMonth(`${e.target.value}-${selectedMonth.substring(5, 7)}`);
+          }}
+        >
+          {yearOptions.map(y => <option key={y} value={String(y)}>{y}</option>)}
+        </select>
 
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <span className="form-label"><i className="fa-solid fa-eye" style={{ marginRight: '6px' }}></i> Periode Ditampilkan</span>
-            <div className="form-control" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: 'var(--brand-primary-light)', userSelect: 'none', cursor: 'default' }}>
-              <i className="fa-solid fa-calendar-check"></i> {periodRange.label}
-            </div>
-          </div>
+        {/* Chip periode aktif */}
+        <div className="period-chip-v4">
+          <i className="fa-solid fa-calendar-check"></i>
+          {periodRange.label}
         </div>
+
+        {/* Reset ke periode berjalan */}
+        {!periodRange.isCurrent && (
+          <button type="button" className="period-reset-v4" onClick={handleResetPeriod}>
+            <i className="fa-solid fa-rotate-left"></i> Periode Berjalan
+          </button>
+        )}
       </div>
 
       {/* ── 2. AI Diagnostic Alert ── */}
