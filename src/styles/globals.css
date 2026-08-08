@@ -248,6 +248,14 @@ a:hover {
   width: 0 !important;         /* Chrome/Safari — override global 6px */
   display: none !important;
 }
+.sidebar::-webkit-scrollbar-track {
+  display: none !important;
+  background: transparent !important;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  display: none !important;
+  background: transparent !important;
+}
 
 /* Logo area */
 .sidebar-logo {
