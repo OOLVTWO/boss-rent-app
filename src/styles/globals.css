@@ -240,12 +240,13 @@ a:hover {
   flex-direction: column;
   z-index: 100;
   overflow-y: auto;
-  /* Hide scrollbar — nav fits without it; overflow safety kept */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  /* Completely hide scrollbar on all browsers */
+  scrollbar-width: none;       /* Firefox */
+  -ms-overflow-style: none;    /* IE/Edge */
 }
 .sidebar::-webkit-scrollbar {
-  display: none;
+  width: 0 !important;         /* Chrome/Safari — override global 6px */
+  display: none !important;
 }
 
 /* Logo area */
