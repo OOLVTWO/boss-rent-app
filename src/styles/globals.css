@@ -130,7 +130,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--sidebar-bg, #1E1346);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -140,6 +140,21 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+/* Sidebar — zero scrollbar, all browsers */
+.sidebar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.sidebar::-webkit-scrollbar,
+.sidebar::-webkit-scrollbar-track,
+.sidebar::-webkit-scrollbar-thumb,
+.sidebar::-webkit-scrollbar-corner {
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+  display: none !important;
 }
 
 /* =========================================
