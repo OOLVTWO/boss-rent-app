@@ -54,7 +54,6 @@ export default function Header({ onToggleMobile, theme, onToggleTheme }) {
         >
           <i className="fa-solid fa-bars"></i>
         </button>
-
         <div className="header-title-box">
           <h2>{meta.title}</h2>
           <p className="header-subtitle">{meta.subtitle}</p>
@@ -64,19 +63,21 @@ export default function Header({ onToggleMobile, theme, onToggleTheme }) {
       <div className="header-right-wrap">
         <VuiVoiceControl />
 
-        {/* ── Theme Toggle Button ── */}
+        {/* ── Theme Toggle — icon button elegan ── */}
         <button
           type="button"
           onClick={onToggleTheme}
-          className="theme-toggle-btn"
-          title={isDark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
+          className="theme-icon-btn"
+          title={isDark ? 'Mode Terang' : 'Mode Gelap'}
           aria-label="Toggle tema"
         >
-          <div className="theme-toggle-track" data-dark={isDark}>
-            <div className="theme-toggle-thumb">
-              <i className={`fa-solid ${isDark ? 'fa-moon' : 'fa-sun'}`}></i>
-            </div>
-          </div>
+          {isDark
+            ? <i className="fa-solid fa-sun"></i>
+            : <i className="fa-solid fa-moon"></i>
+          }
+          <span className="theme-icon-label">
+            {isDark ? 'Terang' : 'Gelap'}
+          </span>
         </button>
 
         <img src={logoUrl} alt="Boss Rent Pererenan" className="header-logo-img" />
