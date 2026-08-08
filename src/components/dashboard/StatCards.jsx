@@ -40,8 +40,8 @@ export default function StatCards({ transactions, vehicles, periodLabel, isCurre
     iconClass: 'fa-solid fa-sack-dollar',
     label: showToday ? 'Pendapatan Hari Ini' : `Pendapatan ${periodLabel}`,
     value: formatRupiah(showToday ? stats.todayRevenue : stats.periodRevenue),
-    iconBg: 'linear-gradient(135deg, rgba(232,93,4,0.2), rgba(250,163,7,0.15))',
-    iconColor: '#FAA307',
+    iconBg: 'linear-gradient(135deg, rgba(108,92,231,0.2), rgba(162,155,254,0.15))',
+    iconColor: '#A29BFE',
     change: showToday
       ? `${periodLabel}: ${formatRupiah(stats.periodRevenue)}`
       : `${stats.paidCount} transaksi terbayar`,
