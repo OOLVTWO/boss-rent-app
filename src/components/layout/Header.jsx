@@ -6,20 +6,21 @@ import { usePathname } from 'next/navigation';
 import VuiVoiceControl from '@/components/dashboard/VuiVoiceControl';
 
 const pageMeta = {
-  '/dashboard': { title: 'Dashboard', subtitle: 'Ringkasan statistik usaha rental' },
-  '/transactions': { title: 'Transaksi', subtitle: 'Kelola pencatatan sewa motor' },
-  '/vehicles': { title: 'Data Motor', subtitle: 'Manajemen armada kendaraan' },
-  '/tracking': { title: 'Tracking Sewa', subtitle: 'Monitoring durasi sewa & pengingat WA' },
-  '/availability': { title: 'Ketersediaan', subtitle: 'Ketersediaan armada motor real-time' },
-  '/expenses': { title: 'Keuangan', subtitle: 'Catat pemasukan, pengeluaran & saldo bersih' },
-  '/maintenance': { title: 'AI Diagnostic', subtitle: 'Deteksi dini kesehatan motor' },
-  '/gallery': { title: 'Galeri Foto', subtitle: 'Arsip foto identitas & kendaraan' },
-  '/reports': { title: 'Laporan', subtitle: 'Export dan analisis pendapatan' },
-  '/settings': { title: 'Pengaturan', subtitle: 'Koneksi database & template WA' },
-  '/fleet': { title: 'Website Publik', subtitle: 'Katalog sewa motor publik (/fleet)' },
+  '/dashboard':   { title: 'Dashboard',       subtitle: 'Ringkasan statistik usaha rental' },
+  '/transactions':{ title: 'Transaksi',        subtitle: 'Kelola pencatatan sewa motor' },
+  '/vehicles':    { title: 'Data Motor',       subtitle: 'Manajemen armada kendaraan' },
+  '/tracking':    { title: 'Tracking Sewa',    subtitle: 'Monitoring durasi sewa & pengingat WA' },
+  '/availability':{ title: 'Ketersediaan',     subtitle: 'Ketersediaan armada motor real-time' },
+  '/expenses':    { title: 'Keuangan',         subtitle: 'Catat pemasukan, pengeluaran & saldo bersih' },
+  '/maintenance': { title: 'AI Diagnostic',    subtitle: 'Deteksi dini kesehatan motor' },
+  '/gallery':     { title: 'Galeri Foto',      subtitle: 'Arsip foto identitas & kendaraan' },
+  '/reports':     { title: 'Laporan',          subtitle: 'Export dan analisis pendapatan' },
+  '/settings':    { title: 'Pengaturan',       subtitle: 'Koneksi database & template WA' },
+  '/fleet':       { title: 'Website Publik',   subtitle: 'Katalog sewa motor publik (/fleet)' },
+  '/customers':   { title: 'Data Customer',    subtitle: 'Kelola data penyewa & riwayat' },
 };
 
-export default function Header({ onToggleMobile }) {
+export default function Header({ onToggleMobile, theme, onToggleTheme }) {
   const pathname = usePathname();
   const matchedKey = Object.keys(pageMeta).find(key => pathname.startsWith(key));
   const meta = pageMeta[matchedKey] || { title: 'Boss Rent', subtitle: 'Admin Panel' };
@@ -37,10 +38,10 @@ export default function Header({ onToggleMobile }) {
 
   const now = new Date();
   const dateStr = now.toLocaleDateString('id-ID', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
+    weekday: 'short', month: 'short', day: 'numeric',
   });
+
+  const isDark = theme === 'dark';
 
   return (
     <header className="header">
@@ -62,11 +63,24 @@ export default function Header({ onToggleMobile }) {
 
       <div className="header-right-wrap">
         <VuiVoiceControl />
-        <img
-          src={logoUrl}
-          alt="Boss Rent Pererenan"
-          className="header-logo-img"
-        />
+
+        {/* ── Theme Toggle Button ── */}
+        <button
+          type="button"
+          onClick={onToggleTheme}
+          className="theme-toggle-btn"
+          title={isDark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
+          aria-label="Toggle tema"
+        >
+          <div className="theme-toggle-track" data-dark={isDark}>
+            <div className="theme-toggle-thumb">
+              <i className={`fa-solid ${isDark ? 'fa-moon' : 'fa-sun'}`}></i>
+            </div>
+          </div>
+        </button>
+
+        <img src={logoUrl} alt="Boss Rent Pererenan" className="header-logo-img" />
+
         <div className="header-date">
           <i className="fa-regular fa-calendar-days" style={{ marginRight: '6px' }}></i>
           {dateStr}
