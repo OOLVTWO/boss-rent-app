@@ -9,22 +9,36 @@ import { analyzeVehicleHealth } from '@/lib/aiDiagnostic';
 import { calcFinancialSummary, formatRupiah, getLocalMonthStr, toLocalDateStr } from '@/lib/finance';
 
 const MONTH_NAMES = [
-  'Januari','Februari','Maret','April','Mei','Juni',
-  'Juli','Agustus','September','Oktober','November','Desember',
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
 ];
 
 const statusBadge = (status, paymentStatus) => {
-  if (status === 'active' && paymentStatus === 'unpaid') return (
-    <span className="db-badge db-badge-warn">
-      <i className="fa-solid fa-clock"></i> Belum Bayar
-    </span>
-  );
+  if (status === 'active' && paymentStatus === 'unpaid') {
+    return (
+      <span className="tx-status-pill" style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B', borderColor: 'rgba(245,158,11,0.4)' }}>
+        <i className="fa-solid fa-clock" style={{ fontSize: '11px' }}></i> Belum Bayar
+      </span>
+    );
+  }
   const map = {
-    active: <span className="db-badge db-badge-blue"><i className="fa-solid fa-bolt"></i> Aktif</span>,
-    completed: <span className="db-badge db-badge-green"><i className="fa-solid fa-circle-check"></i> Selesai</span>,
-    cancelled: <span className="db-badge db-badge-red"><i className="fa-solid fa-circle-xmark"></i> Batal</span>,
+    active: (
+      <span className="tx-status-pill active">
+        <i className="fa-solid fa-bolt" style={{ fontSize: '11px' }}></i> Sewa Aktif
+      </span>
+    ),
+    completed: (
+      <span className="tx-status-pill completed">
+        <i className="fa-solid fa-circle-check" style={{ fontSize: '11px' }}></i> Selesai
+      </span>
+    ),
+    cancelled: (
+      <span className="tx-status-pill cancelled">
+        <i className="fa-solid fa-circle-xmark" style={{ fontSize: '11px' }}></i> Dibatalkan
+      </span>
+    ),
   };
-  return map[status] || <span className="db-badge">{status}</span>;
+  return map[status] || <span className="tx-status-pill">{status}</span>;
 };
 
 export default function DashboardClient({ transactions, vehicles }) {
@@ -32,20 +46,33 @@ export default function DashboardClient({ transactions, vehicles }) {
   const [periodMode, setPeriodMode] = useState('month');
   const [selectedMonth, setSelectedMonth] = useState(getLocalMonthStr());
   const [selectedYear, setSelectedYear] = useState(getLocalMonthStr().substring(0, 4));
+  const [viewPhotoUrl, setViewPhotoUrl] = useState(null);
 
   useEffect(() => {
     (async () => {
       let list = null;
       try {
         const res = await fetch('/api/expenses');
-        if (res.ok) { const d = await res.json(); if (Array.isArray(d)) list = d; }
-      } catch {}
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) list = data;
+        } else {
+          console.warn('API /api/expenses HTTP ' + res.status + ' — fallback ke Supabase langsung.');
+        }
+      } catch (err) {
+        console.error('Fetch expenses via API error:', err);
+      }
       if (list === null) {
         try {
-          const sb = createClient();
-          const { data } = await sb.from('expenses').select('*').order('expense_date', { ascending: false });
-          list = data || [];
-        } catch {}
+          const supabase = createClient();
+          const { data, error } = await supabase
+            .from('expenses')
+            .select('*')
+            .order('expense_date', { ascending: false });
+          if (!error) list = data || [];
+        } catch (err) {
+          console.error('Fetch expenses via Supabase error:', err);
+        }
       }
       setExpenses(list || []);
     })();
@@ -56,16 +83,21 @@ export default function DashboardClient({ transactions, vehicles }) {
   const safeExpenses = Array.isArray(expenses) ? expenses : [];
 
   const periodRange = useMemo(() => {
-    const curYear = getLocalMonthStr().substring(0, 4);
+    const currentYear = getLocalMonthStr().substring(0, 4);
     if (periodMode === 'year') {
-      return { start:`${selectedYear}-01-01`, end:`${selectedYear}-12-31`, label:`Tahun ${selectedYear}`, isCurrent: selectedYear === curYear };
+      return {
+        start: `${selectedYear}-01-01`,
+        end: `${selectedYear}-12-31`,
+        label: `Tahun ${selectedYear}`,
+        isCurrent: selectedYear === currentYear,
+      };
     }
     const [y, m] = selectedMonth.split('-').map(Number);
     const lastDay = new Date(y, m, 0).getDate();
     return {
-      start:`${selectedMonth}-01`,
-      end:`${selectedMonth}-${String(lastDay).padStart(2,'0')}`,
-      label:`${MONTH_NAMES[m-1]} ${y}`,
+      start: `${selectedMonth}-01`,
+      end: `${selectedMonth}-${String(lastDay).padStart(2, '0')}`,
+      label: `${MONTH_NAMES[m - 1]} ${y}`,
       isCurrent: selectedMonth === getLocalMonthStr(),
     };
   }, [periodMode, selectedMonth, selectedYear]);
@@ -74,92 +106,158 @@ export default function DashboardClient({ transactions, vehicles }) {
     const d = toLocalDateStr(t.created_at);
     return d >= periodRange.start && d <= periodRange.end;
   });
+
   const filteredExpenses = safeExpenses.filter(e => {
     const d = e.expense_date || toLocalDateStr(e.created_at);
     return d >= periodRange.start && d <= periodRange.end;
   });
 
   const yearOptions = useMemo(() => {
-    const years = new Set([Number(getLocalMonthStr().substring(0,4))]);
-    safeTx.forEach(t => { const y = Number(toLocalDateStr(t.created_at).substring(0,4)); if (y) years.add(y); });
-    return Array.from(years).sort((a,b) => b-a);
+    const arr = Array.isArray(transactions) ? transactions : [];
+    const years = new Set([Number(getLocalMonthStr().substring(0, 4))]);
+    arr.forEach(t => {
+      const y = Number(toLocalDateStr(t.created_at).substring(0, 4));
+      if (y) years.add(y);
+    });
+    return Array.from(years).sort((a, b) => b - a);
   }, [transactions]);
 
+  const handleResetPeriod = () => {
+    setSelectedMonth(getLocalMonthStr());
+    setSelectedYear(getLocalMonthStr().substring(0, 4));
+  };
+
   const recentTx = filteredTx.slice(0, 5);
+
+  // AI Diagnostic — pakai SELURUH riwayat, bukan hanya periode terpilih
   const diagnostics = safeVehicles.map(v => analyzeVehicleHealth(v, safeTx));
   const urgentVehicles = diagnostics.filter(d => d.healthScore < 60 || d.recentIssues.length > 0);
 
-  const summary = calcFinancialSummary({ transactions: filteredTx, expenses: filteredExpenses, vehicles: safeVehicles });
-  const { totalRevenue, totalExpenses, investorPayout: investorDeduction, netProfit } = summary;
+  // ── Financial summary (shared engine — konsisten dgn halaman Laporan) ──
+  const summary = calcFinancialSummary({
+    transactions: filteredTx,
+    expenses: filteredExpenses,
+    vehicles: safeVehicles,
+  });
+  const totalRevenue   = summary.totalRevenue;
+  const totalExpenses  = summary.totalExpenses;
+  const investorDeduction = summary.investorPayout;
+  const netProfit      = summary.netProfit;
 
-  const hasInvestor = safeVehicles.some(v => v.owner_type === 'investor' || v.ownership_type === 'investor');
+  // Apakah ada motor investor? (untuk kondisi tampil/sembunyi kartu investor)
+  const hasInvestor = safeVehicles.some(v =>
+    v.owner_type === 'investor' || v.ownership_type === 'investor'
+  );
+
+  // Deposit
   const activeTx = safeTx.filter(t => t.status === 'active');
   const completedTx = filteredTx.filter(t => t.status === 'completed');
-  const totalDepositHeld     = activeTx.reduce((s,t) => s + Number(t.deposit||0), 0);
-  const totalDepositDamage   = completedTx.reduce((s,t) => s + Number(t.damage_fee||0), 0);
-  const totalDepositReturned = completedTx.reduce((s,t) => s + Math.max(0, Number(t.deposit||0) - Number(t.damage_fee||0)), 0);
-  const unpaidTx    = safeTx.filter(t => t.status === 'active' && t.payment_status === 'unpaid');
-  const totalUnpaid = unpaidTx.reduce((s,t) => s + Number(t.total_price||0), 0);
-  const marginPct   = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 100) : 0;
+  const totalDepositHeld     = activeTx.reduce((s, t) => s + Number(t.deposit || 0), 0);
+  const totalDepositDamage   = completedTx.reduce((s, t) => s + Number(t.damage_fee || 0), 0);
+  const totalDepositReturned = completedTx.reduce((s, t) => {
+    const dep = Number(t.deposit || 0);
+    const dmg = Number(t.damage_fee || 0);
+    return s + Math.max(0, dep - dmg);
+  }, 0);
 
-  const paidCount = filteredTx.filter(t =>
-    t.status === 'completed' || (t.status === 'active' && t.payment_status === 'paid')
-  ).length;
+  // Piutang
+  const unpaidTx    = safeTx.filter(t => t.status === 'active' && t.payment_status === 'unpaid');
+  const totalUnpaid = unpaidTx.reduce((s, t) => s + Number(t.total_price || 0), 0);
 
   return (
-    <div className="db-wrap fade-in">
+    <div className="bento-dashboard-wrapper fade-in">
 
-      {/* ── GREETING ROW ── */}
-      <div className="db-greeting-row">
-        <div>
-          <h1 className="db-greeting-title">
-            Selamat Datang, <span className="db-greeting-accent">Boss Rent</span>
-          </h1>
-          <p className="db-greeting-sub">
-            {periodRange.label} &mdash; Pererenan, Canggu
-          </p>
-        </div>
-
-        {/* Period picker inline */}
-        <div className="db-period-row">
-          <div className="db-period-pills">
-            <button className={`db-ppill ${periodMode==='month'?'active':''}`} onClick={()=>setPeriodMode('month')}>Bulanan</button>
-            <button className={`db-ppill ${periodMode==='year'?'active':''}`} onClick={()=>setPeriodMode('year')}>Tahunan</button>
-          </div>
-          {periodMode === 'month' && (
-            <select className="db-sel" value={selectedMonth.substring(5,7)} onChange={e=>setSelectedMonth(`${selectedMonth.substring(0,4)}-${e.target.value}`)}>
-              {MONTH_NAMES.map((n,i) => <option key={i} value={String(i+1).padStart(2,'0')}>{n}</option>)}
-            </select>
-          )}
-          <select className="db-sel" value={periodMode==='year'?selectedYear:selectedMonth.substring(0,4)} onChange={e=>{
-            if (periodMode==='year') setSelectedYear(e.target.value);
-            else setSelectedMonth(`${e.target.value}-${selectedMonth.substring(5,7)}`);
-          }}>
-            {yearOptions.map(y=><option key={y} value={String(y)}>{y}</option>)}
-          </select>
-          {!periodRange.isCurrent && (
-            <button className="db-reset-btn" onClick={()=>{setSelectedMonth(getLocalMonthStr());setSelectedYear(getLocalMonthStr().substring(0,4));}}>
-              <i className="fa-solid fa-rotate-left"></i> Reset
-            </button>
-          )}
-        </div>
+      {/* ── Header ── */}
+      <div className="page-header mb-6">
+        <h2>
+          <i className="fa-solid fa-border-all" style={{ marginRight: '8px', color: 'var(--brand-primary)' }}></i>
+          Dashboard Bento Analytics
+        </h2>
+        <p>Ringkasan performa finansial, status armada, dan ketersediaan sewa motor Boss Rent Pererenan — {periodRange.label}</p>
       </div>
 
-      {/* ── AI ALERT ── */}
+      {/* ── 1. Filter Periode — v4 style ── */}
+      <div className="period-bar-v4">
+        {/* Pill tabs: Bulanan / Tahunan */}
+        <div className="period-tabs-v4">
+          <button
+            type="button"
+            className={`ptab-v4 ${periodMode === 'month' ? 'on' : ''}`}
+            onClick={() => setPeriodMode('month')}
+          >
+            Bulanan
+          </button>
+          <button
+            type="button"
+            className={`ptab-v4 ${periodMode === 'year' ? 'on' : ''}`}
+            onClick={() => setPeriodMode('year')}
+          >
+            Tahunan
+          </button>
+        </div>
+
+        {/* Select bulan (hanya tampil di mode bulanan) */}
+        {periodMode === 'month' && (
+          <select
+            className="period-select-v4"
+            value={selectedMonth.substring(5, 7)}
+            onChange={e => setSelectedMonth(`${selectedMonth.substring(0, 4)}-${e.target.value}`)}
+          >
+            {MONTH_NAMES.map((name, i) => (
+              <option key={i} value={String(i + 1).padStart(2, '0')}>{name}</option>
+            ))}
+          </select>
+        )}
+
+        {/* Select tahun */}
+        <select
+          className="period-select-v4"
+          value={periodMode === 'year' ? selectedYear : selectedMonth.substring(0, 4)}
+          onChange={e => {
+            if (periodMode === 'year') setSelectedYear(e.target.value);
+            else setSelectedMonth(`${e.target.value}-${selectedMonth.substring(5, 7)}`);
+          }}
+        >
+          {yearOptions.map(y => <option key={y} value={String(y)}>{y}</option>)}
+        </select>
+
+        {/* Chip periode aktif */}
+        <div className="period-chip-v4">
+          <i className="fa-solid fa-calendar-check"></i>
+          {periodRange.label}
+        </div>
+
+        {/* Reset ke periode berjalan */}
+        {!periodRange.isCurrent && (
+          <button type="button" className="period-reset-v4" onClick={handleResetPeriod}>
+            <i className="fa-solid fa-rotate-left"></i> Periode Berjalan
+          </button>
+        )}
+      </div>
+
+      {/* ── 2. AI Diagnostic Alert ── */}
       {urgentVehicles.length > 0 && (
-        <div className="db-alert-bar">
-          <div className="db-alert-icon"><i className="fa-solid fa-robot"></i></div>
-          <div className="db-alert-text">
-            <strong>AI Diagnostik: {urgentVehicles.length} unit perlu perhatian</strong>
-            <span>{urgentVehicles.map(v=>`${v.vehicleName} (${v.plateNumber})`).join(', ')}</span>
+        <div className="bento-card bento-alert-card mb-6">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div className="bento-alert-icon">
+              <i className="fa-solid fa-robot fa-bounce"></i>
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: '15px', color: '#F59E0B' }}>
+                AI Maintenance Alert: {urgentVehicles.length} Unit Motor Perlu Perhatian!
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                {urgentVehicles.map(v => `${v.vehicleName} (${v.plateNumber})`).join(', ')}
+              </div>
+            </div>
           </div>
-          <Link href="/maintenance" className="db-alert-btn">
-            Periksa <i className="fa-solid fa-arrow-right"></i>
+          <Link href="/maintenance" className="btn btn-warning btn-sm">
+            Diagnosa AI <i className="fa-solid fa-arrow-right" style={{ marginLeft: '4px' }}></i>
           </Link>
         </div>
       )}
 
-      {/* ── STAT CARDS — Motor KPI ── */}
+      {/* ── 3. StatCards (Motor KPI) ── */}
       <StatCards
         transactions={filteredTx}
         vehicles={safeVehicles}
@@ -168,165 +266,286 @@ export default function DashboardClient({ transactions, vehicles }) {
         periodMode={periodMode}
       />
 
-      {/* ── ASYMMETRIC BENTO GRID ── */}
-      {/* Layout: [FinanceSummary wide] [Deposit narrow] / [Chart wide] [Fleet narrow] */}
-      <div className="db-bento">
+      {/* ── 3b. Finance KPI Cards (Laporan terintegrasi) ── */}
+      <div className="mb-6">
+        <div className="finance-kpi-section-label">
+          <i className="fa-solid fa-chart-line" style={{ color: 'var(--brand-primary)' }}></i>
+          Ringkasan Keuangan — {periodRange.label}
+        </div>
 
-        {/* A. Finance Summary — spans 2 col, 1 row */}
-        <div className="db-bento-cell db-cell-finance">
-          <div className="db-cell-eyebrow">
-            <span className="db-live-dot"></span>
-            Ringkasan Keuangan
+        {/* Row 1: Pemasukan · Pengeluaran · Laba Bersih */}
+        <div className="grid-3 mb-4">
+          <div className="stat-card">
+            <div className="stat-icon" style={{ background: 'rgba(34,197,94,0.15)', color: '#22C55E' }}>
+              <i className="fa-solid fa-sack-dollar"></i>
+            </div>
+            <div className="stat-info">
+              <div className="stat-label">Total Pemasukan</div>
+              <div className="stat-value" style={{ color: '#22C55E' }}>{formatRupiah(totalRevenue)}</div>
+              <div className="stat-change">
+                {filteredTx.filter(t =>
+                  t.status === 'completed' ||
+                  (t.status === 'active' && t.payment_status === 'paid')
+                ).length} transaksi terbayar
+              </div>
+            </div>
           </div>
-          <div className="db-finance-main">
-            <div className="db-finance-left">
-              <p className="db-finance-label">Laba Bersih {periodRange.label}</p>
-              <div className={`db-finance-value ${netProfit < 0 ? 'negative' : ''}`}>
+
+          <div className="stat-card">
+            <div className="stat-icon" style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444' }}>
+              <i className="fa-solid fa-money-bill-transfer"></i>
+            </div>
+            <div className="stat-info">
+              <div className="stat-label">Total Pengeluaran</div>
+              <div className="stat-value" style={{ color: '#EF4444' }}>{formatRupiah(totalExpenses)}</div>
+              <div className="stat-change">{filteredExpenses.length} item pengeluaran</div>
+            </div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.15)', color: '#3B82F6' }}>
+              <i className="fa-solid fa-chart-pie"></i>
+            </div>
+            <div className="stat-info">
+              <div className="stat-label">Laba Bersih (Net Profit)</div>
+              <div className="stat-value" style={{ color: netProfit >= 0 ? '#3B82F6' : '#EF4444' }}>
                 {formatRupiah(netProfit)}
               </div>
-              <div className="db-finance-margin">
-                <i className={`fa-solid ${netProfit>=0?'fa-arrow-trend-up':'fa-arrow-trend-down'}`}></i>
-                {totalRevenue > 0 ? `Margin ${marginPct}%` : 'Belum ada pemasukan'}
-              </div>
+              <div className="stat-change">Pemasukan − Pengeluaran − Bagi Hasil</div>
             </div>
-            <div className="db-finance-right">
-              <div className="db-finance-metric">
-                <span className="db-fm-label"><i className="fa-solid fa-circle-arrow-down" style={{color:'#15803D'}}></i> Pemasukan</span>
-                <span className="db-fm-val income">{formatRupiah(totalRevenue)}</span>
-                <span className="db-fm-sub">{paidCount} transaksi terbayar</span>
+          </div>
+        </div>
+
+        {/* Row 2: Investor cards — hanya muncul jika ada motor investor */}
+        {hasInvestor && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)', marginBottom: 'var(--space-3)' }}>
+            <div className="stat-card" style={{ border: '2px solid rgba(168,85,247,0.4)', background: 'rgba(168,85,247,0.06)' }}>
+              <div className="stat-icon" style={{ background: 'rgba(168,85,247,0.2)', color: '#A855F7' }}>
+                <i className="fa-solid fa-crown"></i>
               </div>
-              <div className="db-finance-divider"></div>
-              <div className="db-finance-metric">
-                <span className="db-fm-label"><i className="fa-solid fa-circle-arrow-up" style={{color:'#B91C1C'}}></i> Pengeluaran</span>
-                <span className="db-fm-val expense">{formatRupiah(totalExpenses)}</span>
-                <span className="db-fm-sub">{filteredExpenses.length} item</span>
-              </div>
-              {hasInvestor && <>
-                <div className="db-finance-divider"></div>
-                <div className="db-finance-metric">
-                  <span className="db-fm-label"><i className="fa-solid fa-crown" style={{color:'#7C3AED'}}></i> Bagi Hasil</span>
-                  <span className="db-fm-val" style={{color:'#7C3AED'}}>{formatRupiah(investorDeduction)}</span>
-                  <span className="db-fm-sub">Investor gabungan</span>
+              <div className="stat-info">
+                <div className="stat-label" style={{ color: '#A855F7', fontWeight: 800 }}>
+                  TRANSFER NET INVESTOR (Gabungan)
                 </div>
-              </>}
-              <div className="db-finance-divider"></div>
-              <div className="db-finance-metric">
-                <span className="db-fm-label"><i className="fa-solid fa-clock" style={{color:'#B45309'}}></i> Piutang</span>
-                <span className="db-fm-val piutang">{formatRupiah(totalUnpaid)}</span>
-                <span className="db-fm-sub">{unpaidTx.length} belum bayar</span>
+                <div className="stat-value" style={{ color: '#A855F7', fontSize: '20px', fontWeight: 900 }}>
+                  {formatRupiah(investorDeduction)}
+                </div>
+                <div className="stat-change" style={{ color: '#A855F7' }}>Hak Bersih Investor — Semua Motor Titipan</div>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon" style={{ background: 'rgba(59,130,246,0.15)', color: '#3B82F6' }}>
+                <i className="fa-solid fa-building"></i>
+              </div>
+              <div className="stat-info">
+                <div className="stat-label">Komisi Boss Rent (Gabungan)</div>
+                <div className="stat-value" style={{ color: '#3B82F6' }}>
+                  {formatRupiah(Math.max(0, totalRevenue - totalExpenses - investorDeduction))}
+                </div>
+                <div className="stat-change">Hak Pengelolaan Boss Rent</div>
               </div>
             </div>
           </div>
-          <div className="db-finance-footer">
-            <Link href="/reports" className="db-finance-link">
-              Laporan Lengkap <i className="fa-solid fa-arrow-right"></i>
-            </Link>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Link href="/reports" style={{ fontSize: '12px', color: 'var(--brand-primary-light)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px', textDecoration: 'none' }}>
+            Lihat Laporan Lengkap <i className="fa-solid fa-arrow-right" style={{ fontSize: '10px' }}></i>
+          </Link>
+        </div>
+      </div>
+
+      {/* ── 4. Charts & Armada ── */}
+      <DashboardCharts
+        transactions={filteredTx}
+        vehicles={safeVehicles}
+        periodMode={periodMode}
+        periodRange={periodRange}
+      />
+
+      {/* ── 5. Bento Grid: Financial Intelligence + Deposit ── */}
+      <div className="bento-grid-container mb-6">
+
+        {/* Hero: Financial Intelligence */}
+        <div className="bento-card bento-hero-card">
+          {/* Badge row */}
+          <div className="bento-hero-top">
+            <div className="tx-status-pill active" style={{ background: 'rgba(108,92,231,0.1)', color: 'var(--brand-primary)', borderColor: 'rgba(108,92,231,0.25)' }}>
+              <span className="bento-live-pulse" style={{ margin: 0 }}></span>
+              <i className="fa-solid fa-wand-magic-sparkles"></i>
+              AI Financial Intelligence
+            </div>
+            <div className={`tx-status-pill ${netProfit >= 0 ? 'completed' : 'cancelled'}`}>
+              <i className={`fa-solid ${netProfit >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'}`}></i>
+              {netProfit >= 0 ? 'Profit Positif' : 'Rugi — Evaluasi'}
+            </div>
+          </div>
+
+          {/* Main value */}
+          <div className="bento-hero-value-block">
+            <div className="bento-hero-label">
+              Laba Bersih
+              <span style={{ background: 'var(--bg-surface)', border: '1.5px solid var(--bg-border)', borderRadius: '100px', padding: '2px 10px', fontSize: '10.5px', fontWeight: 700, color: 'var(--text-muted)' }}>
+                {periodRange.label}
+              </span>
+            </div>
+            <div className="bento-hero-value" style={{ color: netProfit >= 0 ? 'var(--text-primary)' : '#B91C1C' }}>
+              {formatRupiah(netProfit)}
+            </div>
+            <div className="bento-hero-margin">
+              {totalRevenue > 0
+                ? <><i className="fa-solid fa-chart-simple" style={{ marginRight: 5, color: 'var(--brand-primary)' }}></i>Margin {Math.round((netProfit / totalRevenue) * 100)}% dari total omset</>
+                : 'Belum ada pemasukan pada periode ini'}
+            </div>
+          </div>
+
+          {/* Sub items grid */}
+          <div className="bento-hero-sub-grid">
+            <div className="bento-hero-sub-item">
+              <div className="bento-sub-label">
+                <i className="fa-solid fa-circle-arrow-down" style={{ color: '#15803D' }}></i>
+                Total Pemasukan
+              </div>
+              <div className="bento-sub-value positive">{formatRupiah(totalRevenue)}</div>
+            </div>
+            <div className="bento-hero-sub-item">
+              <div className="bento-sub-label">
+                <i className="fa-solid fa-circle-arrow-up" style={{ color: '#B91C1C' }}></i>
+                Total Pengeluaran
+              </div>
+              <div className="bento-sub-value negative">{formatRupiah(totalExpenses)}</div>
+            </div>
+            {hasInvestor && (
+              <div className="bento-hero-sub-item">
+                <div className="bento-sub-label">
+                  <i className="fa-solid fa-crown" style={{ color: '#7C3AED' }}></i>
+                  Bagi Hasil Investor
+                </div>
+                <div className="bento-sub-value" style={{ color: '#7C3AED' }}>{formatRupiah(investorDeduction)}</div>
+              </div>
+            )}
+            <div className="bento-hero-sub-item">
+              <div className="bento-sub-label">
+                <i className="fa-solid fa-clock" style={{ color: '#B45309' }}></i>
+                Piutang Belum Bayar
+              </div>
+              <div className="bento-sub-value" style={{ color: '#B45309' }}>{formatRupiah(totalUnpaid)}</div>
+            </div>
           </div>
         </div>
 
-        {/* B. Deposit — 1 col, 1 row */}
-        <div className="db-bento-cell db-cell-deposit">
-          <div className="db-cell-eyebrow">
-            <i className="fa-solid fa-vault" style={{color:'var(--brand-primary)'}}></i>
-            Deposit Jaminan
+        {/* Deposit Vault */}
+        <div className="bento-card">
+          <div className="bento-vault-header">
+            <div className="bento-vault-icon">
+              <i className="fa-solid fa-vault"></i>
+            </div>
+            <div>
+              <div className="bento-vault-title">Rekap Deposit Jaminan</div>
+              <div className="bento-vault-sub">Monitor deposit & klaim denda</div>
+            </div>
           </div>
-          <div className="db-deposit-list">
-            <div className="db-dep-row held">
-              <div className="db-dep-info">
-                <span className="db-dep-label"><i className="fa-solid fa-lock"></i> Ditahan</span>
-                <span className="db-dep-sub">{activeTx.length} sewa aktif</span>
+
+          <div className="bento-deposit-list">
+            <div className="bento-deposit-item held">
+              <div className="dep-left">
+                <div className="dep-label">
+                  <i className="fa-solid fa-lock" style={{ fontSize: '9px' }}></i>
+                  Deposit Ditahan
+                </div>
+                <div className="dep-count">{activeTx.length} sewa aktif</div>
               </div>
-              <span className="db-dep-amt held">{formatRupiah(totalDepositHeld)}</span>
+              <div className="dep-amount">{formatRupiah(totalDepositHeld)}</div>
             </div>
-            <div className="db-dep-row damage">
-              <div className="db-dep-info">
-                <span className="db-dep-label"><i className="fa-solid fa-triangle-exclamation"></i> Klaim Denda</span>
-                <span className="db-dep-sub">Periode ini</span>
+            <div className="bento-deposit-item damage">
+              <div className="dep-left">
+                <div className="dep-label">
+                  <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: '9px' }}></i>
+                  Klaim Kerusakan
+                </div>
+                <div className="dep-count">Periode {periodRange.label}</div>
               </div>
-              <span className="db-dep-amt damage">{formatRupiah(totalDepositDamage)}</span>
+              <div className="dep-amount">{formatRupiah(totalDepositDamage)}</div>
             </div>
-            <div className="db-dep-row returned">
-              <div className="db-dep-info">
-                <span className="db-dep-label"><i className="fa-solid fa-rotate-left"></i> Dikembalikan</span>
-                <span className="db-dep-sub">{completedTx.length} selesai</span>
+            <div className="bento-deposit-item returned">
+              <div className="dep-left">
+                <div className="dep-label">
+                  <i className="fa-solid fa-rotate-left" style={{ fontSize: '9px' }}></i>
+                  Deposit Dikembalikan
+                </div>
+                <div className="dep-count">{completedTx.length} transaksi selesai</div>
               </div>
-              <span className="db-dep-amt returned">{formatRupiah(totalDepositReturned)}</span>
+              <div className="dep-amount">{formatRupiah(totalDepositReturned)}</div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* C. Charts — spans 2 col */}
-        <div className="db-bento-cell db-cell-chart">
-          <DashboardCharts
-            transactions={filteredTx}
-            vehicles={safeVehicles}
-            periodMode={periodMode}
-            periodRange={periodRange}
-          />
-        </div>
-
-      </div>{/* /db-bento */}
-
-      {/* ── TRANSAKSI TERBARU ── */}
-      <div className="db-table-wrap">
-        <div className="db-table-head">
+      {/* ── 6. Transaksi Terbaru ── */}
+      <div className="bento-card bento-table-card">
+        <div className="card-header mb-4">
           <div>
-            <h3 className="db-table-title">Transaksi Terbaru</h3>
-            <p className="db-table-sub">5 terkini pada {periodRange.label}</p>
+            <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <i className="fa-solid fa-receipt" style={{ color: 'var(--brand-primary)' }}></i>
+              Transaksi Terbaru
+            </div>
+            <div className="card-subtitle">5 transaksi terkini pada periode {periodRange.label}</div>
           </div>
-          <Link href="/transactions" className="db-table-link">
-            Semua transaksi <i className="fa-solid fa-arrow-right"></i>
+          <Link href="/transactions" className="btn btn-secondary btn-sm">
+            Lihat Semua <i className="fa-solid fa-arrow-right" style={{ marginLeft: '4px' }}></i>
           </Link>
         </div>
 
         {recentTx.length === 0 ? (
-          <div className="db-empty">
-            <i className="fa-solid fa-receipt db-empty-ico"></i>
-            <p>Belum ada transaksi pada {periodRange.label}</p>
-            <Link href="/transactions" className="db-empty-link">Catat transaksi baru</Link>
+          <div className="table-empty" style={{ padding: '40px 16px' }}>
+            <div className="table-empty-icon"><i className="fa-solid fa-receipt"></i></div>
+            <p>Belum ada transaksi pada periode {periodRange.label}. <Link href="/transactions">Catat transaksi baru</Link></p>
           </div>
         ) : (
-          <div className="db-table-scroll">
-            <table className="db-table">
+          <div className="table-wrapper">
+            <table className="table" style={{ minWidth: '650px' }}>
               <thead>
                 <tr>
-                  <th>#</th>
                   <th>Penyewa</th>
                   <th>Motor</th>
-                  <th>Periode Sewa</th>
-                  <th>Total</th>
+                  <th>Tanggal Sewa</th>
+                  <th>Total Harga</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {recentTx.map((tx, idx) => (
+                {recentTx.map((tx) => (
                   <tr key={tx.id}>
                     <td>
-                      <span className="db-row-num">{String(idx+1).padStart(2,'0')}</span>
-                    </td>
-                    <td>
-                      <div className="db-renter">
-                        <div className="db-renter-avatar">{(tx.renter_name||'?')[0].toUpperCase()}</div>
-                        <div>
-                          <div className="db-renter-name">{tx.renter_name}</div>
-                          {tx.renter_phone && <div className="db-renter-phone">{tx.renter_phone}</div>}
-                        </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)' }}>{tx.renter_name}</strong>
+                        {tx.renter_phone && (
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                            <i className="fa-solid fa-phone" style={{ marginRight: '4px', fontSize: '10px' }}></i>
+                            {tx.renter_phone}
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td>
-                      <div className="db-motor-name">{tx.vehicles?.name || tx.vehicle_name || '—'}</div>
-                      {(tx.vehicles?.plate_number || tx.plate_number) && (
-                        <span className="db-plat">{tx.vehicles?.plate_number || tx.plate_number}</span>
-                      )}
-                    </td>
-                    <td>
-                      <div className="db-dates">
-                        <span><i className="fa-solid fa-arrow-right-to-bracket"></i> {tx.start_date}</span>
-                        <span><i className="fa-solid fa-arrow-right-from-bracket"></i> {tx.end_date}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                        <strong style={{ fontSize: '13px' }}>{tx.vehicles?.name || tx.vehicle_name || '—'}</strong>
+                        {(tx.vehicles?.plate_number || tx.plate_number) && (
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg-elevated)', padding: '1px 6px', borderRadius: '4px', width: 'fit-content' }}>
+                            {tx.vehicles?.plate_number || tx.plate_number}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td>
-                      <span className="db-price">{formatRupiah(tx.total_price)}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                        <span><i className="fa-solid fa-calendar-plus" style={{ marginRight: '4px', color: '#22C55E', fontSize: '10px' }}></i>{tx.start_date}</span>
+                        <span><i className="fa-solid fa-calendar-check" style={{ marginRight: '4px', color: '#3B82F6', fontSize: '10px' }}></i>{tx.end_date}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{formatRupiah(tx.total_price)}</strong>
                     </td>
                     <td>{statusBadge(tx.status, tx.payment_status)}</td>
                   </tr>
@@ -337,6 +556,21 @@ export default function DashboardClient({ transactions, vehicles }) {
         )}
       </div>
 
+      {/* Photo Viewer Modal */}
+      {viewPhotoUrl && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+          onClick={() => setViewPhotoUrl(null)}
+        >
+          <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>
+            <img src={viewPhotoUrl} alt="Foto" style={{ maxWidth: '100%', maxHeight: '85vh', borderRadius: '12px', objectFit: 'contain' }} />
+            <button
+              onClick={() => setViewPhotoUrl(null)}
+              style={{ position: 'absolute', top: '-12px', right: '-12px', background: '#EF4444', color: '#fff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', fontWeight: 800, boxShadow: '0 4px 10px rgba(0,0,0,0.5)' }}
+            >✕</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
