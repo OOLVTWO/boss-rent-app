@@ -7,12 +7,12 @@ import { createClient } from '@/lib/supabase/client';
 import { useState, useEffect } from 'react';
 
 const navItems = [
-  { href: '/dashboard',    iconClass: 'fa-solid fa-chart-pie',           label: 'Dashboard' },
+  { href: '/dashboard',    iconClass: 'fa-solid fa-gauge-high',          label: 'Dashboard' },
   { href: '/transactions', iconClass: 'fa-solid fa-file-invoice-dollar', label: 'Transaksi' },
   { href: '/customers',    iconClass: 'fa-solid fa-users',               label: 'Data Customer' },
   { href: '/vehicles',     iconClass: 'fa-solid fa-motorcycle',          label: 'Data Motor' },
-  { href: '/tracking',     iconClass: 'fa-solid fa-clock-rotate-left',   label: 'Tracking Sewa',  badge: 'tracking' },
-  { href: '/availability', iconClass: 'fa-solid fa-circle-half-stroke',  label: 'Ketersediaan',   badge: 'availability' },
+  { href: '/tracking',     iconClass: 'fa-solid fa-clock-rotate-left',   label: 'Tracking Sewa', badge: 'tracking' },
+  { href: '/availability', iconClass: 'fa-solid fa-circle-half-stroke',  label: 'Ketersediaan',  badge: 'availability' },
   { href: '/expenses',     iconClass: 'fa-solid fa-wallet',              label: 'Keuangan' },
   { href: '/maintenance',  iconClass: 'fa-solid fa-robot',               label: 'AI Diagnostic' },
   { href: '/gallery',      iconClass: 'fa-solid fa-images',              label: 'Galeri Foto' },
@@ -29,7 +29,7 @@ const navItems = [
     ],
   },
   { href: '/settings', iconClass: 'fa-solid fa-gear',  label: 'Pengaturan' },
-  { href: '/fleet',    iconClass: 'fa-solid fa-globe', label: 'Website Publik (/fleet)' },
+  { href: '/fleet',    iconClass: 'fa-solid fa-globe', label: 'Website Publik' },
 ];
 
 function getDaysLeft(endDate) {
@@ -44,23 +44,12 @@ export default function Sidebar({ user, mobileOpen, onClose }) {
   const pathname = usePathname();
   const router = useRouter();
   const [alertCounts, setAlertCounts] = useState({ tracking: 0, availability: 0 });
-  const [logoUrl, setLogoUrl] = useState('/images/logoCompany.png');
   const [laporanOpen, setLaporanOpen] = useState(false);
 
-  // Auto-buka dropdown jika sedang di halaman /reports
+  // Auto-expand dropdown jika sedang di /reports
   useEffect(() => {
     if (pathname.startsWith('/reports')) setLaporanOpen(true);
   }, [pathname]);
-
-  useEffect(() => {
-    try {
-      const savedBiz = localStorage.getItem('boss_rent_biz_settings');
-      if (savedBiz) {
-        const parsed = JSON.parse(savedBiz);
-        if (parsed.logoUrl) setLogoUrl(parsed.logoUrl);
-      }
-    } catch { /* ignore */ }
-  }, []);
 
   useEffect(() => {
     const fetchAlerts = async () => {
@@ -92,7 +81,8 @@ export default function Sidebar({ user, mobileOpen, onClose }) {
 
   return (
     <aside className={`sidebar ${mobileOpen ? 'mobile-active' : ''}`}>
-      {/* Mobile Close Button */}
+
+      {/* Mobile close */}
       <button
         type="button"
         className="mobile-sidebar-close-btn"
@@ -104,13 +94,22 @@ export default function Sidebar({ user, mobileOpen, onClose }) {
 
       {/* Logo */}
       <div className="sidebar-logo">
-        <img
-          src={logoUrl}
-          alt="BOSS RENT PERERENAN Logo"
-          style={{ height: '48px', width: 'auto', objectFit: 'contain', marginBottom: '6px' }}
-        />
-        <h1>Boss Rent</h1>
-        <p>Pererenan — Admin Panel</p>
+        <div className="sidebar-logo-icon">
+          <i className="fa-solid fa-motorcycle"></i>
+        </div>
+        <div>
+          <h1>Boss Rent</h1>
+          <p>Pererenan — Admin Panel</p>
+        </div>
+      </div>
+
+      {/* User block */}
+      <div className="sidebar-user">
+        <div className="sidebar-user-avatar">{userInitial}</div>
+        <div className="sidebar-user-info">
+          <div className="sidebar-user-name">{userEmail}</div>
+          <span className="sidebar-user-role">Manager</span>
+        </div>
       </div>
 
       {/* Navigation */}
@@ -119,11 +118,12 @@ export default function Sidebar({ user, mobileOpen, onClose }) {
 
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href.split('?')[0]);
-          const badgeCount = item.badge === 'tracking' ? alertCounts.tracking
+          const badgeCount =
+            item.badge === 'tracking' ? alertCounts.tracking
             : item.badge === 'availability' ? alertCounts.availability
             : 0;
 
-          // ── DROPDOWN: Laporan ──
+          /* ── Dropdown: Laporan ── */
           if (item.isDropdown) {
             const isDropdownActive = pathname.startsWith('/reports');
             return (
@@ -138,79 +138,74 @@ export default function Sidebar({ user, mobileOpen, onClose }) {
                   <i
                     className="fa-solid fa-chevron-down"
                     style={{
-                      fontSize: '11px',
+                      fontSize: '10px',
                       transition: 'transform 0.22s ease',
                       transform: laporanOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                      opacity: 0.55,
+                      opacity: 0.5,
                     }}
                   />
                 </button>
 
-                {/* Animated children */}
+                {/* Animated sub-items */}
                 <div style={{
                   overflow: 'hidden',
-                  maxHeight: laporanOpen ? '220px' : '0px',
+                  maxHeight: laporanOpen ? '240px' : '0px',
                   transition: 'max-height 0.28s ease',
                 }}>
-                  {item.children.map((child) => {
-                    const childActive = pathname.startsWith('/reports') && typeof window !== 'undefined'
-                      && window.location.search.includes(child.href.split('?tab=')[1] || '__');
-                    return (
-                      <Link
-                        key={child.href}
-                        href={child.href}
-                        className={`sidebar-nav-item sidebar-child-item ${childActive ? 'active' : ''}`}
-                        onClick={onClose}
-                      >
-                        <span className="nav-icon" style={{ fontSize: '13px', width: '18px' }}>
-                          <i className={child.iconClass}></i>
-                        </span>
-                        <span style={{ fontSize: '12.5px' }}>{child.label}</span>
-                      </Link>
-                    );
-                  })}
+                  {item.children.map((child) => (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      className="sidebar-nav-item sidebar-child-item"
+                      onClick={onClose}
+                      style={{ paddingLeft: '36px' }}
+                    >
+                      <span className="nav-icon" style={{ fontSize: '12px', width: '16px' }}>
+                        <i className={child.iconClass}></i>
+                      </span>
+                      <span style={{ fontSize: '12px' }}>{child.label}</span>
+                    </Link>
+                  ))}
                 </div>
               </div>
             );
           }
 
-          // ── Regular item ──
+          /* ── Item biasa ── */
+          /* Section label Tools sebelum AI Diagnostic */
+          const showToolsLabel = item.href === '/maintenance';
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
-              onClick={onClose}
-            >
-              <span className="nav-icon"><i className={item.iconClass}></i></span>
-              {item.label}
-              {badgeCount > 0 && (
-                <span className="sidebar-alert-badge">
-                  {badgeCount > 9 ? '9+' : badgeCount}
-                </span>
+            <div key={item.href}>
+              {showToolsLabel && (
+                <div className="sidebar-section-label">Tools</div>
               )}
-            </Link>
+              <Link
+                href={item.href}
+                className={`sidebar-nav-item ${isActive ? 'active' : ''}`}
+                onClick={onClose}
+              >
+                <span className="nav-icon"><i className={item.iconClass}></i></span>
+                {item.label}
+                {badgeCount > 0 && (
+                  <span className="sidebar-alert-badge">
+                    {badgeCount > 9 ? '9+' : badgeCount}
+                  </span>
+                )}
+              </Link>
+            </div>
           );
         })}
       </nav>
 
-      {/* Footer */}
+      {/* Sign out */}
       <div className="sidebar-footer">
-        <div className="sidebar-user">
-          <div className="sidebar-user-avatar">{userInitial}</div>
-          <div className="sidebar-user-info">
-            <div className="sidebar-user-name">{userEmail}</div>
-            <div className="sidebar-user-role">Administrator</div>
-          </div>
-        </div>
         <button
           type="button"
-          className="btn btn-secondary btn-sm"
-          style={{ width: '100%', marginTop: '10px', justifyContent: 'center' }}
+          className="sidebar-signout-btn"
           onClick={handleLogout}
         >
-          <i className="fa-solid fa-right-from-bracket" style={{ marginRight: '6px' }}></i>
-          Keluar
+          <i className="fa-solid fa-right-from-bracket"></i>
+          Sign out
         </button>
       </div>
     </aside>
