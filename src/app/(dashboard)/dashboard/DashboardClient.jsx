@@ -262,17 +262,17 @@ export default function DashboardClient({ transactions, vehicles }) {
             >Tahunan</button>
           </div>
 
-          {periodMode === 'month' && (
-            <select
-              className="dash-period-select"
-              value={selectedMonth.substring(5, 7)}
-              onChange={e => setSelectedMonth(`${selectedMonth.substring(0, 4)}-${e.target.value}`)}
-            >
-              {MONTH_NAMES.map((name, i) => (
-                <option key={i} value={String(i + 1).padStart(2, '0')}>{name}</option>
-              ))}
-            </select>
-          )}
+          {/* Always rendered — hidden in year mode to prevent layout shift */}
+          <select
+            className="dash-period-select"
+            style={{ display: periodMode === 'year' ? 'none' : undefined }}
+            value={selectedMonth.substring(5, 7)}
+            onChange={e => setSelectedMonth(`${selectedMonth.substring(0, 4)}-${e.target.value}`)}
+          >
+            {MONTH_NAMES.map((name, i) => (
+              <option key={i} value={String(i + 1).padStart(2, '0')}>{name}</option>
+            ))}
+          </select>
 
           <select
             className="dash-period-select"

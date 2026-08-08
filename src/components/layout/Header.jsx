@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect, @next/next/no-img-element */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import VuiVoiceControl from '@/components/dashboard/VuiVoiceControl';
 
@@ -25,6 +25,8 @@ export default function Header({ onToggleMobile, theme, onToggleTheme }) {
   const matchedKey = Object.keys(pageMeta).find(key => pathname.startsWith(key));
   const meta = pageMeta[matchedKey] || { title: 'Boss Rent', subtitle: 'Admin Panel' };
   const [logoUrl, setLogoUrl] = useState('/images/logoCompany.png');
+  const [themeDropOpen, setThemeDropOpen] = useState(false);
+  const themeRef = useRef(null);
 
   useEffect(() => {
     try {
@@ -36,12 +38,28 @@ export default function Header({ onToggleMobile, theme, onToggleTheme }) {
     } catch { /* ignore */ }
   }, []);
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (themeRef.current && !themeRef.current.contains(e.target)) {
+        setThemeDropOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
   const now = new Date();
   const dateStr = now.toLocaleDateString('id-ID', {
     weekday: 'short', month: 'short', day: 'numeric',
   });
 
   const isDark = theme === 'dark';
+
+  const handleSelectTheme = (dark) => {
+    if (dark !== isDark) onToggleTheme();
+    setThemeDropOpen(false);
+  };
 
   return (
     <header className="header">
@@ -63,22 +81,46 @@ export default function Header({ onToggleMobile, theme, onToggleTheme }) {
       <div className="header-right-wrap">
         <VuiVoiceControl />
 
-        {/* ── Theme Toggle — icon button elegan ── */}
-        <button
-          type="button"
-          onClick={onToggleTheme}
-          className="theme-icon-btn"
-          title={isDark ? 'Mode Terang' : 'Mode Gelap'}
-          aria-label="Toggle tema"
-        >
-          {isDark
-            ? <i className="fa-solid fa-sun"></i>
-            : <i className="fa-solid fa-moon"></i>
-          }
-          <span className="theme-icon-label">
-            {isDark ? 'Terang' : 'Gelap'}
-          </span>
-        </button>
+        {/* ── Theme Dropdown Toggle ── */}
+        <div className="theme-dropdown-wrap" ref={themeRef}>
+          <button
+            type="button"
+            className={`theme-dropdown-trigger ${themeDropOpen ? 'open' : ''}`}
+            onClick={() => setThemeDropOpen(prev => !prev)}
+            aria-label="Pilih tema"
+            aria-expanded={themeDropOpen}
+          >
+            {/* Active theme icon */}
+            <i className={isDark ? 'fa-solid fa-moon' : 'fa-solid fa-sun'}></i>
+            {/* Chevron arrow — rotates when open */}
+            <i className="fa-solid fa-chevron-down theme-dropdown-arrow"></i>
+          </button>
+
+          {themeDropOpen && (
+            <div className="theme-dropdown-menu" role="menu">
+              <button
+                type="button"
+                className={`theme-dropdown-item ${!isDark ? 'active' : ''}`}
+                onClick={() => handleSelectTheme(false)}
+                role="menuitem"
+              >
+                <i className="fa-solid fa-sun"></i>
+                <span>Terang</span>
+                {!isDark && <i className="fa-solid fa-check theme-check"></i>}
+              </button>
+              <button
+                type="button"
+                className={`theme-dropdown-item ${isDark ? 'active' : ''}`}
+                onClick={() => handleSelectTheme(true)}
+                role="menuitem"
+              >
+                <i className="fa-solid fa-moon"></i>
+                <span>Gelap</span>
+                {isDark && <i className="fa-solid fa-check theme-check"></i>}
+              </button>
+            </div>
+          )}
+        </div>
 
         <img src={logoUrl} alt="Boss Rent Pererenan" className="header-logo-img" />
 

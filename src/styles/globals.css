@@ -240,6 +240,12 @@ a:hover {
   flex-direction: column;
   z-index: 100;
   overflow-y: auto;
+  /* Hide scrollbar — nav fits without it; overflow safety kept */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.sidebar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Logo area */
@@ -4345,57 +4351,134 @@ select.form-control option { background: var(--bg-surface); color: var(--text-pr
 [data-theme="dark"] body { background-color: var(--bg-base) !important; }
 
 /* =========================================
-   THEME ICON BUTTON — elegan, minimal
+   THEME DROPDOWN TOGGLE
    ========================================= */
-.theme-icon-btn {
+.theme-dropdown-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Trigger button — icon only + chevron */
+.theme-dropdown-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 7px 14px;
+  gap: 5px;
+  padding: 7px 11px;
   border-radius: 10px;
   background: var(--bg-elevated);
   border: 1.5px solid var(--bg-border);
   color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.18s ease;
-  flex-shrink: 0;
 }
 
-.theme-icon-btn i {
-  font-size: 14px;
-  transition: transform 0.35s ease, color 0.18s ease;
-}
-
-.theme-icon-btn:hover {
+.theme-dropdown-trigger:hover,
+.theme-dropdown-trigger.open {
   background: var(--brand-primary);
   border-color: var(--brand-primary-dark);
   color: #ffffff;
   box-shadow: 0 4px 14px rgba(108,92,231,0.35);
 }
 
-.theme-icon-btn:hover i {
-  transform: rotate(20deg);
-  color: #ffffff;
+/* Rotating chevron */
+.theme-dropdown-arrow {
+  font-size: 10px !important;
+  transition: transform 0.22s ease;
+  opacity: 0.7;
+}
+.theme-dropdown-trigger.open .theme-dropdown-arrow {
+  transform: rotate(180deg);
 }
 
-.theme-icon-label {
-  font-size: 12px;
+/* Dropdown panel */
+.theme-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 140px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--bg-border);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: var(--shadow-lg);
+  z-index: 9999;
+  animation: dropIn 0.16s ease;
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Option rows */
+.theme-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.14s, color 0.14s;
+}
+
+.theme-dropdown-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.theme-dropdown-item.active {
+  background: rgba(108,92,231,0.1);
+  color: var(--brand-primary);
   font-weight: 700;
 }
 
-/* Dark mode: sedikit beda agar kontras */
-[data-theme="dark"] .theme-icon-btn {
+.theme-dropdown-item i:first-child {
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+}
+
+.theme-dropdown-item span {
+  flex: 1;
+}
+
+.theme-check {
+  font-size: 11px !important;
+  color: var(--brand-primary);
+  opacity: 0.9;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .theme-dropdown-trigger {
   background: rgba(255,255,255,0.07);
   border-color: rgba(255,255,255,0.1);
-  color: rgba(255,255,255,0.6);
+  color: rgba(255,255,255,0.7);
 }
-[data-theme="dark"] .theme-icon-btn:hover {
+[data-theme="dark"] .theme-dropdown-trigger:hover,
+[data-theme="dark"] .theme-dropdown-trigger.open {
   background: var(--brand-primary);
   border-color: var(--brand-primary-dark);
   color: #ffffff;
+}
+[data-theme="dark"] .theme-dropdown-menu {
+  background: var(--bg-elevated);
+  border-color: rgba(255,255,255,0.1);
+}
+[data-theme="dark"] .theme-dropdown-item:hover {
+  background: rgba(255,255,255,0.06);
+}
+[data-theme="dark"] .theme-dropdown-item.active {
+  background: rgba(108,92,231,0.18);
 }
 
 /* =========================================
@@ -4647,13 +4730,13 @@ select.form-control option { background: var(--bg-surface); color: var(--text-pr
   display: block;
   font-size: 14px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #ffffff;
   line-height: 1.3;
 }
 .sidebar-brand-sub {
   display: block;
   font-size: 10px;
-  color: var(--text-muted);
+  color: rgba(255,255,255,0.4);
 }
 .sidebar-section {
   padding: 0 8px;
@@ -4724,12 +4807,12 @@ select.form-control option { background: var(--bg-surface); color: var(--text-pr
   margin-top: 2px;
 }
 
-/* Period bar */
+/* Period bar — fixed layout, no shift when switching Bulanan/Tahunan */
 .dash-period-bar {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 .dash-period-tabs {
   display: flex;
