@@ -1431,11 +1431,25 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
              background reads as an app screenshot, not a formal document, and
              wastes ink if actually printed on paper. */
           <div>
+            {/* Fixed fixed-width scroll wrapper — the card itself always renders
+                at a real desktop-scale width (1050px) via the explicit width
+                below, regardless of the actual screen size viewing this modal.
+                Without this, opening the invoice from a phone (where this modal
+                itself only has ~350px to work with) made html2canvas capture the
+                card at that same cramped width, squeezing every heading and
+                table row into a narrow column and clipping the price table
+                clean off the right edge in the exported PDF. This wrapper just
+                lets a phone user scroll sideways to preview it; the capture
+                itself is unaffected by scroll position since the card's actual
+                width is fixed either way. */}
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             <div id="visual-invoice-card" style={{
               background: '#FFFFFF',
               border: '1px solid #E2E8F0',
               padding: '32px',
               color: '#1E293B',
+              width: '1050px',
+              maxWidth: 'none',
             }}>
               {/* Header: Company info left, INVOICE title/number/date right */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #1E293B', paddingBottom: '18px', marginBottom: '20px' }}>
@@ -1544,10 +1558,50 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
                 </tbody>
               </table>
 
+              {/* Rental Regulation — 2-column layout since A5 landscape gives
+                  plenty of width, keeping the whole invoice on one page even
+                  with this added. */}
+              <div style={{ marginBottom: '16px', padding: '12px 16px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
+                <div style={{ fontSize: '10.5px', color: '#1E293B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', borderBottom: '1px solid #E2E8F0', paddingBottom: '6px' }}>
+                  Rental Regulation
+                </div>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gridTemplateRows: 'repeat(6, auto)',
+                  gridAutoFlow: 'column',
+                  columnGap: '28px',
+                  rowGap: '3px',
+                  fontSize: '9px',
+                  color: '#475569',
+                  lineHeight: 1.45,
+                }}>
+                  {[
+                    'Non-refundable payment.',
+                    'The price is not including with insurance.',
+                    "Any damage or loss to the motor bike will be the renter's responsibility.",
+                    'Motor Bike not allow to rent with other Renter.',
+                    "Motor Bike can't drive on the beach.",
+                    'Motor Bike not allow drive to other island.',
+                    'Delivery only covers Canggu, Berawa, and Pererenan area.',
+                    'Pick up only covers Canggu, Berawa and Pererenan area.',
+                    'Lost key penalty IDR 500,000.',
+                    'Rental is based on 24 hours/day, delay over 3 hours will be charged as 1 day.',
+                    'Please check the Motor Bike condition before use.',
+                  ].map((rule, i) => (
+                    <div key={i} style={{ display: 'flex', gap: '4px' }}>
+                      <span style={{ flexShrink: 0, fontWeight: 700 }}>{i + 1}.</span>
+                      <span>{rule}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#64748B', borderTop: '1px solid #E2E8F0', paddingTop: '14px' }}>
                 <div>Metode Pembayaran: <strong style={{ color: paymentMeta.color }}><i className={paymentMeta.icon}></i> {paymentMeta.label}</strong></div>
                 <div>Thank you for choosing Boss Rent Bali! 🌴</div>
               </div>
+            </div>
             </div>
 
             <div className="no-print" style={{ marginTop: '16px' }}>
