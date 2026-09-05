@@ -1293,7 +1293,7 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
   const buildInvoicePdf = async () => {
     const { jsPDF } = await import('jspdf');
     const canvas = await renderInvoiceCanvas();
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' });
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a5' });
 
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
