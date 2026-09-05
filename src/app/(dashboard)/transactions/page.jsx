@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { compressImage } from '@/lib/imageCompressor';
 import { getPaymentMethods, getPaymentMethodMeta } from '@/lib/paymentMethods';
-import { COUNTRY_CODES, getWhatsAppShareUrl, generateInvoiceText, getFlagImageUrl } from '@/lib/countryCodes';
+import { COUNTRY_CODES, getWhatsAppShareUrl, generateInvoiceText, generateInvoiceNumber, getFlagImageUrl } from '@/lib/countryCodes';
 import { createClient } from '@/lib/supabase/client';
 import { fetchCustomers, upsertCustomer } from '@/lib/customers';
 import { getLocalDateStr } from '@/lib/finance';
@@ -1240,8 +1240,12 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
   const [activeTab, setActiveTab] = useState('text');
   const [customMsg, setCustomMsg] = useState('');
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   const paymentMeta = getPaymentMethodMeta(tx?.payment_method);
+  const invoiceNumber = tx ? generateInvoiceNumber(tx) : '-';
 
   // Generate pesan invoice saat modal dibuka — pola resmi React
   // "adjust state during render" (menggantikan useEffect + setState sinkron)
@@ -1264,14 +1268,103 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
     setTimeout(() => setCopied(false), 2500);
   };
 
+  // WhatsApp's wa.me click-to-chat links can only pre-fill text — there is
+  // no way to auto-attach a file through that URL scheme, on any plan,
+  // free or paid. So true "share this invoice directly to WhatsApp" only
+  // works via the native OS share sheet (Web Share API with a file),
+  // which most mobile Chrome/Safari support — the user picks WhatsApp
+  // from their own share sheet and the PDF arrives already attached.
+  // Where that's not supported (most desktop browsers), we fall back to:
+  // download the PDF, then open the WA chat so it's one tap away from
+  // being attached manually.
+  const renderInvoiceCanvas = async () => {
+    const html2canvas = (await import('html2canvas')).default;
+    const node = document.getElementById('visual-invoice-card');
+    return html2canvas(node, {
+      backgroundColor: '#0F172A',
+      scale: 2, // sharper image for the PDF
+      useCORS: true,
+    });
+  };
+
+  // A5 is literally "A4 cut in half" (148 x 210mm) — the requested size.
+  // The invoice card's own aspect ratio is preserved and centered on the
+  // page rather than stretched, so it never looks distorted.
+  const buildInvoicePdf = async () => {
+    const { jsPDF } = await import('jspdf');
+    const canvas = await renderInvoiceCanvas();
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' });
+
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 6;
+    const maxW = pageW - margin * 2;
+    const maxH = pageH - margin * 2;
+
+    const imgRatio = canvas.width / canvas.height;
+    let renderW = maxW;
+    let renderH = renderW / imgRatio;
+    if (renderH > maxH) {
+      renderH = maxH;
+      renderW = renderH * imgRatio;
+    }
+    const x = (pageW - renderW) / 2;
+    const y = (pageH - renderH) / 2;
+
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, renderW, renderH);
+    return pdf;
+  };
+
+  const handleShareDirect = async () => {
+    setSharing(true);
+    try {
+      const pdf = await buildInvoicePdf();
+      const blob = pdf.output('blob');
+      const file = new File([blob], `Invoice-${invoiceNumber}.pdf`, { type: 'application/pdf' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `Invoice ${invoiceNumber}`,
+          text: `Invoice sewa motor dari Boss Rent Pererenan untuk ${tx.renter_name}.`,
+        });
+      } else {
+        // Device reports share support but not for files — fall back.
+        await handleDownloadPdf();
+      }
+    } catch (err) {
+      // AbortError = user closed the share sheet without picking anything —
+      // not a real failure, don't show an error for it.
+      if (err?.name !== 'AbortError') {
+        console.error('Gagal share invoice:', err);
+        alert('Gagal membagikan invoice. Silakan gunakan opsi Download PDF Invoice sebagai gantinya.');
+      }
+    }
+    setSharing(false);
+  };
+
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPdf = async () => {
+    setDownloading(true);
+    try {
+      const pdf = await buildInvoicePdf();
+      pdf.save(`Invoice-${invoiceNumber}.pdf`);
+      setDownloaded(true);
+      setTimeout(() => setDownloaded(false), 3000);
+    } catch (err) {
+      console.error('Gagal membuat PDF invoice:', err);
+      alert('Gagal mengunduh PDF invoice. Silakan coba lagi atau gunakan opsi Cetak / Print.');
+    }
+    setDownloading(false);
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
+        <div className="modal-header no-print">
           <div>
             <div className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <i className="fa-brands fa-whatsapp" style={{ color: '#25D366', fontSize: '20px' }}></i>
@@ -1285,7 +1378,7 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
         </div>
 
         {/* Tab Selector */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+        <div className="no-print" style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
           <button
             className={`btn btn-${activeTab === 'text' ? 'primary' : 'secondary'} btn-sm`}
             onClick={() => setActiveTab('text')}
@@ -1358,6 +1451,9 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
                   <span className="badge" style={{ background: tx.status === 'completed' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(59, 130, 246, 0.2)', color: tx.status === 'completed' ? '#22C55E' : '#3B82F6', border: `1px solid ${tx.status === 'completed' ? '#22C55E' : '#3B82F6'}`, padding: '6px 12px', fontSize: '12px' }}>
                     {tx.status === 'completed' ? 'PAID / LUNAS ✓' : 'ACTIVE RENTAL 🛵'}
                   </span>
+                  <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '6px' }}>
+                    No. Invoice: <strong style={{ color: '#F8FAFC' }}>{invoiceNumber}</strong>
+                  </div>
                 </div>
               </div>
 
@@ -1443,19 +1539,41 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
               </div>
             </div>
 
-            <div className="modal-footer" style={{ marginTop: '16px', justifyContent: 'space-between' }}>
-              <button className="btn btn-secondary" onClick={handlePrint}>
-                <i className="fa-solid fa-print" style={{ marginRight: '6px' }}></i> Cetak / Print PDF
-              </button>
-              <a
-                href={waUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-success"
-                style={{ textDecoration: 'none', background: '#25D366', borderColor: '#25D366', color: '#fff' }}
-              >
-                <i className="fa-brands fa-whatsapp" style={{ marginRight: '6px', fontSize: '16px' }}></i> Kirim Invoice WA
-              </a>
+            <div className="no-print" style={{ marginTop: '16px' }}>
+              <div className="alert alert-info" style={{ fontSize: '12px', marginBottom: '12px' }}>
+                <i className="fa-solid fa-circle-info" style={{ marginTop: '1px' }}></i>
+                <span>
+                  <strong>Bagikan Langsung</strong> membuka menu share HP Anda — pilih WhatsApp dan
+                  invoice PDF akan terlampir otomatis di chat customer (didukung sebagian besar HP).
+                  Jika tidak muncul opsi share, klik <strong>Download PDF Invoice</strong> lalu klik{' '}
+                  <strong>Buka WhatsApp</strong> dan lampirkan file PDF yang sudah terunduh secara manual.
+                </span>
+              </div>
+
+              <div className="modal-footer" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button className="btn btn-success" onClick={handleShareDirect} disabled={sharing} style={{ background: '#25D366', borderColor: '#25D366', color: '#fff' }}>
+                    <i className={`fa-solid ${sharing ? 'fa-spinner fa-spin' : 'fa-share-nodes'}`} style={{ marginRight: '6px' }}></i>
+                    {sharing ? 'Menyiapkan Invoice...' : 'Bagikan Langsung ke WhatsApp'}
+                  </button>
+                  <button className="btn btn-primary" onClick={handleDownloadPdf} disabled={downloading}>
+                    <i className={`fa-solid ${downloading ? 'fa-spinner fa-spin' : downloaded ? 'fa-check' : 'fa-download'}`} style={{ marginRight: '6px' }}></i>
+                    {downloading ? 'Membuat PDF...' : downloaded ? 'Terunduh!' : 'Download PDF Invoice'}
+                  </button>
+                  <button className="btn btn-secondary" onClick={handlePrint}>
+                    <i className="fa-solid fa-print" style={{ marginRight: '6px' }}></i> Cetak
+                  </button>
+                </div>
+                <a
+                  href={waUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <i className="fa-brands fa-whatsapp" style={{ marginRight: '6px', fontSize: '16px', color: '#25D366' }}></i> Buka WhatsApp
+                </a>
+              </div>
             </div>
           </div>
         )}

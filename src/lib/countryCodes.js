@@ -150,6 +150,7 @@ export const COUNTRY_CODES = [
 
 export const DEFAULT_WA_TEMPLATE = `🛵 *OFFICIAL RENTAL INVOICE — {SHOP_NAME}*
 --------------------------------------------
+🧾 Invoice No: *{INVOICE_NUMBER}*
 Dear *{RENTER_NAME}*,
 
 Thank you for choosing {SHOP_NAME} in Canggu, Bali! 🌴✨
@@ -352,6 +353,24 @@ export async function sendWhatsAppGateway(fullPhone, textMessage) {
 }
 
 /**
+ * Nomor invoice deterministik dari data transaksi yang sudah ada — tanpa
+ * perlu kolom baru di database atau counter terpisah. Transaksi yang sama
+ * akan selalu menghasilkan nomor yang sama, dan setiap transaksi berbeda
+ * hampir pasti menghasilkan nomor berbeda (diambil dari UUID transaksi).
+ * Format: INV-YYYYMMDD-XXXXXX (tanggal transaksi dibuat + 6 karakter akhir ID).
+ */
+export function generateInvoiceNumber(tx) {
+  if (!tx) return '-';
+  const created = tx.created_at ? new Date(tx.created_at) : new Date();
+  const y = created.getFullYear();
+  const m = String(created.getMonth() + 1).padStart(2, '0');
+  const d = String(created.getDate()).padStart(2, '0');
+  const rawId = (tx.id || '').toString().replace(/-/g, '');
+  const shortId = (rawId.slice(-6) || '000000').toUpperCase();
+  return `INV-${y}${m}${d}-${shortId}`;
+}
+
+/**
  * Generate Professional Dual-Language Invoice Text with Custom Template support
  */
 export function generateInvoiceText(tx, vehicle, paymentMethodMeta, customTemplate) {
@@ -383,6 +402,7 @@ export function generateInvoiceText(tx, vehicle, paymentMethodMeta, customTempla
   const discountRow = tx.discount > 0 ? `🎉 Discount Applied: -${formatMoney(tx.discount)}\n` : '';
 
   return template
+    .replaceAll('{INVOICE_NUMBER}', generateInvoiceNumber(tx))
     .replaceAll('{RENTER_NAME}', tx.renter_name || 'Customer')
     .replaceAll('{RENTER_PHONE}', tx.renter_phone || '-')
     .replaceAll('{VEHICLE_NAME}', vehicle?.name || 'Motor')

@@ -1221,6 +1221,7 @@ export default function SettingsPage() {
                     </div>
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                       {[
+                        { tag: '{INVOICE_NUMBER}', label: 'No. Invoice' },
                         { tag: '{RENTER_NAME}', label: 'Nama Penyewa' },
                         { tag: '{RENTER_PHONE}', label: 'No Phone' },
                         { tag: '{VEHICLE_NAME}', label: 'Nama Motor' },

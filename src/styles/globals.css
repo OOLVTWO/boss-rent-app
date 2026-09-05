@@ -5578,3 +5578,43 @@ select.form-control option { background: var(--bg-surface); color: var(--text-pr
     overflow-x: hidden;
   }
 }
+
+/* ── Invoice print scoping ──
+   "Cetak / Print PDF" on the invoice modal calls window.print() directly —
+   without this, the browser prints the entire visible page (sidebar,
+   header, modal chrome, buttons) instead of just the invoice itself.
+   Explicitly hides the known dashboard chrome (.sidebar, .header) and
+   marks non-invoice modal UI with .no-print, rather than trying to
+   blanket-hide "everything except the modal" via a body-children
+   selector — the modal isn't a direct child of <body>, it's nested deep
+   inside the normal page tree, so that approach hid the invoice card
+   right along with everything else. The modal overlay stays
+   position:fixed with an opaque background so it still visually covers
+   the page content sitting behind it. */
+@media print {
+  .sidebar,
+  .header,
+  .no-print {
+    display: none !important;
+  }
+  .modal-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    background: #fff !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+  }
+  .modal {
+    position: static !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  #visual-invoice-card {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
