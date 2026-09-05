@@ -1281,7 +1281,7 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
     const html2canvas = (await import('html2canvas')).default;
     const node = document.getElementById('visual-invoice-card');
     return html2canvas(node, {
-      backgroundColor: '#0F172A',
+      backgroundColor: '#FFFFFF',
       scale: 2, // sharper image for the PDF
       useCORS: true,
     });
@@ -1426,73 +1426,84 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
             </div>
           </div>
         ) : (
-          /* VISUAL INVOICE CARD FOR PRINT / IMAGE SHARE */
+          /* VISUAL INVOICE CARD FOR PRINT / IMAGE SHARE — white, print-appropriate
+             document design (not a dark UI card). A printed invoice with a dark
+             background reads as an app screenshot, not a formal document, and
+             wastes ink if actually printed on paper. */
           <div>
             <div id="visual-invoice-card" style={{
-              background: '#0F172A',
-              border: '1px solid var(--bg-border)',
-              borderRadius: '16px',
-              padding: '24px',
-              color: '#F8FAFC',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
+              background: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              padding: '32px',
+              color: '#1E293B',
             }}>
-              {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '16px', marginBottom: '20px' }}>
+              {/* Header: Company info left, INVOICE title/number/date right */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #1E293B', paddingBottom: '18px', marginBottom: '20px' }}>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '20px', fontWeight: 800, color: 'var(--brand-primary-light)' }}>
-                    <i className="fa-solid fa-motorcycle"></i>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '19px', fontWeight: 800, color: '#1E293B' }}>
+                    <i className="fa-solid fa-motorcycle" style={{ color: '#2563EB' }}></i>
                     BOSS RENT PERERENAN
                   </div>
-                  <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px' }}>
-                    Jl. Pantai Pererenan, Canggu, Badung, Bali • WA: +62 812-3456-7890
+                  <div style={{ fontSize: '10.5px', color: '#64748B', marginTop: '5px', lineHeight: 1.6 }}>
+                    Jl. Pantai Pererenan, Canggu, Badung, Bali 80351<br />
+                    WhatsApp: +62 812-3456-7890
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <span className="badge" style={{ background: tx.status === 'completed' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(59, 130, 246, 0.2)', color: tx.status === 'completed' ? '#22C55E' : '#3B82F6', border: `1px solid ${tx.status === 'completed' ? '#22C55E' : '#3B82F6'}`, padding: '6px 12px', fontSize: '12px' }}>
-                    {tx.status === 'completed' ? 'PAID / LUNAS ✓' : 'ACTIVE RENTAL 🛵'}
-                  </span>
-                  <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '6px' }}>
-                    No. Invoice: <strong style={{ color: '#F8FAFC' }}>{invoiceNumber}</strong>
+                  <div style={{ fontSize: '22px', fontWeight: 800, color: '#2563EB', letterSpacing: '1.5px' }}>INVOICE</div>
+                  <div style={{ fontSize: '11px', color: '#64748B', marginTop: '6px' }}>
+                    No: <strong style={{ color: '#1E293B' }}>{invoiceNumber}</strong>
                   </div>
+                  <div style={{ fontSize: '11px', color: '#64748B' }}>
+                    Tanggal: <strong style={{ color: '#1E293B' }}>{tx.created_at ? new Date(tx.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</strong>
+                  </div>
+                  <span style={{
+                    display: 'inline-block', marginTop: '8px', padding: '4px 12px', borderRadius: '4px', fontSize: '11px', fontWeight: 700,
+                    background: tx.status === 'completed' ? '#DCFCE7' : '#DBEAFE',
+                    color: tx.status === 'completed' ? '#16A34A' : '#2563EB',
+                    border: `1px solid ${tx.status === 'completed' ? '#86EFAC' : '#93C5FD'}`,
+                  }}>
+                    {tx.status === 'completed' ? 'LUNAS / PAID' : 'SEWA AKTIF'}
+                  </span>
                 </div>
               </div>
 
               {/* Renter & Vehicle */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px', background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px', background: '#F8FAFC', padding: '16px', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
                 <div>
-                  <div style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', fontWeight: 700 }}>Penyewa / Renter</div>
-                  <div style={{ fontWeight: 700, fontSize: '15px', marginTop: '2px' }}>{tx.renter_name}</div>
-                  <div style={{ fontSize: '12px', color: '#CBD5E1' }}>{tx.renter_phone}</div>
+                  <div style={{ fontSize: '10.5px', color: '#64748B', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.4px' }}>Penyewa / Renter</div>
+                  <div style={{ fontWeight: 700, fontSize: '15px', marginTop: '3px', color: '#1E293B' }}>{tx.renter_name}</div>
+                  <div style={{ fontSize: '12px', color: '#475569' }}>{tx.renter_phone}</div>
                   {tx.renter_address && (
-                    <div style={{ fontSize: '11.5px', color: 'var(--brand-primary-light)', marginTop: '4px' }}>
+                    <div style={{ fontSize: '11.5px', color: '#2563EB', marginTop: '4px' }}>
                       <i className="fa-solid fa-location-dot" style={{ marginRight: '4px' }}></i> {tx.renter_address}
                     </div>
                   )}
                 </div>
                 <div>
-                  <div style={{ fontSize: '11px', color: '#94A3B8', textTransform: 'uppercase', fontWeight: 700 }}>Motor / Vehicle</div>
-                  <div style={{ fontWeight: 700, fontSize: '15px', marginTop: '2px', color: 'var(--brand-primary-light)' }}>{vehicle?.name || 'Motor'}</div>
-                  <div style={{ fontSize: '12px', color: '#CBD5E1' }}>Plat: <strong>{vehicle?.plate_number}</strong></div>
+                  <div style={{ fontSize: '10.5px', color: '#64748B', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.4px' }}>Motor / Vehicle</div>
+                  <div style={{ fontWeight: 700, fontSize: '15px', marginTop: '3px', color: '#2563EB' }}>{vehicle?.name || 'Motor'}</div>
+                  <div style={{ fontSize: '12px', color: '#475569' }}>Plat: <strong style={{ color: '#1E293B' }}>{vehicle?.plate_number}</strong></div>
                 </div>
               </div>
 
               {/* Documentation Photos on Invoice Card */}
               {(tx.customer_image_url || tx.handover_image_url) && (
-                <div style={{ marginBottom: '20px', background: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 800, textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <i className="fa-solid fa-camera" style={{ color: 'var(--brand-primary)' }}></i> Dokumentasi Foto Transaksi
+                <div style={{ marginBottom: '20px', background: '#F8FAFC', padding: '14px', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: '10.5px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <i className="fa-solid fa-camera" style={{ color: '#2563EB' }}></i> Dokumentasi Foto Transaksi
                   </div>
                   <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
                     {tx.customer_image_url && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <img src={tx.customer_image_url} alt="KTP / SIM" style={{ width: '110px', height: '76px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)' }} />
-                        <span style={{ fontSize: '10px', color: '#22C55E', fontWeight: 800 }}>✓ Foto Identitas KTP/SIM</span>
+                        <img src={tx.customer_image_url} alt="KTP / SIM" style={{ width: '110px', height: '76px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #CBD5E1' }} />
+                        <span style={{ fontSize: '10px', color: '#16A34A', fontWeight: 700 }}>✓ Foto Identitas KTP/SIM</span>
                       </div>
                     )}
                     {tx.handover_image_url && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <img src={tx.handover_image_url} alt="Serah Terima" style={{ width: '110px', height: '76px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)' }} />
-                        <span style={{ fontSize: '10px', color: '#3B82F6', fontWeight: 800 }}>✓ Foto Orang + Motor</span>
+                        <img src={tx.handover_image_url} alt="Serah Terima" style={{ width: '110px', height: '76px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #CBD5E1' }} />
+                        <span style={{ fontSize: '10px', color: '#2563EB', fontWeight: 700 }}>✓ Foto Orang + Motor</span>
                       </div>
                     )}
                   </div>
@@ -1500,40 +1511,40 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
               )}
 
               {/* Dates & Pricing Table */}
-              <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse', marginBottom: '20px', whiteSpace: 'nowrap' }}>
+              <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse', marginBottom: '18px', whiteSpace: 'nowrap' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94A3B8', textAlign: 'left' }}>
-                    <th style={{ padding: '8px 0' }}>DESKRIPSI</th>
-                    <th style={{ padding: '8px 0', textAlign: 'right' }}>DURASI / VALUE</th>
+                  <tr style={{ borderBottom: '1.5px solid #1E293B', color: '#64748B', textAlign: 'left' }}>
+                    <th style={{ padding: '8px 4px', fontSize: '10.5px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Deskripsi</th>
+                    <th style={{ padding: '8px 4px', textAlign: 'right', fontSize: '10.5px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Durasi / Value</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <td style={{ padding: '10px 0' }}>Periode Sewa ({new Date(tx.start_date).toLocaleDateString('id-ID')} s/d {new Date(tx.end_date).toLocaleDateString('id-ID')})</td>
-                    <td style={{ padding: '10px 0', textAlign: 'right', fontWeight: 600 }}>{tx.duration_days} Hari</td>
+                  <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                    <td style={{ padding: '10px 4px' }}>Periode Sewa ({new Date(tx.start_date).toLocaleDateString('id-ID')} s/d {new Date(tx.end_date).toLocaleDateString('id-ID')})</td>
+                    <td style={{ padding: '10px 4px', textAlign: 'right', fontWeight: 600 }}>{tx.duration_days} Hari</td>
                   </tr>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <td style={{ padding: '10px 0' }}>Tarif Sewa Harian</td>
-                    <td style={{ padding: '10px 0', textAlign: 'right' }}>{formatRupiah(vehicle?.rate_per_day)} / hari</td>
+                  <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                    <td style={{ padding: '10px 4px' }}>Tarif Sewa Harian</td>
+                    <td style={{ padding: '10px 4px', textAlign: 'right' }}>{formatRupiah(vehicle?.rate_per_day)} / hari</td>
                   </tr>
                   {tx.discount > 0 && (
-                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', color: '#F59E0B' }}>
-                      <td style={{ padding: '10px 0' }}>Diskon Potongan Harga</td>
-                      <td style={{ padding: '10px 0', textAlign: 'right' }}>-{formatRupiah(tx.discount)}</td>
+                    <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#D97706' }}>
+                      <td style={{ padding: '10px 4px' }}>Diskon Potongan Harga</td>
+                      <td style={{ padding: '10px 4px', textAlign: 'right' }}>-{formatRupiah(tx.discount)}</td>
                     </tr>
                   )}
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <td style={{ padding: '10px 0' }}>Deposit Jaminan (Held)</td>
-                    <td style={{ padding: '10px 0', textAlign: 'right' }}>{formatRupiah(tx.deposit)}</td>
+                  <tr style={{ borderBottom: '2px solid #E2E8F0' }}>
+                    <td style={{ padding: '10px 4px' }}>Deposit Jaminan (Held)</td>
+                    <td style={{ padding: '10px 4px', textAlign: 'right' }}>{formatRupiah(tx.deposit)}</td>
                   </tr>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', fontWeight: 800, fontSize: '15px' }}>
-                    <td style={{ padding: '12px 0', color: 'var(--brand-primary-light)' }}>TOTAL PEMBAYARAN</td>
-                    <td style={{ padding: '12px 0', textAlign: 'right', color: 'var(--brand-primary-light)' }}>{formatRupiah(tx.total_price)}</td>
+                  <tr style={{ fontWeight: 800, fontSize: '15px' }}>
+                    <td style={{ padding: '14px 4px 4px 4px', color: '#2563EB' }}>TOTAL PEMBAYARAN</td>
+                    <td style={{ padding: '14px 4px 4px 4px', textAlign: 'right', color: '#2563EB' }}>{formatRupiah(tx.total_price)}</td>
                   </tr>
                 </tbody>
               </table>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#94A3B8' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#64748B', borderTop: '1px solid #E2E8F0', paddingTop: '14px' }}>
                 <div>Metode Pembayaran: <strong style={{ color: paymentMeta.color }}><i className={paymentMeta.icon}></i> {paymentMeta.label}</strong></div>
                 <div>Thank you for choosing Boss Rent Bali! 🌴</div>
               </div>
