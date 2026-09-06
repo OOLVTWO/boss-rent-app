@@ -1630,17 +1630,23 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
                 </div>
               </div>
 
-              {/* Signatures */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginBottom: '20px', padding: '0 8px' }}>
+              {/* Signatures — lines narrower than the full column width (each
+                  capped at 200px, centered), with clear breathing room above
+                  separating this from the Rental Regulation box. */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '36px', marginBottom: '20px', padding: '0 8px' }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ height: '48px' }}></div>
-                  <div style={{ borderTop: '1px solid #94A3B8', paddingTop: '6px', fontSize: '11px', color: '#1E293B', fontWeight: 700 }}>Owner</div>
-                  <div style={{ fontSize: '9.5px', color: '#64748B' }}>Boss Rent Pererenan</div>
+                  <div style={{ maxWidth: '200px', margin: '0 auto' }}>
+                    <div style={{ borderTop: '1px solid #94A3B8', paddingTop: '6px', fontSize: '11px', color: '#1E293B', fontWeight: 700 }}>Owner</div>
+                    <div style={{ fontSize: '9.5px', color: '#64748B' }}>Boss Rent Pererenan</div>
+                  </div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ height: '48px' }}></div>
-                  <div style={{ borderTop: '1px solid #94A3B8', paddingTop: '6px', fontSize: '11px', color: '#1E293B', fontWeight: 700 }}>Renter</div>
-                  <div style={{ fontSize: '9.5px', color: '#64748B' }}>{tx.renter_name}</div>
+                  <div style={{ maxWidth: '200px', margin: '0 auto' }}>
+                    <div style={{ borderTop: '1px solid #94A3B8', paddingTop: '6px', fontSize: '11px', color: '#1E293B', fontWeight: 700 }}>Renter</div>
+                    <div style={{ fontSize: '9.5px', color: '#64748B' }}>{tx.renter_name}</div>
+                  </div>
                 </div>
               </div>
 
