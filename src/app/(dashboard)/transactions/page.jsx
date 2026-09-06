@@ -1633,7 +1633,7 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
               {/* Signatures — lines narrower than the full column width (each
                   capped at 200px, centered), with clear breathing room above
                   separating this from the Rental Regulation box. */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '36px', marginBottom: '20px', padding: '0 8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '56px', marginBottom: '20px', padding: '0 8px' }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ height: '48px' }}></div>
                   <div style={{ maxWidth: '200px', margin: '0 auto' }}>
