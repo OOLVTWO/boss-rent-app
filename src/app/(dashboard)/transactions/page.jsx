@@ -1246,6 +1246,15 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
 
   const paymentMeta = getPaymentMethodMeta(tx?.payment_method);
   const invoiceNumber = tx ? generateInvoiceNumber(tx) : '-';
+  // English-only label for the invoice specifically — paymentMeta.label is
+  // shared with the rest of the (Indonesian) admin dashboard, so translate
+  // separately here rather than changing that shared source.
+  const PAYMENT_LABEL_EN = {
+    cash: 'Cash', transfer_bca: 'Bank Transfer (BCA)', transfer_mandiri: 'Bank Transfer (Mandiri)',
+    qris: 'QRIS / GoPay / OVO', card: 'Credit / Debit Card', wise: 'Wise / Revolut',
+    transfer: 'Bank Transfer',
+  };
+  const paymentLabelEn = PAYMENT_LABEL_EN[paymentMeta.id] || paymentMeta.label;
 
   // Generate pesan invoice saat modal dibuka — pola resmi React
   // "adjust state during render" (menggantikan useEffect + setState sinkron)
@@ -1484,7 +1493,7 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
                   </div>
                   <div style={{ fontSize: '10.5px', color: '#64748B', marginTop: '5px', lineHeight: 1.6 }}>
                     Jl. Pantai Pererenan, Canggu, Badung, Bali 80351<br />
-                    WhatsApp: +62 812-3456-7890
+                    WhatsApp: +62 812-3710-9751
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -1493,7 +1502,7 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
                     No: <strong style={{ color: '#1E293B' }}>{invoiceNumber}</strong>
                   </div>
                   <div style={{ fontSize: '11px', color: '#64748B' }}>
-                    Tanggal: <strong style={{ color: '#1E293B' }}>{tx.created_at ? new Date(tx.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</strong>
+                    Date: <strong style={{ color: '#1E293B' }}>{tx.created_at ? new Date(tx.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</strong>
                   </div>
                   <span style={{
                     display: 'inline-block', marginTop: '8px', padding: '4px 12px', borderRadius: '4px', fontSize: '11px', fontWeight: 700,
@@ -1501,7 +1510,7 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
                     color: tx.status === 'completed' ? '#16A34A' : '#2563EB',
                     border: `1px solid ${tx.status === 'completed' ? '#86EFAC' : '#93C5FD'}`,
                   }}>
-                    {tx.status === 'completed' ? 'LUNAS / PAID' : 'SEWA AKTIF'}
+                    {tx.status === 'completed' ? 'PAID' : 'ACTIVE RENTAL'}
                   </span>
                 </div>
               </div>
@@ -1509,7 +1518,7 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
               {/* Renter & Vehicle */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px', background: '#F8FAFC', padding: '16px', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
                 <div>
-                  <div style={{ fontSize: '10.5px', color: '#64748B', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.4px' }}>Penyewa / Renter</div>
+                  <div style={{ fontSize: '10.5px', color: '#64748B', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.4px' }}>Renter</div>
                   <div style={{ fontWeight: 700, fontSize: '15px', marginTop: '3px', color: '#1E293B' }}>{tx.renter_name}</div>
                   <div style={{ fontSize: '12px', color: '#475569' }}>{tx.renter_phone}</div>
                   {tx.renter_address && (
@@ -1519,9 +1528,9 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
                   )}
                 </div>
                 <div>
-                  <div style={{ fontSize: '10.5px', color: '#64748B', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.4px' }}>Motor / Vehicle</div>
+                  <div style={{ fontSize: '10.5px', color: '#64748B', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.4px' }}>Vehicle</div>
                   <div style={{ fontWeight: 700, fontSize: '15px', marginTop: '3px', color: '#2563EB' }}>{vehicle?.name || 'Motor'}</div>
-                  <div style={{ fontSize: '12px', color: '#475569' }}>Plat: <strong style={{ color: '#1E293B' }}>{vehicle?.plate_number}</strong></div>
+                  <div style={{ fontSize: '12px', color: '#475569' }}>Plate: <strong style={{ color: '#1E293B' }}>{vehicle?.plate_number}</strong></div>
                 </div>
               </div>
 
@@ -1529,19 +1538,19 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
               {(tx.customer_image_url || tx.handover_image_url) && (
                 <div style={{ marginBottom: '20px', background: '#F8FAFC', padding: '14px', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
                   <div style={{ fontSize: '10.5px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <i className="fa-solid fa-camera" style={{ color: '#2563EB' }}></i> Dokumentasi Foto Transaksi
+                    <i className="fa-solid fa-camera" style={{ color: '#2563EB' }}></i> Transaction Photo Documentation
                   </div>
                   <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
                     {tx.customer_image_url && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <img src={tx.customer_image_url} alt="KTP / SIM" style={{ width: '110px', height: '76px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #CBD5E1' }} />
-                        <span style={{ fontSize: '10px', color: '#16A34A', fontWeight: 700 }}>✓ Foto Identitas KTP/SIM</span>
+                        <img src={tx.customer_image_url} alt="ID Card" style={{ width: '110px', height: '76px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #CBD5E1' }} />
+                        <span style={{ fontSize: '10px', color: '#16A34A', fontWeight: 700 }}>✓ ID Photo (KTP/Passport)</span>
                       </div>
                     )}
                     {tx.handover_image_url && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <img src={tx.handover_image_url} alt="Serah Terima" style={{ width: '110px', height: '76px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #CBD5E1' }} />
-                        <span style={{ fontSize: '10px', color: '#2563EB', fontWeight: 700 }}>✓ Foto Orang + Motor</span>
+                        <img src={tx.handover_image_url} alt="Handover" style={{ width: '110px', height: '76px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #CBD5E1' }} />
+                        <span style={{ fontSize: '10px', color: '#2563EB', fontWeight: 700 }}>✓ Handover Photo (Renter + Motorbike)</span>
                       </div>
                     )}
                   </div>
@@ -1552,31 +1561,31 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
               <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse', marginBottom: '18px', whiteSpace: 'nowrap' }}>
                 <thead>
                   <tr style={{ borderBottom: '1.5px solid #1E293B', color: '#64748B', textAlign: 'left' }}>
-                    <th style={{ padding: '8px 4px', fontSize: '10.5px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Deskripsi</th>
-                    <th style={{ padding: '8px 4px', textAlign: 'right', fontSize: '10.5px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Durasi / Value</th>
+                    <th style={{ padding: '8px 4px', fontSize: '10.5px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Description</th>
+                    <th style={{ padding: '8px 4px', textAlign: 'right', fontSize: '10.5px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Duration / Value</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                    <td style={{ padding: '10px 4px' }}>Periode Sewa ({new Date(tx.start_date).toLocaleDateString('id-ID')} s/d {new Date(tx.end_date).toLocaleDateString('id-ID')})</td>
-                    <td style={{ padding: '10px 4px', textAlign: 'right', fontWeight: 600 }}>{tx.duration_days} Hari</td>
+                    <td style={{ padding: '10px 4px' }}>Rental Period ({new Date(tx.start_date).toLocaleDateString('en-GB')} to {new Date(tx.end_date).toLocaleDateString('en-GB')})</td>
+                    <td style={{ padding: '10px 4px', textAlign: 'right', fontWeight: 600 }}>{tx.duration_days} Day{tx.duration_days === 1 ? '' : 's'}</td>
                   </tr>
                   <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                    <td style={{ padding: '10px 4px' }}>Tarif Sewa Harian</td>
-                    <td style={{ padding: '10px 4px', textAlign: 'right' }}>{formatRupiah(vehicle?.rate_per_day)} / hari</td>
+                    <td style={{ padding: '10px 4px' }}>Daily Rate</td>
+                    <td style={{ padding: '10px 4px', textAlign: 'right' }}>{formatRupiah(vehicle?.rate_per_day)} / day</td>
                   </tr>
                   {tx.discount > 0 && (
                     <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#D97706' }}>
-                      <td style={{ padding: '10px 4px' }}>Diskon Potongan Harga</td>
+                      <td style={{ padding: '10px 4px' }}>Discount</td>
                       <td style={{ padding: '10px 4px', textAlign: 'right' }}>-{formatRupiah(tx.discount)}</td>
                     </tr>
                   )}
                   <tr style={{ borderBottom: '2px solid #E2E8F0' }}>
-                    <td style={{ padding: '10px 4px' }}>Deposit Jaminan (Held)</td>
+                    <td style={{ padding: '10px 4px' }}>Security Deposit (Held)</td>
                     <td style={{ padding: '10px 4px', textAlign: 'right' }}>{formatRupiah(tx.deposit)}</td>
                   </tr>
                   <tr style={{ fontWeight: 800, fontSize: '15px' }}>
-                    <td style={{ padding: '14px 4px 4px 4px', color: '#2563EB' }}>TOTAL PEMBAYARAN</td>
+                    <td style={{ padding: '14px 4px 4px 4px', color: '#2563EB' }}>TOTAL PAYMENT</td>
                     <td style={{ padding: '14px 4px 4px 4px', textAlign: 'right', color: '#2563EB' }}>{formatRupiah(tx.total_price)}</td>
                   </tr>
                 </tbody>
@@ -1621,8 +1630,22 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
                 </div>
               </div>
 
+              {/* Signatures */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginBottom: '20px', padding: '0 8px' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ height: '48px' }}></div>
+                  <div style={{ borderTop: '1px solid #94A3B8', paddingTop: '6px', fontSize: '11px', color: '#1E293B', fontWeight: 700 }}>Owner</div>
+                  <div style={{ fontSize: '9.5px', color: '#64748B' }}>Boss Rent Pererenan</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ height: '48px' }}></div>
+                  <div style={{ borderTop: '1px solid #94A3B8', paddingTop: '6px', fontSize: '11px', color: '#1E293B', fontWeight: 700 }}>Renter</div>
+                  <div style={{ fontSize: '9.5px', color: '#64748B' }}>{tx.renter_name}</div>
+                </div>
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#64748B', borderTop: '1px solid #E2E8F0', paddingTop: '14px' }}>
-                <div>Metode Pembayaran: <strong style={{ color: paymentMeta.color }}><i className={paymentMeta.icon}></i> {paymentMeta.label}</strong></div>
+                <div>Payment Method: <strong style={{ color: paymentMeta.color }}><i className={paymentMeta.icon}></i> {paymentLabelEn}</strong></div>
                 <div>Thank you for choosing Boss Rent Bali! 🌴</div>
               </div>
             </div>
