@@ -1277,12 +1277,25 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
   // Where that's not supported (most desktop browsers), we fall back to:
   // download the PDF, then open the WA chat so it's one tap away from
   // being attached manually.
+  //
+  // Also: the whole point of "Bagikan Langsung" is calling navigator.share()
+  // as close as possible to the user's click, since browsers only allow the
+  // Web Share API within a short window of "user activation" after a real
+  // gesture. Measured this rendering + encoding pipeline taking ~2.8s at
+  // scale:2 with PNG encoding — long enough that by the time share() was
+  // finally called, several browsers had likely already invalidated that
+  // activation window, silently failing the share (or throwing
+  // NotAllowedError) with no visible symptom beyond "the button doesn't do
+  // anything". Scale reduced to 1.5 and switched to JPEG (much faster to
+  // encode than lossless PNG, and the invoice is a flat-color business
+  // document, not a photo, so the quality loss at 0.92 is not visible) to
+  // substantially cut that delay.
   const renderInvoiceCanvas = async () => {
     const html2canvas = (await import('html2canvas')).default;
     const node = document.getElementById('visual-invoice-card');
     return html2canvas(node, {
       backgroundColor: '#FFFFFF',
-      scale: 2, // sharper image for the PDF
+      scale: 1.5,
       useCORS: true,
     });
   };
@@ -1311,7 +1324,7 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
     const x = (pageW - renderW) / 2;
     const y = (pageH - renderH) / 2;
 
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, renderW, renderH);
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', x, y, renderW, renderH);
     return pdf;
   };
 
@@ -1335,7 +1348,18 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
     } catch (err) {
       // AbortError = user closed the share sheet without picking anything —
       // not a real failure, don't show an error for it.
-      if (err?.name !== 'AbortError') {
+      if (err?.name === 'AbortError') {
+        // no-op
+      } else if (err?.name === 'NotAllowedError') {
+        // Web Share API requires the call to land within a short window of
+        // the user's actual click ("user activation"). If PDF generation
+        // still takes too long on a slower device even after speeding it
+        // up, this is the specific error browsers throw — worth a distinct
+        // message since "gagal membagikan" alone doesn't explain why, and
+        // simply retrying often works once the device/network isn't busy.
+        console.error('Share invoice - user activation expired:', err);
+        alert('Berbagi tidak sempat diproses HP Anda. Silakan coba lagi, atau gunakan Download PDF Invoice.');
+      } else {
         console.error('Gagal share invoice:', err);
         alert('Gagal membagikan invoice. Silakan gunakan opsi Download PDF Invoice sebagai gantinya.');
       }
