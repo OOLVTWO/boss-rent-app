@@ -163,17 +163,28 @@ describe('expenseMatchesVehicle', () => {
     expect(expenseMatchesVehicle({ vehicle_id: 'v1', title: 'Servis rutin' }, v)).toBe(true);
   });
 
-  it('cocok via nama motor di judul (case-insensitive)', () => {
-    expect(expenseMatchesVehicle({ title: 'Ganti oli VARIO 160' }, v)).toBe(true);
-  });
-
   it('cocok via plat nomor di judul', () => {
     expect(expenseMatchesVehicle({ title: 'Servis dk 1234 ab' }, v)).toBe(true);
+  });
+
+  it('TIDAK cocok hanya lewat nama model di judul (tanpa plat/vehicle_id) — nama model tidak unik', () => {
+    expect(expenseMatchesVehicle({ title: 'Ganti oli VARIO 160' }, v)).toBe(false);
   });
 
   it('tidak cocok → false', () => {
     expect(expenseMatchesVehicle({ title: 'Bensin operasional' }, v)).toBe(false);
     expect(expenseMatchesVehicle({ vehicle_id: 'lain', title: '' }, v)).toBe(false);
+  });
+
+  it('regression: expense umum tidak ikut memotong SEMUA motor investor yang bermodel sama', () => {
+    // Skenario asli bug: dua motor "Vario 160" berbeda unit (mis. satu milik
+    // investor A, satu investor B) — expense umum yang cuma menyebut nama
+    // model (tanpa plat) sebelumnya cocok ke KEDUANYA sekaligus.
+    const vA = { id: 'vA', name: 'Vario 160', plate_number: 'DK 1111 AA' };
+    const vB = { id: 'vB', name: 'Vario 160', plate_number: 'DK 2222 BB' };
+    const genericExpense = { title: 'Servis Vario rutin bulanan' };
+    expect(expenseMatchesVehicle(genericExpense, vA)).toBe(false);
+    expect(expenseMatchesVehicle(genericExpense, vB)).toBe(false);
   });
 });
 
@@ -218,8 +229,9 @@ describe('calcInvestorPayouts', () => {
     { id: 't3', vehicle_id: 'v2', status: 'completed', total_price: 500000 }, // motor internal
   ];
   const expenses = [
-    { id: 'e1', title: 'Servis Vario', amount: 100000, type: 'expense' }, // cocok v1 via nama
+    { id: 'e1', title: 'Servis rutin', amount: 100000, type: 'expense', vehicle_id: 'v1' }, // cocok v1 via vehicle_id (tag eksplisit, bukan nama)
     { id: 'e2', title: 'Bensin operasional', amount: 50000, type: 'expense' }, // tidak cocok motor mana pun
+    { id: 'e3', title: 'Servis Vario', amount: 75000, type: 'expense' }, // HANYA sebut nama model, tanpa vehicle_id/plat — TIDAK boleh match (armada sering punya >1 motor model sama; expense umum begini tidak boleh ikut memotong omset investor tertentu)
   ];
 
   it('payout = sharePct% × (omset motor − biaya servis motor), dibulatkan', () => {
@@ -227,7 +239,7 @@ describe('calcInvestorPayouts', () => {
     expect(perVehicle).toHaveLength(1); // hanya motor investor
     const pv = perVehicle[0];
     expect(pv.revenue).toBe(1050000);   // 1.000.000 + damage 50.000
-    expect(pv.expenses).toBe(100000);
+    expect(pv.expenses).toBe(100000);   // hanya e1 (vehicle_id) — e3 (nama saja) TIDAK ikut kehitung
     expect(pv.net).toBe(950000);
     expect(pv.sharePct).toBe(70);
     expect(pv.payout).toBe(665000);     // 70% × 950.000
@@ -239,6 +251,16 @@ describe('calcInvestorPayouts', () => {
     expect(r.totalRevenue).toBe(1050000);
     expect(r.totalExpenses).toBe(100000);
     expect(r.totalNet).toBe(950000);
+  });
+
+  it('regression: expense yang cuma sebut nama model TIDAK memotong omset investor', () => {
+    // e3 ("Servis Vario", tanpa vehicle_id/plat) sengaja tidak boleh match v1
+    // meski namanya sama-sama "Vario" — inilah bug yang dilaporkan: expense
+    // umum ikut kepotong ke motor investor lewat kecocokan nama model saja.
+    const { perVehicle } = calcInvestorPayouts({ transactions, expenses, vehicles });
+    const pv = perVehicle[0];
+    expect(pv.expenses).not.toBe(175000); // 100.000 + 75.000 — angka SALAH kalau e3 ikut kehitung
+    expect(pv.expenses).toBe(100000);
   });
 
   it('pembulatan Math.round untuk hasil pecahan', () => {
@@ -295,7 +317,7 @@ describe('calcFinancialSummary', () => {
         { id: 't2', vehicle_id: 'v2', status: 'completed', total_price: 500000 },
       ],
       expenses: [
-        { id: 'e1', title: 'Servis Vario', amount: 100000, type: 'expense' },
+        { id: 'e1', title: 'Servis rutin', amount: 100000, type: 'expense', vehicle_id: 'v1' },
         { id: 'e2', title: 'Bensin operasional', amount: 50000, type: 'expense' },
       ],
       vehicles: [

@@ -84,35 +84,29 @@ export function getVehicleSharePct(v) {
   return Number(v.revenue_share_percentage) || 70;
 }
 
-// Expense dianggap milik motor tertentu jika vehicle_id cocok,
-// atau judulnya menyebut PLAT / TOKEN nama motor (data lama tanpa vehicle_id).
-// PERUBAHAN (C3): token-based matching + stopwords:
-//  - nama motor dicocokkan sebagai token utuh (bukan substring acak),
-//    jadi "Vario" tidak salah-cocok ke judul seperti "Servis variasi".
-//  - kata umum ("servis", "oli", "bensin", …) tidak dianggap identitas motor.
-const EXPENSE_STOPWORDS = new Set([
-  'servis', 'service', 'ganti', 'beli', 'bensin', 'oli', 'perbaikan',
-  'tune', 'up', 'cuci', 'parkir', 'tol', 'bengkel', 'montir', 'cek',
-  'tambah', 'isi', 'konsumsi', 'bulanan', 'tahunan', 'rutin',
-]);
-
-function normalizeTokens(str) {
-  return String(str || '')
-    .toLowerCase()
-    .split(/[^a-z0-9]+/i)
-    .filter(t => t.length >= 3 && !EXPENSE_STOPWORDS.has(t));
-}
-
+// Expense dianggap milik motor tertentu HANYA jika ada identitas yang
+// benar-benar unik ke motor itu: vehicle_id (tag eksplisit dari form) atau
+// plat nomor disebut di judul. Keduanya dijamin unik per motor.
+//
+// PERUBAHAN (C4): token nama motor (mis. "Vario", "NMAX") DIHAPUS dari
+// matching — nama model TIDAK unik, satu armada biasanya punya beberapa
+// unit model yang sama (beberapa "Vario 160", dsb.), campuran motor
+// investor & motor milik sendiri. Expense umum yang judulnya menyebut
+// nama model tanpa plat nomor (mis. "Ganti Ban Vario") sebelumnya ikut
+// cocok ke SEMUA motor investor bernama Vario sekaligus — memotong omset
+// investor untuk biaya yang belum tentu untuk motor mereka. Sekarang
+// expense semacam itu tidak dicocokkan ke motor manapun secara otomatis;
+// tetap tercatat sebagai pengeluaran umum di laporan keuangan biasa, tapi
+// tidak mengurangi bagi hasil investor kecuali admin menandai vehicle_id
+// atau menyebut plat nomornya secara eksplisit di judul.
 export function expenseMatchesVehicle(e, v) {
   if (!e || !v) return false;
   if (e.vehicle_id && v.id && e.vehicle_id === v.id) return true;
   if (typeof e.title !== 'string' || !e.title) return false;
   const title = e.title.toLowerCase();
-  // Plat nomor = match paling kuat
-  if (v.plate_number && title.includes(String(v.plate_number).toLowerCase())) return true;
-  // Nama motor: cocok minimal satu token utuh
-  const nameTokens = normalizeTokens(v.name);
-  return nameTokens.some(tok => title.includes(tok));
+  // Plat nomor = satu-satunya identitas berbasis teks yang aman dipakai,
+  // karena dijamin unik per motor (tidak seperti nama model).
+  return !!(v.plate_number && title.includes(String(v.plate_number).toLowerCase()));
 }
 
 // Total omset sebuah motor dari transaksi yang sudah diakui (paid).
