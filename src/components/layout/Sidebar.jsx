@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { startVisiblePolling } from '@/lib/visiblePolling';
 import { useState, useEffect } from 'react';
 
 // ── Nav grouped by section ──
@@ -173,8 +174,7 @@ export default function Sidebar({ user, mobileOpen, onClose }) {
       } catch { /* ignore */ }
     };
     fetchAlerts();
-    const interval = setInterval(fetchAlerts, 60000);
-    return () => clearInterval(interval);
+    return startVisiblePolling(fetchAlerts, 60000);
   }, []);
 
   const handleLogout = async () => {

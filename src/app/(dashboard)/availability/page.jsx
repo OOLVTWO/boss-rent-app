@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { TX_LIGHT_COLUMNS, VEHICLE_LIGHT_COLUMNS } from '@/lib/queryColumns';
+import { startVisiblePolling } from '@/lib/visiblePolling';
 
 const VALID_AVAIL_TABS = ['all', 'available', 'rented', 'overdue', 'maintenance'];
 
@@ -178,10 +180,10 @@ export default function AvailabilityPage() {
   const loadData = useCallback(async () => {
     const supabase = createClient();
     const [{ data: vData }, { data: txData }] = await Promise.all([
-      supabase.from('vehicles').select('*').order('name'),
+      supabase.from('vehicles').select(VEHICLE_LIGHT_COLUMNS).order('name'),
       supabase
         .from('transactions')
-        .select('*')
+        .select(TX_LIGHT_COLUMNS)
         .eq('status', 'active'),
     ]);
     setVehicles(vData || []);
@@ -193,8 +195,8 @@ export default function AvailabilityPage() {
   useEffect(() => {
     // Defer ke microtask: loadData memanggil setState — hindari setState sinkron di effect
     Promise.resolve().then(loadData);
-    const interval = setInterval(loadData, 60000);
-    return () => clearInterval(interval);
+    // Polling hanya saat tab terlihat (hemat kuota egress Supabase)
+    return startVisiblePolling(loadData, 60000);
   }, [loadData]);
 
   // Map: vehicle_id → active transaction

@@ -1,11 +1,19 @@
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireAuth, readJsonBody, missingFields, toNonNegativeNumber } from '@/lib/apiAuth';
 import { NextResponse } from 'next/server';
+import { TX_LIGHT_SELECT, fetchAllRows } from '@/lib/queryColumns';
 
 const VALID_STATUS = ['active', 'completed', 'cancelled'];
 const VALID_PAYMENT = ['paid', 'unpaid'];
 
 // GET /api/transactions
+//   ?status=active|completed|cancelled
+//   ?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD   (filter created_at)
+//   ?damage_only=1                               (hanya yang ada klaim denda)
+//   ?view=photo_ids                              (hanya id transaksi yang punya foto serah terima)
+//
+// Default mengembalikan kolom RINGAN tanpa foto (lihat lib/queryColumns.js).
+// Foto diambil per transaksi lewat GET /api/transactions/:id.
 export async function GET(request) {
   const authError = await requireAuth(request);
   if (authError) return authError;
@@ -15,17 +23,37 @@ export async function GET(request) {
   const status = searchParams.get('status');
   const startDate = searchParams.get('start_date');
   const endDate = searchParams.get('end_date');
+  const damageOnly = searchParams.get('damage_only') === '1';
+  const view = searchParams.get('view');
 
-  let query = supabase
-    .from('transactions')
-    .select(`*, vehicles(id, name, plate_number, rate_per_day)`)
-    .order('created_at', { ascending: false });
+  if (view === 'photo_ids') {
+    // Hanya kolom id → sangat kecil; filter dievaluasi di database.
+    const { data, error } = await fetchAllRows(() =>
+      supabase.from('transactions').select('id')
+        .not('handover_image_url', 'is', null)
+        .neq('handover_image_url', '')
+        .order('created_at', { ascending: false })
+    );
+    if (error) {
+      console.error('GET /api/transactions?view=photo_ids error:', error.message);
+      return NextResponse.json({ error: 'Gagal mengambil daftar foto.', detail: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ handover: data.map(r => r.id) });
+  }
 
-  if (status && status !== 'all') query = query.eq('status', status);
-  if (startDate) query = query.gte('created_at', startDate.includes('T') ? startDate : `${startDate}T00:00:00Z`);
-  if (endDate) query = query.lte('created_at', endDate.includes('T') ? endDate : `${endDate}T23:59:59Z`);
+  const build = () => {
+    let query = supabase
+      .from('transactions')
+      .select(TX_LIGHT_SELECT)
+      .order('created_at', { ascending: false });
+    if (status && status !== 'all') query = query.eq('status', status);
+    if (startDate) query = query.gte('created_at', startDate.includes('T') ? startDate : `${startDate}T00:00:00Z`);
+    if (endDate) query = query.lte('created_at', endDate.includes('T') ? endDate : `${endDate}T23:59:59Z`);
+    if (damageOnly) query = query.gt('damage_fee', 0);
+    return query;
+  };
 
-  const { data, error } = await query;
+  const { data, error } = await fetchAllRows(build);
   if (error) {
     console.error('GET /api/transactions error:', error.message);
     return NextResponse.json(
@@ -33,7 +61,7 @@ export async function GET(request) {
       { status: 500 }
     );
   }
-  return NextResponse.json(Array.isArray(data) ? data : []);
+  return NextResponse.json(data);
 }
 
 // POST /api/transactions
@@ -122,7 +150,7 @@ export async function POST(request) {
   let { data: tx, error } = await supabase
     .from('transactions')
     .insert([payload])
-    .select(`*, vehicles(id, name, plate_number, rate_per_day)`)
+    .select(TX_LIGHT_SELECT)
     .single();
 
   // FIX #3: Smart Fallback jika kolom baru belum di-migrate di database Supabase
@@ -150,7 +178,7 @@ export async function POST(request) {
     const retry = await supabase
       .from('transactions')
       .insert([fallbackPayload])
-      .select(`*, vehicles(id, name, plate_number, rate_per_day)`)
+      .select(TX_LIGHT_SELECT)
       .single();
 
     if (retry.error) {
@@ -164,7 +192,7 @@ export async function POST(request) {
       const retry2 = await supabase
         .from('transactions')
         .insert([minimalPayload])
-        .select(`*, vehicles(id, name, plate_number, rate_per_day)`)
+        .select(TX_LIGHT_SELECT)
         .single();
 
       tx = retry2.data;

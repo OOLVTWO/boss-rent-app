@@ -8,6 +8,7 @@ import {
   isInvestorVehicle, expenseMatchesVehicle, getLocalDateStr,
 } from '@/lib/finance';
 import { createClient } from '@/lib/supabase/client';
+import { TX_LIGHT_SELECT, VEHICLE_LIGHT_COLUMNS } from '@/lib/queryColumns';
 
 const VALID_TABS = ['income', 'expenses', 'profit_loss', 'investor'];
 
@@ -75,7 +76,7 @@ export default function ReportsPage() {
       const [txRes, expRes, vehRes] = await Promise.all([
         fetch(`/api/transactions?${txParams}`),
         fetch(`/api/expenses?${expParams}`),
-        fetch('/api/vehicles')
+        fetch('/api/vehicles?view=light')
       ]);
 
       const txData = await txRes.json();
@@ -91,17 +92,20 @@ export default function ReportsPage() {
         try {
           const supabase = createClient();
           if (!Array.isArray(txData)) {
-            let q = supabase.from('transactions').select('*, vehicles(id, name, plate_number, rate_per_day, category)');
+            let q = supabase.from('transactions').select(TX_LIGHT_SELECT)
+              .gte('created_at', startISO).lte('created_at', endISO);
             if (statusFilter !== 'all') q = q.eq('status', statusFilter);
             const { data: txFallback } = await q.order('created_at', { ascending: false });
             txArr = txFallback || [];
           }
           if (!Array.isArray(expData)) {
-            const { data: expFallback } = await supabase.from('expenses').select('*').order('expense_date', { ascending: false });
+            const { data: expFallback } = await supabase.from('expenses').select('*')
+              .gte('expense_date', startDate).lte('expense_date', endDate)
+              .order('expense_date', { ascending: false });
             expArr = expFallback || [];
           }
           if (!Array.isArray(vehData)) {
-            const { data: vehFallback } = await supabase.from('vehicles').select('*');
+            const { data: vehFallback } = await supabase.from('vehicles').select(VEHICLE_LIGHT_COLUMNS);
             vehArr = vehFallback || [];
           }
         } catch (fbErr) {

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import DashboardClient from './DashboardClient';
+import { TX_LIGHT_SELECT, VEHICLE_LIGHT_COLUMNS } from '@/lib/queryColumns';
 
 // Ambil SEMUA baris dengan pagination (Supabase JS default limit = 1000 baris,
 // jadi tanpa loop ini transaksi lama TIDAK PERNAH sampai ke dashboard —
@@ -43,13 +44,13 @@ export default async function DashboardPage() {
     fetchAllRows(
       supabase
         .from('transactions')
-        .select(`*, vehicles(name, plate_number, rate_per_day)`)
+        .select(TX_LIGHT_SELECT) // tanpa kolom foto
         .gte('created_at', yearStart)
         .lte('created_at', yearEnd)
         .order('created_at', { ascending: false })
     ),
     fetchAllRows(
-      supabase.from('vehicles').select('*').order('created_at', { ascending: false })
+      supabase.from('vehicles').select(VEHICLE_LIGHT_COLUMNS).order('created_at', { ascending: false })
     ),
   ]);
 
