@@ -54,6 +54,7 @@ function useCountUp(targetVal, durationMs = 1500, isDecimal = false) {
 export default function SharpSquareBusinessWebsitePage() {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [search, setSearch] = useState('');
 
@@ -339,11 +340,22 @@ export default function SharpSquareBusinessWebsitePage() {
           .select('*')
           .order('name', { ascending: true });
 
-        if (!error && Array.isArray(data)) {
+        if (error) {
+          // PERBAIKAN: sebelumnya error di sini benar-benar diam — tidak ada
+          // log sama sekali, jadi kalau query gagal (misalnya masalah
+          // koneksi/konfigurasi Supabase), halaman fleet publik cuma
+          // menampilkan array kosong tanpa jejak diagnosis apa pun, baik di
+          // console browser maupun di mana pun. Sekarang errornya tercatat
+          // jelas supaya penyebab sebenarnya kelihatan lewat DevTools
+          // console kalau ini terjadi lagi.
+          console.error('Gagal memuat data motor (fleet publik):', error);
+          setFetchError(true);
+        } else if (Array.isArray(data)) {
           setVehicles(data);
         }
-      } catch {
-        // ignore
+      } catch (err) {
+        console.error('Gagal memuat data motor (fleet publik) — exception:', err);
+        setFetchError(true);
       } finally {
         setLoading(false);
       }
@@ -789,6 +801,14 @@ export default function SharpSquareBusinessWebsitePage() {
           <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--sharp-muted)' }}>
             <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '32px', color: 'var(--sharp-accent)' }}></i>
             <div style={{ marginTop: '12px', fontSize: '14px' }}>Loading Available Scooters...</div>
+          </div>
+        ) : fetchError && filtered.length === 0 ? (
+          <div className="sharp-card" style={{ textAlign: 'center', padding: '60px 0' }}>
+            <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: '40px', color: '#EF4444', marginBottom: '12px' }}></i>
+            <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--sharp-ink)' }}>Couldn&apos;t Load the Fleet</div>
+            <div style={{ fontSize: '12px', color: 'var(--sharp-muted)', marginTop: '4px' }}>
+              There was a problem connecting to load scooter data. Please try refreshing the page.
+            </div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="sharp-card" style={{ textAlign: 'center', padding: '60px 0' }}>
