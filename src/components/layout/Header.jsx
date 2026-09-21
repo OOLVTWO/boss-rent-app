@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import VuiVoiceControl from '@/components/dashboard/VuiVoiceControl';
 
 const pageMeta = {
   '/dashboard':   { title: 'Dashboard',       subtitle: 'Ringkasan statistik usaha rental' },
@@ -12,10 +11,8 @@ const pageMeta = {
   '/tracking':    { title: 'Tracking Sewa',    subtitle: 'Monitoring durasi sewa & pengingat WA' },
   '/availability':{ title: 'Ketersediaan',     subtitle: 'Ketersediaan armada motor real-time' },
   '/expenses':    { title: 'Keuangan',         subtitle: 'Catat pemasukan, pengeluaran & saldo bersih' },
-  '/maintenance': { title: 'AI Diagnostic',    subtitle: 'Deteksi dini kesehatan motor' },
-  '/gallery':     { title: 'Galeri Foto',      subtitle: 'Arsip foto identitas & kendaraan' },
   '/reports':     { title: 'Laporan',          subtitle: 'Export dan analisis pendapatan' },
-  '/settings':    { title: 'Pengaturan',       subtitle: 'Koneksi database & template WA' },
+  '/settings':    { title: 'Pengaturan',       subtitle: 'Profil bisnis, pembayaran, template WA & backup' },
   '/fleet':       { title: 'Website Publik',   subtitle: 'Katalog sewa motor publik (/fleet)' },
   '/customers':   { title: 'Data Customer',    subtitle: 'Kelola data penyewa & riwayat' },
 };
@@ -79,8 +76,6 @@ export default function Header({ onToggleMobile, theme, onToggleTheme }) {
       </div>
 
       <div className="header-right-wrap">
-        <VuiVoiceControl />
-
         {/* ── Theme Dropdown Toggle ── */}
         <div className="theme-dropdown-wrap" ref={themeRef}>
           <button

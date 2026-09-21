@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from 'react';
 import DashboardCharts from '@/components/dashboard/DashboardCharts';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { analyzeVehicleHealth } from '@/lib/aiDiagnostic';
 import { calcFinancialSummary, formatRupiah, getLocalMonthStr, getLocalDateStr, toLocalDateStr, isPaidTransaction, isIncomeEntry } from '@/lib/finance';
 
 const MONTH_NAMES = [
@@ -246,9 +245,6 @@ export default function DashboardClient({ transactions, vehicles, loadedYear }) 
   const unpaidTx    = safeTx.filter(t => t.status === 'active' && t.payment_status === 'unpaid');
   const totalUnpaid = unpaidTx.reduce((s, t) => s + Number(t.total_price || 0), 0);
 
-  const diagnostics    = safeVehicles.map(v => analyzeVehicleHealth(v, safeTx));
-  const urgentVehicles = diagnostics.filter(d => d.healthScore < 60 || d.recentIssues.length > 0);
-
   const recentTx    = filteredTx.slice(0, 5);
   const fleetPreview = safeVehicles.slice(0, 6);
 
@@ -300,22 +296,13 @@ export default function DashboardClient({ transactions, vehicles, loadedYear }) 
   return (
     <div className="dashboard-v2 fade-in">
 
-      {(unpaidTx.length > 0 || urgentVehicles.length > 0) && (
+      {unpaidTx.length > 0 && (
         <div className="dash-alerts">
-          {unpaidTx.length > 0 && (
-            <Link href="/transactions" className="dash-alert-bar unpaid">
-              <i className="fa-solid fa-triangle-exclamation"></i>
-              <span>{unpaidTx.length} sewa aktif belum bayar — total piutang {formatRupiah(totalUnpaid)}</span>
-              <span className="alert-cta">Lihat Transaksi &rarr;</span>
-            </Link>
-          )}
-          {urgentVehicles.length > 0 && (
-            <Link href="/maintenance" className="dash-alert-bar maintenance">
-              <i className="fa-solid fa-robot"></i>
-              <span>AI Diagnostic: {urgentVehicles.length} motor perlu perhatian — {urgentVehicles.map(v => v.vehicleName).join(', ')}</span>
-              <span className="alert-cta">Cek Diagnostic &rarr;</span>
-            </Link>
-          )}
+          <Link href="/transactions" className="dash-alert-bar unpaid">
+            <i className="fa-solid fa-triangle-exclamation"></i>
+            <span>{unpaidTx.length} sewa aktif belum bayar — total piutang {formatRupiah(totalUnpaid)}</span>
+            <span className="alert-cta">Lihat Transaksi &rarr;</span>
+          </Link>
         </div>
       )}
 
@@ -505,11 +492,6 @@ export default function DashboardClient({ transactions, vehicles, loadedYear }) 
               <i className="fa-solid fa-chart-line"></i>
               <div className="qbtn-label">Laporan Investor</div>
               <div className="qbtn-sub">Export Excel</div>
-            </Link>
-            <Link href="/maintenance" className="dash-quick-btn q-purple">
-              <i className="fa-solid fa-robot"></i>
-              <div className="qbtn-label">AI Diagnostic</div>
-              <div className="qbtn-sub">Kesehatan motor</div>
             </Link>
           </div>
         </div>

@@ -94,23 +94,6 @@ const NAV_SECTIONS = [
     ],
   },
   {
-    label: 'Tools',
-    items: [
-      {
-        href: '/maintenance',
-        iconClass: 'fa-solid fa-robot',
-        label: 'AI Diagnostic',
-        isDropdown: true,
-        children: [
-          { href: '/maintenance?tab=diagnostics', iconClass: 'fa-solid fa-robot',              label: 'Skor Kesehatan' },
-          { href: '/maintenance?tab=history',     iconClass: 'fa-solid fa-clock-rotate-left',  label: 'Riwayat Servis' },
-          { href: '/maintenance?tab=reports',     iconClass: 'fa-solid fa-clipboard-list',     label: 'Keluhan Pelanggan' },
-        ],
-      },
-      { href: '/gallery',     iconClass: 'fa-solid fa-images', label: 'Galeri Foto' },
-    ],
-  },
-  {
     label: 'Lainnya',
     items: [
       {
