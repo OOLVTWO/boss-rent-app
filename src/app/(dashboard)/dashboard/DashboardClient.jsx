@@ -54,17 +54,73 @@ function fleetStatusLabel(status) {
   return status;
 }
 
-export default function DashboardClient({ transactions, vehicles }) {
+export default function DashboardClient({ transactions, vehicles, loadedYear }) {
   const [expenses, setExpenses] = useState([]);
   const [periodMode, setPeriodMode] = useState('month');
   const [selectedMonth, setSelectedMonth] = useState(getLocalMonthStr());
   const [selectedYear, setSelectedYear] = useState(getLocalMonthStr().substring(0, 4));
+  // Fallback aman kalau prop loadedYear entah kenapa tidak terkirim.
+  const effectiveLoadedYear = loadedYear || Number(getLocalMonthStr().substring(0, 4));
+  // Tahun transaksi & expenses yang sudah dimuat dari server (tahun berjalan
+  // saat halaman pertama kali dibuka). Kalau user pindah ke tahun lain lewat
+  // selector, effect di bawah fetch data tahun itu on-demand dan menyimpannya
+  // di sini — tanpa ini, memilih tahun lampau akan tampak kosong karena
+  // datanya memang belum pernah diminta dari server.
+  const [extraYearData, setExtraYearData] = useState(null); // { year, transactions, expenses }
+  const [loadingYear, setLoadingYear] = useState(false);
+
+  // Tahun mana yang SEDANG dilihat user, baik lewat mode Bulanan (tahun ikut
+  // bagian dari selectedMonth) maupun mode Tahunan (selectedYear).
+  const viewingYear = periodMode === 'year' ? selectedYear : selectedMonth.substring(0, 4);
+
+  useEffect(() => {
+    if (viewingYear === String(effectiveLoadedYear)) return; // sudah dimuat server, tidak perlu fetch
+    if (extraYearData?.year === viewingYear) return; // tahun ini sudah pernah di-fetch, jangan ulang
+
+    let cancelled = false;
+    (async () => {
+      setLoadingYear(true);
+      const start = `${viewingYear}-01-01`;
+      const end = `${viewingYear}-12-31`;
+      let tx = [];
+      let exp = [];
+      try {
+        const res = await fetch(`/api/transactions?start_date=${start}&end_date=${end}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) tx = data;
+        }
+      } catch (err) {
+        console.error('Fetch transaksi tahun lain error:', err);
+      }
+      try {
+        const res = await fetch(`/api/expenses?start_date=${start}&end_date=${end}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) exp = data;
+        }
+      } catch (err) {
+        console.error('Fetch expenses tahun lain error:', err);
+      }
+      if (!cancelled) {
+        setExtraYearData({ year: viewingYear, transactions: tx, expenses: exp });
+        setLoadingYear(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [viewingYear, effectiveLoadedYear, extraYearData]);
 
   useEffect(() => {
     (async () => {
       let list = null;
+      // PERBAIKAN: dulu tanpa batas tanggal sama sekali — ikut ditarik
+      // seluruhnya setiap load, sama seperti masalah transactions di atas.
+      // Dibatasi ke tahun yang sama dengan transactions (loadedYear) supaya
+      // konsisten; tahun lain di-fetch on-demand lewat effect di atas.
+      const start = `${effectiveLoadedYear}-01-01`;
+      const end = `${effectiveLoadedYear}-12-31`;
       try {
-        const res = await fetch('/api/expenses');
+        const res = await fetch(`/api/expenses?start_date=${start}&end_date=${end}`);
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) list = data;
@@ -78,6 +134,8 @@ export default function DashboardClient({ transactions, vehicles }) {
           const { data, error } = await supabase
             .from('expenses')
             .select('*')
+            .gte('expense_date', start)
+            .lte('expense_date', end)
             .order('expense_date', { ascending: false });
           if (!error) list = data || [];
         } catch (err) {
@@ -86,11 +144,14 @@ export default function DashboardClient({ transactions, vehicles }) {
       }
       setExpenses(list || []);
     })();
-  }, []);
+  }, [effectiveLoadedYear]);
 
-  const safeTx       = Array.isArray(transactions) ? transactions : [];
-  const safeVehicles = Array.isArray(vehicles)     ? vehicles     : [];
-  const safeExpenses = Array.isArray(expenses)     ? expenses     : [];
+  // Kalau user sedang melihat tahun selain yang dimuat server, pakai data
+  // on-demand (extraYearData); selain itu pakai data awal dari server/props.
+  const viewingExtraYear = extraYearData?.year === viewingYear && viewingYear !== String(effectiveLoadedYear);
+  const safeTx       = viewingExtraYear ? (extraYearData.transactions || []) : (Array.isArray(transactions) ? transactions : []);
+  const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
+  const safeExpenses = viewingExtraYear ? (extraYearData.expenses || []) : (Array.isArray(expenses) ? expenses : []);
 
   const periodRange = useMemo(() => {
     const currentYear = getLocalMonthStr().substring(0, 4);
@@ -125,13 +186,21 @@ export default function DashboardClient({ transactions, vehicles }) {
   });
 
   const yearOptions = useMemo(() => {
-    const years = new Set([Number(getLocalMonthStr().substring(0, 4))]);
-    safeTx.forEach(t => {
-      const y = Number(toLocalDateStr(t.created_at).substring(0, 4));
-      if (y) years.add(y);
-    });
-    return Array.from(years).sort((a, b) => b - a);
-  }, [safeTx]);
+    // PERBAIKAN: dulu daftar tahun di-derive dari transaksi yang SUDAH
+    // dimuat (safeTx) — tapi sekarang transaksi awal hanya mencakup tahun
+    // berjalan (lihat catatan performa di atas), jadi kalau tetap begini,
+    // dropdown tahun cuma akan pernah menampilkan SATU pilihan (tahun ini)
+    // selamanya — user tidak akan pernah bisa memilih tahun lalu sama
+    // sekali, karena data tahun lalu memang belum pernah dimuat untuk
+    // "ditemukan" oleh logic ini. Diganti ke rentang tetap (5 tahun ke
+    // belakang) yang tidak bergantung pada data yang sudah di-fetch —
+    // memilih tahun yang datanya belum dimuat akan otomatis memicu
+    // on-demand fetch (lihat useEffect viewingYear di atas).
+    const current = Number(getLocalMonthStr().substring(0, 4));
+    const years = [];
+    for (let y = current; y >= current - 4; y--) years.push(y);
+    return years;
+  }, []);
 
   const handleResetPeriod = () => {
     setSelectedMonth(getLocalMonthStr());
@@ -256,7 +325,15 @@ export default function DashboardClient({ transactions, vehicles }) {
             <i className="fa-solid fa-chart-pie" style={{ marginRight: '8px', color: 'var(--brand-primary)' }}></i>
             Dashboard
           </h2>
-          <p className="dash-subtitle">Ringkasan performa usaha — {periodRange.label}</p>
+          <p className="dash-subtitle">
+            Ringkasan performa usaha — {periodRange.label}
+            {loadingYear && (
+              <span style={{ marginLeft: '8px', color: 'var(--brand-primary)' }}>
+                <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '4px' }}></i>
+                Memuat data {viewingYear}...
+              </span>
+            )}
+          </p>
         </div>
 
         <div className="dash-period-bar">
