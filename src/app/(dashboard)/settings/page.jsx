@@ -16,8 +16,33 @@ import {
   sendWhatsAppGateway
 } from '@/lib/countryCodes';
 import { updateFavicon } from '@/lib/favicon';
+import { fetchAllRows } from '@/lib/queryColumns';
+import { DEFAULT_SERVICE_INTERVAL_KM, DEFAULT_SERVICE_INTERVAL_DAYS } from '@/lib/serviceLog';
 
-const VALID_SETTINGS_TABS = ['storage', 'payment', 'wacustom', 'security', 'business'];
+// Panel Pengaturan difokuskan untuk ADMINISTRASI saja.
+// CMS website publik (hero, galeri, FAQ, rating) dihapus: isinya hanya
+// tersimpan di localStorage browser admin, jadi tidak pernah terlihat oleh
+// pengunjung website. Key lain di localStorage tetap dipertahankan saat simpan.
+const VALID_SETTINGS_TABS = ['business', 'payment', 'wacustom', 'security', 'storage'];
+const BIZ_SETTINGS_KEY = 'boss_rent_biz_settings';
+
+const DEFAULT_BIZ_FORM = {
+  name: 'BOSS RENT PERERENAN',
+  logoUrl: '/images/logoCompany.png',
+  location: 'Jl. Pantai Pererenan No.119, Pererenan, Kec. Mengwi, Kabupaten Badung, Bali 80351',
+  phone: '+62 812-3710-9751',
+  serviceIntervalKm: DEFAULT_SERVICE_INTERVAL_KM,
+  serviceIntervalDays: DEFAULT_SERVICE_INTERVAL_DAYS,
+};
+
+// Tabel yang ikut dihitung & di-backup. service_logs opsional (migration 002).
+const DATA_TABLES = [
+  { key: 'vehicles', label: 'Motor', icon: 'fa-solid fa-motorcycle', order: 'created_at' },
+  { key: 'transactions', label: 'Transaksi', icon: 'fa-solid fa-file-invoice', order: 'created_at' },
+  { key: 'customers', label: 'Customer', icon: 'fa-solid fa-users', order: 'created_at' },
+  { key: 'expenses', label: 'Arus Kas', icon: 'fa-solid fa-wallet', order: 'created_at' },
+  { key: 'service_logs', label: 'Catatan Servis', icon: 'fa-solid fa-screwdriver-wrench', order: 'created_at', optional: true },
+];
 
 // Reads ?tab= so the sidebar "Pengaturan" dropdown links land on the right
 // section. Split out because useSearchParams() requires a Suspense boundary.
@@ -30,12 +55,12 @@ function TabFromQuery({ onTab }) {
   return null;
 }
 
-function formatRupiah(amount) {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(amount || 0);
+function readSavedBiz() {
+  try {
+    return JSON.parse(localStorage.getItem(BIZ_SETTINGS_KEY) || '{}') || {};
+  } catch {
+    return {};
+  }
 }
 
 const FA_ICON_OPTIONS = [
@@ -59,37 +84,12 @@ const COLOR_OPTIONS = [
   { hex: '#EC4899', label: 'Pink' },
 ];
 
-const DEFAULT_STORAGE_PHOTOS = [
-  { id: 'logo-company', title: 'Company Official Logo (logoCompany.png)', url: '/images/logoCompany.png', date: 'System Asset' },
-  { id: 'logo-brand', title: 'Brand Logo Badge (logo.png)', url: '/images/logo.png', date: 'System Asset' },
-  { id: '1', title: 'Customer Bali Scooter', url: '/images/boss_rent_customer_bali.png', date: 'Bento Asset' },
-  { id: '2', title: 'Mint Green Vespa Sprint Fleet', url: '/images/boss_rent_bento_1.png', date: 'Bento Asset' },
-  { id: '3', title: 'Fleet Lineup Serviced & Clean', url: '/images/boss_rent_fleet_lineup.png', date: 'Bento Asset' },
-  { id: '4', title: 'Pererenan Beach Ride & Sunset', url: '/images/boss_rent_bento_2.png', date: 'Bento Asset' },
-  { id: '5', title: 'Key Handover & Villa Delivery', url: '/images/boss_rent_bento_3.png', date: 'Bento Asset' },
-  { id: '6', title: 'Canggu Coastal Road Exploring', url: '/images/boss_rent_bento_4.png', date: 'Bento Asset' },
-  { id: '7', title: 'Scenic Countryside Rice Paddies', url: '/images/boss_rent_bento_5.png', date: 'Bento Asset' },
-  { id: '8', title: 'Sanitized Clean Helmets Service', url: '/images/boss_rent_bento_6.png', date: 'Bento Asset' },
-  { id: '9', title: '24/7 Roadside Assistance Bali', url: '/images/boss_rent_bento_7.png', date: 'Bento Asset' },
-  { id: '10', title: 'Red Honda Scoopy Sunset Edition', url: '/images/boss_rent_bento_8.png', date: 'Bento Asset' },
-  { id: '11', title: 'Yamaha NMAX 155 Maxi Scooter', url: '/images/boss_rent_bento_9.png', date: 'Bento Asset' },
-  { id: '12', title: 'Honda PCX 160 Touring Edition', url: '/images/boss_rent_bento_10.png', date: 'Bento Asset' },
-  { id: '13', title: 'Yamaha Aerox Cyber City Sport', url: '/images/boss_rent_bento_11.png', date: 'Bento Asset' },
-  { id: '14', title: 'Helmet Handover Villa Delivery', url: '/images/boss_rent_helmet_handover.png', date: 'Bento Asset' },
-  { id: 'v-vespa', title: 'Vehicle Model: Vespa Sprint 150', url: '/images/vehicle_vespa.png', date: 'Fleet Model Asset' },
-  { id: 'v-nmax', title: 'Vehicle Model: Yamaha NMAX 155', url: '/images/vehicle_nmax.png', date: 'Fleet Model Asset' },
-  { id: 'v-pcx', title: 'Vehicle Model: Honda PCX 160', url: '/images/vehicle_pcx.png', date: 'Fleet Model Asset' },
-  { id: 'v-scoopy', title: 'Vehicle Model: Honda Scoopy 110', url: '/images/vehicle_scoopy.png', date: 'Fleet Model Asset' },
-  { id: 'v-vario', title: 'Vehicle Model: Honda Vario 160', url: '/images/vehicle_vario.png', date: 'Fleet Model Asset' },
-  { id: 'v-aerox', title: 'Vehicle Model: Yamaha Aerox 155', url: '/images/vehicle_aerox.png', date: 'Fleet Model Asset' },
-];
-
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState('storage'); // 'storage', 'payment', 'security', 'business', 'wacustom'
+  const [activeTab, setActiveTab] = useState('business'); // 'business' | 'payment' | 'wacustom' | 'security' | 'storage'
   const [alert, setAlert] = useState(null);
 
-  // Statistics State
-  const [stats, setStats] = useState({ vehicles: 0, transactions: 0, expenses: 0 });
+  // Statistik jumlah data (dihitung di server, TANPA mengunduh isinya)
+  const [stats, setStats] = useState({});
   const [loadingStats, setLoadingStats] = useState(true);
 
   // Payment Methods State
@@ -103,335 +103,10 @@ export default function SettingsPage() {
   const [showPass, setShowPass] = useState(false);
   const [savingPass, setSavingPass] = useState(false);
 
-  // Operasional & CMS Sub-Tab State ('profile' | 'hero' | 'gallery' | 'faqs')
-  const [cmsSubTab, setCmsSubTab] = useState('profile');
+  // Profil bisnis (dipakai di invoice & pesan WA) + interval servis
+  const [bizForm, setBizForm] = useState(DEFAULT_BIZ_FORM);
 
-  // Business & Public Web CMS Settings State
-  const [bizForm, setBizForm] = useState({
-    name: 'BOSS RENT PERERENAN',
-    logoUrl: '/images/logoCompany.png',
-    location: 'Jl. Pantai Pererenan No.119, Pererenan, Kec. Mengwi, Kabupaten Badung, Bali 80351',
-    phone: '+62 812-3710-9751',
-    instagramUrl: 'https://www.instagram.com/bossrentpererenan?igsh=MWFxZzE3eWI2dWlqZA==',
-    instagramHandle: '@bossrentpererenan',
-    tagline: 'Available Scooter For Rent • Best Service • Best Price • Villa Delivery Available • Clean & Well-Maintained Scooters',
-    heroTitle: 'Clean & Reliable Scooter Rental in Pererenan & Canggu',
-    heroSubtitle: 'Explore Bali with confidence! Clean helmets, delivery & pickup in Canggu / Pererenan area, transparent daily & weekly rates, and 24/7 WhatsApp support.',
-    rating: 5.0,
-    reviewsCount: 24,
-    satisfactionPercent: 100,
-    cleanScootersCount: 50,
-    defaultDeposit: 500000,
-    oilInterval: 2000,
-    cvtInterval: 6000,
-    galleryPhotos: [
-      { url: '/images/boss_rent_customer_bali.png', title: 'Scooter Rental in Pererenan', tag: 'Premium Fleet', icon: 'fa-solid fa-star' },
-      { url: '/images/boss_rent_bento_1.png', title: 'Mint Green Vespa Fleet', tag: 'Stylish Scooters', icon: 'fa-solid fa-motorcycle' },
-      { url: '/images/boss_rent_fleet_lineup.png', title: 'Clean & Regularly Serviced Fleet', tag: '100% Maintained', icon: 'fa-solid fa-wrench' },
-      { url: '/images/boss_rent_bento_2.png', title: 'Pererenan Beach Exploring', tag: 'Canggu Area', icon: 'fa-solid fa-umbrella-beach' },
-      { url: '/images/boss_rent_bento_3.png', title: 'Easy Key Handover Service', tag: 'Express Pickup', icon: 'fa-solid fa-key' },
-      { url: '/images/boss_rent_bento_6.png', title: 'Sanitized Clean Helmets Service', tag: 'Safety Standard', icon: 'fa-solid fa-shield-halved' }
-    ],
-    uploadedStoragePhotos: DEFAULT_STORAGE_PHOTOS,
-    faqs: [
-      {
-        q: 'What documents are required to rent a scooter at Boss Rent Pererenan?',
-        a: 'It is very simple! You only need to present a valid ID / Passport and a Driver’s License (or International Driving Permit for overseas tourists). Verification takes only 3 minutes with no complicated original document holding.'
-      },
-      {
-        q: 'Is villa or hotel delivery service available in Pererenan & Canggu?',
-        a: 'Yes! We provide convenient scooter delivery & pickup service directly to your Villa, Hotel, or Resort in Pererenan, Canggu, Batu Bolong, Echo Beach, and Umalas areas upon request.'
-      },
-      {
-        q: 'What amenities are included with every scooter rental?',
-        a: 'Every scooter rental comes equipped with 2 clean sanitized helmets, 2 premium raincoats, a sturdy handlebar phone holder for GPS navigation, and a well-maintained scooter with fuel ready to ride.'
-      },
-      {
-        q: 'What should I do if I experience a flat tire or mechanical issue during my rental?',
-        a: 'Don’t worry! Our 24/7 Roadside Assistance team is always ready to assist you anywhere in Bali to fix the issue or provide a swap scooter promptly.'
-      },
-      {
-        q: 'How does the security deposit refund process work?',
-        a: 'The security deposit is refunded in full (Cash or Bank Transfer) immediately upon scooter return following a quick joint physical check.'
-      }
-    ]
-  });
-
-  // Direct File Upload Handler (FileReader -> Base64 Storage)
-  const handleFileUploadToStorage = (e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64Url = event.target.result;
-        const newPhotoItem = {
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
-          title: file.name.replace(/\.[^/.]+$/, ""),
-          url: base64Url,
-          date: new Date().toLocaleDateString('id-ID')
-        };
-
-        setBizForm(prev => {
-          const updated = {
-            ...prev,
-            uploadedStoragePhotos: [newPhotoItem, ...(prev.uploadedStoragePhotos || [])]
-          };
-          localStorage.setItem('boss_rent_biz_settings', JSON.stringify(updated));
-          return updated;
-        });
-        showAlert('📁 Foto baru berhasil di-upload dan tersimpan di Repositori Storage (Opsi #5)!');
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const handleLogoFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64Url = event.target.result;
-      const logoTitle = `Logo Brand — ${file.name.replace(/\.[^/.]+$/, "")}`;
-      const newStorageItem = {
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
-        title: logoTitle,
-        url: base64Url,
-        date: new Date().toLocaleDateString('id-ID')
-      };
-
-      setBizForm(p => {
-        const updated = {
-          ...p,
-          logoUrl: base64Url,
-          uploadedStoragePhotos: [newStorageItem, ...(p.uploadedStoragePhotos || [])]
-        };
-        localStorage.setItem('boss_rent_biz_settings', JSON.stringify(updated));
-        updateFavicon(base64Url);
-        return updated;
-      });
-      showAlert('🖼️ Logo brand baru berhasil di-upload! Tampilan logo & icon browser (favicon) telah di-sinkronkan.');
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleDownloadGalleryBackup = () => {
-    const backupData = {
-      app: 'Boss Rent Pererenan',
-      type: 'Gallery Photos Storage Backup',
-      exported_at: new Date().toISOString(),
-      total_photos: bizForm.uploadedStoragePhotos?.length || 0,
-      photos: bizForm.uploadedStoragePhotos || []
-    };
-
-    const jsonStr = JSON.stringify(backupData, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `backup_boss_rent_gallery_${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showAlert('📦 File backup repositori galeri foto berhasil di-download!');
-  };
-
-  const handleUseStoragePhotoInGallery = (photo) => {
-    setBizForm(prev => {
-      const updated = {
-        ...prev,
-        galleryPhotos: [
-          ...(prev.galleryPhotos || []),
-          {
-            title: photo.title || 'Foto Baru Upload',
-            tag: 'Customer Photo',
-            url: photo.url,
-            icon: 'fa-solid fa-camera'
-          }
-        ]
-      };
-      localStorage.setItem('boss_rent_biz_settings', JSON.stringify(updated));
-      return updated;
-    });
-    setCmsSubTab('gallery');
-    showAlert('📌 Foto dari Storage Repositori berhasil digunakan pada Landing Page!');
-  };
-
-  const handleDeleteStoragePhoto = (photoId) => {
-    setBizForm(prev => {
-      const updated = {
-        ...prev,
-        uploadedStoragePhotos: (prev.uploadedStoragePhotos || []).filter(p => p.id !== photoId)
-      };
-      localStorage.setItem('boss_rent_biz_settings', JSON.stringify(updated));
-      return updated;
-    });
-    showAlert('Foto berhasil dihapus dari Storage Repositori.');
-  };
-
-  const handleModalFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setNewPhotoForm(p => ({
-        ...p,
-        url: event.target.result,
-        title: p.title || file.name.replace(/\.[^/.]+$/, "")
-      }));
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleAddFaq = () => {
-    setBizForm(prev => ({
-      ...prev,
-      faqs: [
-        ...(prev.faqs || []),
-        { q: 'New Question title in English...', a: 'Detailed answer explanation in English...' }
-      ]
-    }));
-  };
-
-  const handleUpdateFaq = (index, field, value) => {
-    setBizForm(prev => {
-      const newFaqs = [...(prev.faqs || [])];
-      newFaqs[index] = { ...newFaqs[index], [field]: value };
-      return { ...prev, faqs: newFaqs };
-    });
-  };
-
-  const handleDeleteFaq = (index) => {
-    setBizForm(prev => ({
-      ...prev,
-      faqs: (prev.faqs || []).filter((_, i) => i !== index)
-    }));
-  };
-
-  // Add Photo Modal State
-  const [showAddPhotoModal, setShowAddPhotoModal] = useState(false);
-  const [newPhotoForm, setNewPhotoForm] = useState({
-    title: '',
-    tag: 'Premium Fleet',
-    url: '/images/boss_rent_bento_1.png',
-    icon: 'fa-solid fa-motorcycle'
-  });
-  const [draggedPhotoIdx, setDraggedPhotoIdx] = useState(null);
-
-  // Preset photos options for quick selection in modal
-  const PHOTO_PRESETS = [
-    { label: 'Customer Bali Scooter', url: '/images/boss_rent_customer_bali.png' },
-    { label: 'Mint Green Vespa Fleet', url: '/images/boss_rent_bento_1.png' },
-    { label: 'Fleet Lineup Serviced', url: '/images/boss_rent_fleet_lineup.png' },
-    { label: 'Pererenan Beach Exploring', url: '/images/boss_rent_bento_2.png' },
-    { label: 'Key Handover Service', url: '/images/boss_rent_bento_3.png' },
-    { label: 'Red Honda Scoopy Sunset', url: '/images/boss_rent_bento_8.png' },
-    { label: 'Sanitized Clean Helmets', url: '/images/boss_rent_bento_6.png' },
-    { label: 'Helmet Handover Villa', url: '/images/boss_rent_helmet_handover.png' },
-    { label: 'Scenic Countryside Cruise', url: '/images/boss_rent_bento_5.png' },
-  ];
-
-  // Drag & Drop Reorder Handlers
-  const handleDragStart = (e, index) => {
-    setDraggedPhotoIdx(index);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e, index) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const handleDrop = (e, targetIndex) => {
-    e.preventDefault();
-    if (draggedPhotoIdx === null || draggedPhotoIdx === targetIndex) return;
-
-    setBizForm(prev => {
-      const photos = [...(prev.galleryPhotos || [])];
-      const [draggedItem] = photos.splice(draggedPhotoIdx, 1);
-      photos.splice(targetIndex, 0, draggedItem);
-      return { ...prev, galleryPhotos: photos };
-    });
-    setDraggedPhotoIdx(null);
-  };
-
-  const handleMovePhotoUp = (index) => {
-    if (index === 0) return;
-    setBizForm(prev => {
-      const photos = [...(prev.galleryPhotos || [])];
-      const temp = photos[index - 1];
-      photos[index - 1] = photos[index];
-      photos[index] = temp;
-      return { ...prev, galleryPhotos: photos };
-    });
-  };
-
-  const handleMovePhotoDown = (index) => {
-    setBizForm(prev => {
-      const photos = [...(prev.galleryPhotos || [])];
-      if (index >= photos.length - 1) return prev;
-      const temp = photos[index + 1];
-      photos[index + 1] = photos[index];
-      photos[index] = temp;
-      return { ...prev, galleryPhotos: photos };
-    });
-  };
-
-  const handleSaveNewPhotoModal = (e) => {
-    e.preventDefault();
-    if (!newPhotoForm.title || !newPhotoForm.url) return;
-
-    const newStorageItem = {
-      // eslint-disable-next-line react-hooks/purity -- ID unik digenerate di event handler (submit), bukan saat render
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
-      title: newPhotoForm.title,
-      url: newPhotoForm.url,
-      date: new Date().toLocaleDateString('id-ID')
-    };
-
-    setBizForm(prev => {
-      const updatedPhotos = [...(prev.galleryPhotos || []), { ...newPhotoForm }];
-      const updatedStorage = [newStorageItem, ...(prev.uploadedStoragePhotos || [])];
-
-      const newForm = {
-        ...prev,
-        galleryPhotos: updatedPhotos,
-        uploadedStoragePhotos: updatedStorage
-      };
-
-      localStorage.setItem('boss_rent_biz_settings', JSON.stringify(newForm));
-      return newForm;
-    });
-
-    setShowAddPhotoModal(false);
-    setNewPhotoForm({
-      title: '',
-      tag: 'Premium Fleet',
-      url: '/images/boss_rent_bento_1.png',
-      icon: 'fa-solid fa-motorcycle'
-    });
-
-    showAlert('✨ Foto baru berhasil ditambahkan ke Galeri & otomatis tersimpan ke Storage Repositori Opsi #5!');
-  };
-
-  const handleUpdateGalleryPhoto = (index, field, value) => {
-    setBizForm(prev => {
-      const newPhotos = [...(prev.galleryPhotos || [])];
-      newPhotos[index] = { ...newPhotos[index], [field]: value };
-      return { ...prev, galleryPhotos: newPhotos };
-    });
-  };
-
-  const handleDeleteGalleryPhoto = (index) => {
-    setBizForm(prev => ({
-      ...prev,
-      galleryPhotos: (prev.galleryPhotos || []).filter((_, i) => i !== index)
-    }));
-  };
-
-  // WA Template & Gateway State (Dual Templates: Invoice & Reminder + API Gateway)
+  // WhatsApp Template State
   const [waSubTab, setWaSubTab] = useState('invoice'); // 'invoice' | 'reminder' | 'gateway'
   const [waInvoiceText, setWaInvoiceText] = useState('');
   const [waReminderText, setWaReminderText] = useState('');
@@ -441,10 +116,8 @@ export default function SettingsPage() {
   const [testGatewayPhone, setTestGatewayPhone] = useState('');
   const [testingGateway, setTestingGateway] = useState(false);
 
-  // Backup & Restore State
+  // Backup State
   const [backupLoading, setBackupLoading] = useState(false);
-  const [restoreModalData, setRestoreModalData] = useState(null);
-  const [restoringData, setRestoringData] = useState(false);
 
   useEffect(() => {
     // Defer ke microtask: baca localStorage + setState tidak sinkron di effect
@@ -517,27 +190,73 @@ export default function SettingsPage() {
     setWaReminderText(prev => prev + ` ${tag}`);
   };
 
-  // 📦 1-CLICK FULL BACKUP DOWNLOAD (JSON)
+  const showAlert = (message, type = 'success', title = '') => {
+    setAlert({
+      message,
+      type,
+      title: title || (type === 'danger' ? 'Pemberitahuan System Error' : 'Berhasil Diperbarui ✓')
+    });
+  };
+
+  // Hitung jumlah baris per tabel dengan count+head: server hanya mengirim
+  // ANGKA, bukan data. (Sebelumnya: download seluruh tabel + foto base64.)
+  const fetchStats = useCallback(async () => {
+    setLoadingStats(true);
+    const supabase = createClient();
+    const results = await Promise.all(
+      DATA_TABLES.map(t => supabase.from(t.key).select('id', { count: 'exact', head: true }))
+    );
+    const next = {};
+    DATA_TABLES.forEach((t, i) => {
+      next[t.key] = results[i].error ? null : (results[i].count ?? 0);
+    });
+    setStats(next);
+    setLoadingStats(false);
+  }, []);
+
+  useEffect(() => {
+    // Defer ke microtask: hindari setState sinkron di dalam effect
+    Promise.resolve().then(() => {
+      fetchStats();
+      setPaymentMethodsState(getPaymentMethods());
+      const saved = readSavedBiz();
+      setBizForm({
+        name: saved.name || DEFAULT_BIZ_FORM.name,
+        logoUrl: saved.logoUrl || DEFAULT_BIZ_FORM.logoUrl,
+        location: saved.location || DEFAULT_BIZ_FORM.location,
+        phone: saved.phone || DEFAULT_BIZ_FORM.phone,
+        serviceIntervalKm: Number(saved.serviceIntervalKm ?? saved.oilInterval) || DEFAULT_SERVICE_INTERVAL_KM,
+        serviceIntervalDays: Number(saved.serviceIntervalDays) || DEFAULT_SERVICE_INTERVAL_DAYS,
+      });
+    });
+  }, [fetchStats]);
+
+  // 📦 FULL BACKUP (JSON) — per tabel dengan paging (tidak terpotong di 1000 baris)
   const handleFullBackupDownload = async () => {
     setBackupLoading(true);
     try {
       const supabase = createClient();
-      const [vRes, tRes, eRes] = await Promise.all([
-        supabase.from('vehicles').select('*'),
-        supabase.from('transactions').select('*'),
-        supabase.from('expenses').select('*')
-      ]);
+      const data = {};
+      for (const t of DATA_TABLES) {
+        const { data: rows, error } = await fetchAllRows(() =>
+          supabase.from(t.key).select('*').order(t.order, { ascending: true })
+        );
+        if (error) {
+          if (t.optional) continue;
+          throw new Error(`${t.label}: ${error.message}`);
+        }
+        data[t.key] = rows;
+      }
 
       const backupObject = {
         app: 'Boss Rent Pererenan',
-        version: '2.0',
+        version: '3.0',
         exported_at: new Date().toISOString(),
+        note: 'Foto serah terima yang sudah dipindah ke Supabase Storage hanya tersimpan sebagai referensi (storage://...), filenya tidak ikut.',
         data: {
-          vehicles: vRes.data || [],
-          transactions: tRes.data || [],
-          expenses: eRes.data || [],
+          ...data,
           settings: {
-            biz: JSON.parse(localStorage.getItem('boss_rent_biz_settings') || '{}'),
+            biz: readSavedBiz(),
             wa_invoice: localStorage.getItem('boss_rent_wa_template') || '',
             wa_reminder: localStorage.getItem('boss_rent_wa_reminder_template') || '',
             wa_gateway: JSON.parse(localStorage.getItem('boss_rent_wa_gateway') || '{}'),
@@ -547,10 +266,8 @@ export default function SettingsPage() {
       };
 
       const dateStr = new Date().toISOString().split('T')[0];
-      const jsonStr = JSON.stringify(backupObject, null, 2);
-      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify(backupObject, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-
       const link = document.createElement('a');
       link.href = url;
       link.download = `boss_rent_full_backup_${dateStr}.json`;
@@ -559,182 +276,28 @@ export default function SettingsPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      showAlert('✓ Full Backup Database (.json) berhasil diunduh!');
+      const summary = DATA_TABLES.filter(t => data[t.key]).map(t => `${data[t.key].length} ${t.label.toLowerCase()}`).join(', ');
+      showAlert(`Backup berhasil diunduh (${summary}). Simpan file ini di tempat aman, mis. Google Drive.`);
     } catch (err) {
-      showAlert(`Gagal mengeksport backup data: ${err.message}`, 'danger');
+      showAlert(`Gagal membuat backup: ${err.message}`, 'danger');
     } finally {
       setBackupLoading(false);
     }
   };
 
-  // 📦 1-CLICK FULL RESTORE / IMPORT (JSON)
-  const handleSelectRestoreFile = (e) => {
-    const file = e.target.files[0];
+  // Logo: disimpan di localStorage browser ini (dipakai header, sidebar, favicon)
+  const handleLogoFileUpload = (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
-
+    if (file.size > 1024 * 1024) {
+      showAlert('Ukuran logo maksimal 1 MB. Kecilkan dulu file-nya.', 'danger');
+      return;
+    }
     const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const json = JSON.parse(event.target.result);
-        if (!json.data || (!json.data.vehicles && !json.data.transactions)) {
-          showAlert('File JSON cadangan tidak valid atau rusak.', 'danger');
-          return;
-        }
-        // Precompute tanggal tampilan di event handler — Date.now() tidak boleh dipanggil saat render (purity)
-        setRestoreModalData({
-          ...json,
-          _displayDate: new Date(json.exported_at || Date.now()).toLocaleDateString('id-ID'),
-        });
-      } catch {
-        showAlert('Gagal membaca file JSON. Pastikan format file benar.', 'danger');
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
+    reader.onload = (event) => setBizForm(p => ({ ...p, logoUrl: event.target.result }));
+    reader.readAsDataURL(file);
   };
 
-  const handleExecuteRestore = async () => {
-    if (!restoreModalData || !restoreModalData.data) return;
-    setRestoringData(true);
-
-    try {
-      const supabase = createClient();
-      const { vehicles, transactions, expenses, settings } = restoreModalData.data;
-
-      // 1. Restore local storage settings
-      if (settings) {
-        if (settings.biz) localStorage.setItem('boss_rent_biz_settings', JSON.stringify(settings.biz));
-        if (settings.wa_invoice) localStorage.setItem('boss_rent_wa_template', settings.wa_invoice);
-        if (settings.wa_reminder) localStorage.setItem('boss_rent_wa_reminder_template', settings.wa_reminder);
-        if (settings.wa_gateway) localStorage.setItem('boss_rent_wa_gateway', JSON.stringify(settings.wa_gateway));
-        if (settings.payment_methods) localStorage.setItem('boss_rent_payment_methods', JSON.stringify(settings.payment_methods));
-      }
-
-      // 2. Restore DB Vehicles
-      if (Array.isArray(vehicles) && vehicles.length > 0) {
-        await supabase.from('vehicles').upsert(vehicles, { onConflict: 'id' });
-      }
-
-      // 3. Restore DB Transactions
-      if (Array.isArray(transactions) && transactions.length > 0) {
-        await supabase.from('transactions').upsert(transactions, { onConflict: 'id' });
-      }
-
-      // 4. Restore DB Expenses
-      if (Array.isArray(expenses) && expenses.length > 0) {
-        await supabase.from('expenses').upsert(expenses, { onConflict: 'id' });
-      }
-
-      setRestoreModalData(null);
-      fetchStats();
-      showAlert('🎉 Data aplikasi & pengaturan berhasil dipulihkan dari file backup!');
-    } catch (err) {
-      showAlert(`Terjadi kesalahan saat memulihkan data: ${err.message}`, 'danger');
-    } finally {
-      setRestoringData(false);
-    }
-  };
-
-  const showAlert = (message, type = 'success', title = '') => {
-    setAlert({
-      message,
-      type,
-      title: title || (type === 'danger' ? 'Pemberitahuan System Error' : 'Berhasil Diperbarui ✓')
-    });
-  };
-
-  // Fetch DB Statistics
-  const fetchStats = useCallback(async () => {
-    setLoadingStats(true);
-    try {
-      const [vRes, tRes, eRes] = await Promise.all([
-        fetch('/api/vehicles'),
-        fetch('/api/transactions'),
-        fetch('/api/expenses'),
-      ]);
-      const vData = await vRes.json();
-      const tData = await tRes.json();
-      const eData = await eRes.json();
-
-      let vCount = Array.isArray(vData) ? vData.length : 0;
-      let tCount = Array.isArray(tData) ? tData.length : 0;
-      let eCount = Array.isArray(eData) ? eData.length : 0;
-
-      // Fallback: jika API gagal (non-array), ambil langsung dari Supabase
-      if (!Array.isArray(vData) || !Array.isArray(tData) || !Array.isArray(eData)) {
-        try {
-          const supabase = createClient();
-          const [vFb, tFb, eFb] = await Promise.all([
-            supabase.from('vehicles').select('id'),
-            supabase.from('transactions').select('id'),
-            supabase.from('expenses').select('id'),
-          ]);
-          if (!Array.isArray(vData)) vCount = vFb.data?.length || 0;
-          if (!Array.isArray(tData)) tCount = tFb.data?.length || 0;
-          if (!Array.isArray(eData)) eCount = eFb.data?.length || 0;
-        } catch (fbErr) {
-          console.warn('Supabase fallback (settings stats) gagal:', fbErr);
-        }
-      }
-
-      setStats({
-        vehicles: vCount,
-        transactions: tCount,
-        expenses: eCount,
-      });
-    } catch {
-      // ignore
-    } finally {
-      setLoadingStats(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Defer ke microtask: hindari setState sinkron di dalam effect
-    Promise.resolve().then(() => {
-      fetchStats();
-      setPaymentMethodsState(getPaymentMethods());
-
-      // Load business settings from local storage if available, and merge all default storage photos
-      try {
-        const savedBiz = localStorage.getItem('boss_rent_biz_settings');
-        if (savedBiz) {
-          const parsed = JSON.parse(savedBiz);
-          const existingUrls = new Set((parsed.uploadedStoragePhotos || []).map(p => p.url));
-          const missingDefaults = DEFAULT_STORAGE_PHOTOS.filter(dp => !existingUrls.has(dp.url));
-          const mergedStorage = [...(parsed.uploadedStoragePhotos || []), ...missingDefaults];
-
-          setBizForm({
-            ...parsed,
-            uploadedStoragePhotos: mergedStorage
-          });
-        }
-      } catch {
-        // ignore
-      }
-    });
-  }, [fetchStats]);
-
-  // Export Data to JSON
-  const handleExportData = async (type) => {
-    try {
-      const res = await fetch(`/api/${type}`);
-      const data = await res.json();
-      const jsonStr = JSON.stringify(data, null, 2);
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `backup_boss_rent_${type}_${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showAlert(`Backup data ${type} berhasil di-download.`);
-    } catch {
-      showAlert(`Gagal mengeksport data ${type}.`, 'danger');
-    }
-  };
-
-  // Save Payment Method (Add / Edit)
   const handleSavePaymentMethod = (e) => {
     e.preventDefault();
     const id = paymentForm.id ? paymentForm.id : paymentForm.label.toLowerCase().replace(/[^a-z0-9]/g, '_');
@@ -812,11 +375,22 @@ export default function SettingsPage() {
   // Save Business Settings
   const handleSaveBizSettings = (e) => {
     e.preventDefault();
-    localStorage.setItem('boss_rent_biz_settings', JSON.stringify(bizForm));
-    if (bizForm.logoUrl) {
-      updateFavicon(bizForm.logoUrl);
+    const km = Math.round(Number(bizForm.serviceIntervalKm));
+    const days = Math.round(Number(bizForm.serviceIntervalDays));
+    if (!(km > 0) || !(days > 0)) {
+      showAlert('Interval servis harus berupa angka lebih dari 0.', 'danger');
+      return;
     }
-    showAlert('✅ Pengaturan Operasional, Logo Brand & Favicon Browser Berhasil Diperbarui! Tampilan Web & Tab Browser Telah Di-Sinkronkan.');
+    // Gabungkan dengan data lama supaya key lain (mis. konten /fleet di browser ini) tidak hilang.
+    const merged = { ...readSavedBiz(), ...bizForm, serviceIntervalKm: km, serviceIntervalDays: days };
+    try {
+      localStorage.setItem(BIZ_SETTINGS_KEY, JSON.stringify(merged));
+    } catch {
+      showAlert('Gagal menyimpan: penyimpanan browser penuh. Coba pakai logo yang lebih kecil.', 'danger');
+      return;
+    }
+    if (merged.logoUrl) updateFavicon(merged.logoUrl);
+    showAlert('Profil bisnis & interval servis tersimpan.');
   };
 
   return (
@@ -826,8 +400,8 @@ export default function SettingsPage() {
       </Suspense>
 
       <div className="page-header">
-        <h2><i className="fa-solid fa-gear" style={{ marginRight: '8px' }}></i> Pengaturan Sistem & Operasional</h2>
-        <p>Kelola koneksi database, metode pembayaran, keamanan akun, dan konfigurasi rental</p>
+        <h2><i className="fa-solid fa-gear" style={{ marginRight: '8px' }}></i> Pengaturan</h2>
+        <p>Profil bisnis, metode pembayaran, template WhatsApp, keamanan akun, dan backup data</p>
       </div>
 
       {/* INTERACTIVE MODAL NOTIFICATION POP-UP WITH OK BUTTON */}
@@ -896,15 +470,15 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Current section indicator — the section itself is now chosen from
+      {/* Current section indicator — the section itself is chosen from
           the sidebar "Pengaturan" dropdown, this just confirms what's showing */}
       {(() => {
         const TABS = [
-          { id: 'storage', label: 'Database & Storage', icon: 'fa-solid fa-database' },
+          { id: 'business', label: 'Profil Bisnis', icon: 'fa-solid fa-store' },
           { id: 'payment', label: 'Metode Pembayaran', icon: 'fa-solid fa-credit-card' },
-          { id: 'wacustom', label: 'Template Invoice WA', icon: 'fa-brands fa-whatsapp' },
+          { id: 'wacustom', label: 'Template WhatsApp', icon: 'fa-brands fa-whatsapp' },
           { id: 'security', label: 'Keamanan & Password', icon: 'fa-solid fa-shield-halved' },
-          { id: 'business', label: 'Operasional Rental', icon: 'fa-solid fa-sliders' },
+          { id: 'storage', label: 'Data & Backup', icon: 'fa-solid fa-database' },
         ];
         const current = TABS.find(t => t.id === activeTab) || TABS[0];
         return (
@@ -919,139 +493,72 @@ export default function SettingsPage() {
         );
       })()}
 
-      {/* TAB 1: DATABASE & STORAGE */}
-      {activeTab === 'storage' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Status Box */}
-          <div className="card" style={{ borderLeft: '4px solid #22C55E' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'rgba(62, 207, 142, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3ECF8E', fontSize: '22px', border: '1px solid rgba(62, 207, 142, 0.3)' }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path fillRule="evenodd" clipRule="evenodd" d="M13.35 2.54a1 1 0 0 0-1.7 0l-8.5 13.5A1 1 0 0 0 4 17.5h7v4a1 1 0 0 0 1.7 0l8.5-13.5a1 1 0 0 0-.85-1.5h-7v-3.96z" fill="#3ECF8E" />
-                  </svg>
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '16px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ color: '#3ECF8E' }}>Supabase PostgreSQL Cloud</span>
-                    <span className="badge" style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#22C55E', border: '1px solid rgba(34, 197, 94, 0.3)', fontSize: '11px' }}>
-                      <i className="fa-solid fa-circle" style={{ fontSize: '7px', marginRight: '4px' }}></i> Status Online
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    Koneksi realtime database & storage berjalan normal (Region: ap-southeast-1 Singapore)
-                  </div>
-                </div>
-              </div>
-              <button className="btn btn-secondary btn-sm" onClick={fetchStats}>
-                <i className="fa-solid fa-rotate" style={{ marginRight: '4px' }}></i> Cek Koneksi
+      {/* TAB 1: PROFIL BISNIS (dipakai di invoice/pesan WA, header & sidebar) */}
+      {activeTab === 'business' && (
+        <form className="card" onSubmit={handleSaveBizSettings} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <h3 style={{ margin: 0 }}><i className="fa-solid fa-store" style={{ marginRight: '8px' }}></i> Profil Bisnis</h3>
+            <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+              Nama, alamat, dan nomor WhatsApp muncul di invoice & pesan pengingat. Tersimpan di browser ini.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={bizForm.logoUrl || '/images/logoCompany.png'} alt="Logo"
+              style={{ width: '64px', height: '64px', objectFit: 'contain', borderRadius: '12px', background: 'var(--bg-elevated)', border: '1px solid var(--bg-border)' }} />
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer' }}>
+                <i className="fa-solid fa-upload"></i> Ganti logo
+                <input type="file" accept="image/*" onChange={handleLogoFileUpload} style={{ display: 'none' }} />
+              </label>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setBizForm(p => ({ ...p, logoUrl: DEFAULT_BIZ_FORM.logoUrl }))}>
+                Pakai logo bawaan
               </button>
             </div>
           </div>
 
-          {/* Table Counts & Storage Cards */}
-          <div className="grid-3">
-            <div className="stat-card">
-              <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6' }}>
-                <i className="fa-solid fa-motorcycle"></i>
-              </div>
-              <div className="stat-info">
-                <div className="stat-label">Tabel Vehicles</div>
-                <div className="stat-value">{loadingStats ? '...' : `${stats.vehicles} Unit`}</div>
-                <div className="stat-change">Armada motor terdaftar</div>
-              </div>
+          <div className="form-row cols-2">
+            <div className="form-group">
+              <label className="form-label">Nama bisnis</label>
+              <input className="form-control" value={bizForm.name} onChange={e => setBizForm(p => ({ ...p, name: e.target.value }))} required />
             </div>
-
-            <div className="stat-card">
-              <div className="stat-icon" style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#22C55E' }}>
-                <i className="fa-solid fa-file-invoice-dollar"></i>
-              </div>
-              <div className="stat-info">
-                <div className="stat-label">Tabel Transactions</div>
-                <div className="stat-value">{loadingStats ? '...' : `${stats.transactions} Record`}</div>
-                <div className="stat-change">Riwayat sewa kendaraan</div>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444' }}>
-                <i className="fa-solid fa-money-bill-transfer"></i>
-              </div>
-              <div className="stat-info">
-                <div className="stat-label">Tabel Expenses</div>
-                <div className="stat-value">{loadingStats ? '...' : `${stats.expenses} Record`}</div>
-                <div className="stat-change">Pencatatan pengeluaran</div>
-              </div>
+            <div className="form-group">
+              <label className="form-label">Nomor WhatsApp / telepon</label>
+              <input className="form-control" value={bizForm.phone} onChange={e => setBizForm(p => ({ ...p, phone: e.target.value }))} />
             </div>
           </div>
 
-          {/* Export / Backup & Restore Section */}
-          <div className="card">
-            <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <i className="fa-solid fa-box-archive" style={{ color: 'var(--brand-primary-light)' }}></i>
-              1-Click Backup & Pemulihan (Restore) Database
-            </h3>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: 1.5 }}>
-              Unduh seluruh database (Armada, Transaksi, Pengeluaran, Pengaturan) dalam 1 file cadangan `.json`, atau pulihkan data dari file cadangan sebelumnya.
+          <div className="form-group">
+            <label className="form-label">Alamat</label>
+            <textarea className="form-control" rows={2} value={bizForm.location} onChange={e => setBizForm(p => ({ ...p, location: e.target.value }))} />
+          </div>
+
+          <div>
+            <h4 style={{ margin: '4px 0 2px' }}><i className="fa-solid fa-screwdriver-wrench" style={{ marginRight: '6px' }}></i> Interval servis rutin</h4>
+            <p style={{ margin: '0 0 10px', fontSize: '12.5px', color: 'var(--text-muted)' }}>
+              Motor ditandai &quot;Perlu servis&quot; di halaman Servis Motor & Dashboard jika salah satu batas terlewati.
             </p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '20px' }}>
-              <div style={{ background: 'var(--bg-elevated)', padding: '16px', borderRadius: '12px', border: '1px solid var(--bg-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <i className="fa-solid fa-cloud-arrow-down" style={{ color: '#3B82F6', fontSize: '18px' }}></i>
-                  Download Full Backup (.json)
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                  Mengunduh seluruh data aplikasi (Motor, Transaksi, Pengeluaran, & Settings) dalam 1 file JSON bertanggal.
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleFullBackupDownload}
-                  disabled={backupLoading}
-                  style={{ marginTop: 'auto', width: '100%', background: '#3B82F6', borderColor: '#3B82F6' }}
-                >
-                  {backupLoading ? (
-                    <><i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '6px' }}></i> Mengunduh Backup...</>
-                  ) : (
-                    <><i className="fa-solid fa-download" style={{ marginRight: '6px' }}></i> Download Full Backup (.json)</>
-                  )}
-                </button>
+            <div className="form-row cols-2">
+              <div className="form-group">
+                <label className="form-label">Setiap (km)</label>
+                <input type="number" min="1" inputMode="numeric" className="form-control" value={bizForm.serviceIntervalKm}
+                  onChange={e => setBizForm(p => ({ ...p, serviceIntervalKm: e.target.value }))} required />
               </div>
-
-              <div style={{ background: 'var(--bg-elevated)', padding: '16px', borderRadius: '12px', border: '1px solid var(--bg-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <i className="fa-solid fa-cloud-arrow-up" style={{ color: '#22C55E', fontSize: '18px' }}></i>
-                  Restore / Import Backup (.json)
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                  Unggah file cadangan `.json` untuk memulihkan seluruh data dan pengaturan ke database aplikasi.
-                </div>
-                <label className="btn btn-success" style={{ marginTop: 'auto', width: '100%', textAlign: 'center', cursor: 'pointer', background: '#22C55E', borderColor: '#22C55E', color: '#fff', fontWeight: 600 }}>
-                  <i className="fa-solid fa-upload" style={{ marginRight: '6px' }}></i> Pilih File Backup (.json) untuk Restore
-                  <input type="file" accept=".json" onChange={handleSelectRestoreFile} style={{ display: 'none' }} />
-                </label>
-              </div>
-            </div>
-
-            <div style={{ borderTop: '1px solid var(--bg-border)', paddingTop: '12px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>
-                Ekspor Parsial Satuan:
-              </div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <button className="btn btn-secondary btn-sm" onClick={() => handleExportData('transactions')}>
-                  <i className="fa-solid fa-file-export" style={{ marginRight: '6px' }}></i> Export Transaksi (.json)
-                </button>
-                <button className="btn btn-secondary btn-sm" onClick={() => handleExportData('vehicles')}>
-                  <i className="fa-solid fa-file-export" style={{ marginRight: '6px' }}></i> Export Data Motor (.json)
-                </button>
-                <button className="btn btn-secondary btn-sm" onClick={() => handleExportData('expenses')}>
-                  <i className="fa-solid fa-file-export" style={{ marginRight: '6px' }}></i> Export Pengeluaran (.json)
-                </button>
+              <div className="form-group">
+                <label className="form-label">Atau setiap (hari)</label>
+                <input type="number" min="1" inputMode="numeric" className="form-control" value={bizForm.serviceIntervalDays}
+                  onChange={e => setBizForm(p => ({ ...p, serviceIntervalDays: e.target.value }))} required />
               </div>
             </div>
           </div>
-        </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button type="submit" className="btn btn-primary">
+              <i className="fa-solid fa-floppy-disk"></i> Simpan Profil
+            </button>
+          </div>
+        </form>
       )}
 
       {/* TAB 2: METODE PEMBAYARAN (DYNAMIC PAYMENT ADJUSTER) */}
@@ -1532,549 +1039,40 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* TAB 4: PENGATURAN OPERASIONAL RENTAL & CMS WEB PUBLIK */}
-      {activeTab === 'business' && (
-        <div style={{ maxWidth: '100%' }}>
+      {/* TAB 5: DATA & BACKUP */}
+      {activeTab === 'storage' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div className="card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
-              <div>
-                <h3 style={{ fontSize: '17px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <i className="fa-solid fa-sliders" style={{ color: 'var(--brand-primary-light)' }}></i>
-                  Pengaturan Operasional & CMS Web Publik
-                </h3>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Kelola profil usaha, banner utama, rating pelanggan, galeri foto, dan pertanyaan FAQ
-                </p>
-              </div>
-            </div>
-
-            {/* Sub-tab Pills Selector for Operasional & CMS Web Publik */}
-            <div className="scrollable-tabs-bar" style={{ marginBottom: '20px' }}>
-              <button
-                type="button"
-                className={`scrollable-tab-btn ${cmsSubTab === 'profile' ? 'active' : ''}`}
-                onClick={() => setCmsSubTab('profile')}
-              >
-                <i className="fa-solid fa-store"></i> 1. Profil Usaha & Kontak
-              </button>
-              <button
-                type="button"
-                className={`scrollable-tab-btn ${cmsSubTab === 'hero' ? 'active' : ''}`}
-                onClick={() => setCmsSubTab('hero')}
-              >
-                <i className="fa-solid fa-pen-to-square"></i> 2. Banner Hero & Rating
-              </button>
-              <button
-                type="button"
-                className={`scrollable-tab-btn ${cmsSubTab === 'gallery' ? 'active' : ''}`}
-                onClick={() => setCmsSubTab('gallery')}
-              >
-                <i className="fa-solid fa-images"></i> 3. Galeri Foto Web
-              </button>
-              <button
-                type="button"
-                className={`scrollable-tab-btn ${cmsSubTab === 'faqs' ? 'active' : ''}`}
-                onClick={() => setCmsSubTab('faqs')}
-              >
-                <i className="fa-solid fa-circle-question"></i> 4. FAQ Manager
-              </button>
-              <button
-                type="button"
-                className={`scrollable-tab-btn ${cmsSubTab === 'storage_gallery' ? 'active' : ''}`}
-                onClick={() => setCmsSubTab('storage_gallery')}
-              >
-                <i className="fa-solid fa-hard-drive"></i> 5. Storage Galeri Foto Web
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '14px' }}>
+              <h3 style={{ margin: 0 }}><i className="fa-solid fa-database" style={{ marginRight: '8px' }}></i> Jumlah Data</h3>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={fetchStats} disabled={loadingStats}>
+                <i className={`fa-solid fa-rotate${loadingStats ? ' fa-spin' : ''}`}></i> Muat ulang
               </button>
             </div>
-
-            <form onSubmit={handleSaveBizSettings}>
-              {/* SUB-TAB 1: PROFIL USAHA & KONTAK */}
-              {cmsSubTab === 'profile' && (
-                <div>
-                  {/* Editable Brand Logo Manager Card */}
-                  <div style={{ background: 'var(--bg-elevated)', padding: '16px', borderRadius: '14px', border: '1px solid var(--bg-border)', marginBottom: '20px' }}>
-                    <label className="form-label" style={{ fontSize: '13px', fontWeight: 800, color: 'var(--brand-primary-light)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <i className="fa-solid fa-image"></i> Logo Brand Perusahaan (Tampil di Sidebar, Header Admin & Web Customer)
-                    </label>
-                    <div className="settings-logo-grid">
-                      <div className="settings-logo-preview-box" style={{ background: '#FFF', padding: '10px', borderRadius: '10px', border: '1px solid var(--bg-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <img src={bizForm.logoUrl || '/images/logoCompany.png'} alt="Logo Preview" style={{ maxHeight: '56px', maxWidth: '100%', width: 'auto', objectFit: 'contain' }} />
-                      </div>
-                      <div className="settings-logo-upload-wrap" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px 16px', width: '100%' }}>
-                          <i className="fa-solid fa-cloud-arrow-up" style={{ color: 'var(--brand-primary)', fontSize: '15px' }}></i>
-                          <span style={{ fontWeight: 700 }}>Upload Logo Baru Dari HP / Laptop</span>
-                          <input type="file" accept="image/*" onChange={handleLogoFileUpload} style={{ display: 'none' }} />
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          style={{ fontSize: '11.5px', width: '100%' }}
-                          placeholder="URL / Path Logo Custom (/images/logoCompany.png atau data:image/...)"
-                          value={bizForm.logoUrl || ''}
-                          onChange={e => setBizForm(p => ({ ...p, logoUrl: e.target.value }))}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="biz-name">
-                      <i className="fa-solid fa-building" style={{ marginRight: '6px', color: 'var(--brand-primary)' }}></i> Nama Rental / Perusahaan <span className="required">*</span>
-                    </label>
-                    <input
-                      id="biz-name"
-                      type="text"
-                      className="form-control"
-                      value={bizForm.name}
-                      onChange={e => setBizForm(p => ({ ...p, name: e.target.value }))}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="biz-location">
-                      <i className="fa-solid fa-location-dot" style={{ marginRight: '6px', color: 'var(--brand-primary)' }}></i> Lokasi Alamat Store / Garasi
-                    </label>
-                    <input
-                      id="biz-location"
-                      type="text"
-                      className="form-control"
-                      value={bizForm.location}
-                      onChange={e => setBizForm(p => ({ ...p, location: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="form-row cols-2">
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="biz-ig-handle">
-                        <i className="fa-brands fa-instagram" style={{ marginRight: '6px', color: '#E1306C' }}></i> Instagram Handle
-                      </label>
-                      <input
-                        id="biz-ig-handle"
-                        type="text"
-                        className="form-control"
-                        placeholder="@bossrentpererenan"
-                        value={bizForm.instagramHandle}
-                        onChange={e => setBizForm(p => ({ ...p, instagramHandle: e.target.value }))}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="biz-ig-url">
-                        <i className="fa-solid fa-link" style={{ marginRight: '6px', color: '#3B82F6' }}></i> Instagram Profile Link
-                      </label>
-                      <input
-                        id="biz-ig-url"
-                        type="text"
-                        className="form-control"
-                        placeholder="https://instagram.com/..."
-                        value={bizForm.instagramUrl}
-                        onChange={e => setBizForm(p => ({ ...p, instagramUrl: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="biz-tagline">
-                      <i className="fa-solid fa-bullhorn" style={{ marginRight: '6px', color: '#2563EB' }}></i> Tagline Running Announcement Web Publik
-                    </label>
-                    <input
-                      id="biz-tagline"
-                      type="text"
-                      className="form-control"
-                      value={bizForm.tagline}
-                      onChange={e => setBizForm(p => ({ ...p, tagline: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="form-row cols-2">
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="biz-phone">
-                        <i className="fa-solid fa-phone" style={{ marginRight: '6px', color: '#22C55E' }}></i> No. WhatsApp Admin / Hotline
-                      </label>
-                      <input
-                        id="biz-phone"
-                        type="text"
-                        className="form-control"
-                        value={bizForm.phone}
-                        onChange={e => setBizForm(p => ({ ...p, phone: e.target.value }))}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="biz-deposit">
-                        <i className="fa-solid fa-vault" style={{ marginRight: '6px', color: '#F59E0B' }}></i> Default Deposit (Rp)
-                      </label>
-                      <input
-                        id="biz-deposit"
-                        type="number"
-                        className="form-control"
-                        value={bizForm.defaultDeposit}
-                        onChange={e => setBizForm(p => ({ ...p, defaultDeposit: parseInt(e.target.value) || 0 }))}
-                      />
-                    </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
+              {DATA_TABLES.map(t => (
+                <div key={t.key} style={{ padding: '12px 14px', borderRadius: 'var(--radius-md)', background: 'var(--bg-elevated)', border: '1px solid var(--bg-border)' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}><i className={t.icon} style={{ marginRight: '6px' }}></i>{t.label}</div>
+                  <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)', marginTop: '4px' }}>
+                    {loadingStats ? '…' : stats[t.key] === null ? '—' : (stats[t.key] ?? 0).toLocaleString('id-ID')}
                   </div>
                 </div>
-              )}
+              ))}
+            </div>
+          </div>
 
-              {/* SUB-TAB 2: BANNER HERO & RATING STATS */}
-              {cmsSubTab === 'hero' && (
-                <div>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="cms-hero-title">
-                      <i className="fa-solid fa-heading" style={{ marginRight: '6px' }}></i> Judul Utama Hero Banner (H1)
-                    </label>
-                    <input
-                      id="cms-hero-title"
-                      type="text"
-                      className="form-control"
-                      value={bizForm.heroTitle || ''}
-                      onChange={e => setBizForm(p => ({ ...p, heroTitle: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="cms-hero-subtitle">
-                      <i className="fa-solid fa-align-left" style={{ marginRight: '6px' }}></i> Subtitle Deskripsi Banner
-                    </label>
-                    <textarea
-                      id="cms-hero-subtitle"
-                      className="form-control"
-                      rows={3}
-                      value={bizForm.heroSubtitle || ''}
-                      onChange={e => setBizForm(p => ({ ...p, heroSubtitle: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="form-row cols-2 mb-4">
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="cms-rating">
-                        <i className="fa-solid fa-star" style={{ color: '#F59E0B', marginRight: '6px' }}></i> Google Rating Score
-                      </label>
-                      <input
-                        id="cms-rating"
-                        type="number"
-                        step="0.1"
-                        min="1"
-                        max="5"
-                        className="form-control"
-                        value={bizForm.rating || 5.0}
-                        onChange={e => setBizForm(p => ({ ...p, rating: parseFloat(e.target.value) || 5.0 }))}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="cms-reviews">
-                        <i className="fa-solid fa-comments" style={{ marginRight: '6px' }}></i> Total Google Reviews
-                      </label>
-                      <input
-                        id="cms-reviews"
-                        type="number"
-                        className="form-control"
-                        value={bizForm.reviewsCount || 24}
-                        onChange={e => setBizForm(p => ({ ...p, reviewsCount: parseInt(e.target.value) || 0 }))}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-row cols-2 mb-4">
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="cms-satisfaction">
-                        <i className="fa-solid fa-face-smile" style={{ color: '#22C55E', marginRight: '6px' }}></i> Customer Satisfaction (%)
-                      </label>
-                      <input
-                        id="cms-satisfaction"
-                        type="number"
-                        min="1"
-                        max="100"
-                        className="form-control"
-                        value={bizForm.satisfactionPercent || 100}
-                        onChange={e => setBizForm(p => ({ ...p, satisfactionPercent: parseInt(e.target.value) || 100 }))}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="cms-scooters">
-                        <i className="fa-solid fa-motorcycle" style={{ color: '#2563EB', marginRight: '6px' }}></i> Clean Scooters Fleet Count
-                      </label>
-                      <input
-                        id="cms-scooters"
-                        type="number"
-                        className="form-control"
-                        value={bizForm.cleanScootersCount || 50}
-                        onChange={e => setBizForm(p => ({ ...p, cleanScootersCount: parseInt(e.target.value) || 50 }))}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* SUB-TAB 3: GALERI FOTO WEB SHOWCASE */}
-              {cmsSubTab === 'gallery' && (
-                <div>
-                  <div style={{ background: 'var(--bg-elevated)', padding: '14px 18px', borderRadius: '10px', border: '1px solid var(--bg-border)', marginBottom: '16px' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--brand-primary-light)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <i className="fa-solid fa-circle-info"></i> Konsep Galeri Foto Landing Page (Drag & Drop Urutan Foto)
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                      💡 <strong>Petunjuk Adjust Urutan:</strong> Klik & Tahan ikon grip <i className="fa-solid fa-grip-vertical"></i> lalu <strong>Drag & Drop dengan kursor</strong> untuk menggeser urutan foto! Atau gunakan tombol panah <i className="fa-solid fa-arrow-up"></i> / <i className="fa-solid fa-arrow-down"></i>. <strong>Foto #1 s/d #6</strong> akan tampil secara default di halaman depan (Grid 3x2 Desktop).
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
-                    <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--brand-primary-light)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <i className="fa-solid fa-images"></i> Daftar Foto Showcase Landing Page ({bizForm.galleryPhotos?.length || 0} Foto Total)
-                    </h4>
-                    <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowAddPhotoModal(true)}>
-                      <i className="fa-solid fa-plus" style={{ marginRight: '4px' }}></i> Form Tambah Foto Baru
-                    </button>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {(bizForm.galleryPhotos || []).map((photo, idx) => (
-                      <div
-                        key={idx}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, idx)}
-                        onDragOver={(e) => handleDragOver(e, idx)}
-                        onDrop={(e) => handleDrop(e, idx)}
-                        className="gallery-item-responsive-card"
-                        style={{
-                          background: 'var(--bg-elevated)',
-                          padding: '14px 16px',
-                          borderRadius: '12px',
-                          border: idx < 6 ? '2px solid var(--brand-primary)' : '1px solid var(--bg-border)',
-                          display: 'grid',
-                          gridTemplateColumns: '32px 90px 1fr auto',
-                          gap: '14px',
-                          alignItems: 'center',
-                          cursor: 'grab',
-                          opacity: draggedPhotoIdx === idx ? 0.4 : 1,
-                          boxShadow: draggedPhotoIdx === idx ? '0 0 10px rgba(37, 99, 235, 0.4)' : 'none',
-                          transition: 'transform 0.15s ease, border 0.15s ease'
-                        }}
-                      >
-                        {/* Drag Handle Grip */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '16px' }} title="Geser (Drag & Drop) untuk ubah urutan">
-                          <i className="fa-solid fa-grip-vertical" style={{ cursor: 'grab' }}></i>
-                        </div>
-
-                        {/* Thumbnail Image */}
-                        <div style={{ position: 'relative' }}>
-                          <img src={photo.url} alt={photo.title} style={{ width: '90px', height: '68px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--bg-border)' }} />
-                          <span style={{ position: 'absolute', bottom: '4px', left: '4px', background: 'rgba(15,23,42,0.88)', color: '#FFF', fontSize: '10px', padding: '2px 6px', fontWeight: 800, borderRadius: '4px' }}>
-                            #{idx + 1}
-                          </span>
-                        </div>
-
-                        {/* Photo Form Inputs */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            {idx < 6 ? (
-                              <span style={{ fontSize: '10px', background: '#22C55E', color: '#FFF', padding: '3px 8px', fontWeight: 800, borderRadius: '4px' }}>
-                                📌 [1-6] Tampil Default Halaman Utama (Grid 3x2)
-                              </span>
-                            ) : (
-                              <span style={{ fontSize: '10px', background: '#3B82F6', color: '#FFF', padding: '3px 8px', fontWeight: 800, borderRadius: '4px' }}>
-                                👁️ [#{idx + 1}] Tampil saat Customer Klik &quot;See More&quot;
-                              </span>
-                            )}
-                          </div>
-
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                            <input
-                              type="text"
-                              className="form-control"
-                              style={{ fontSize: '12px' }}
-                              placeholder="Judul Foto (Title)..."
-                              value={photo.title}
-                              onChange={e => handleUpdateGalleryPhoto(idx, 'title', e.target.value)}
-                            />
-                            <input
-                              type="text"
-                              className="form-control"
-                              style={{ fontSize: '11px' }}
-                              placeholder="URL / Path Foto (/images/...)"
-                              value={photo.url}
-                              onChange={e => handleUpdateGalleryPhoto(idx, 'url', e.target.value)}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Reorder Up/Down & Delete Actions */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
-                          <div style={{ display: 'flex', gap: '4px' }}>
-                            <button
-                              type="button"
-                              onClick={() => handleMovePhotoUp(idx)}
-                              disabled={idx === 0}
-                              className="btn btn-secondary btn-sm"
-                              style={{ padding: '4px 8px', fontSize: '11px', opacity: idx === 0 ? 0.4 : 1 }}
-                              title="Naikkan Urutan (Up)"
-                            >
-                              <i className="fa-solid fa-arrow-up"></i>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleMovePhotoDown(idx)}
-                              disabled={idx === (bizForm.galleryPhotos?.length || 1) - 1}
-                              className="btn btn-secondary btn-sm"
-                              style={{ padding: '4px 8px', fontSize: '11px', opacity: idx === (bizForm.galleryPhotos?.length || 1) - 1 ? 0.4 : 1 }}
-                              title="Turunkan Urutan (Down)"
-                            >
-                              <i className="fa-solid fa-arrow-down"></i>
-                            </button>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteGalleryPhoto(idx)}
-                            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#EF4444', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 700, width: '100%' }}
-                            title="Hapus Foto Ini"
-                          >
-                            <i className="fa-solid fa-trash-can"></i> Hapus
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* SUB-TAB 4: FAQ MANAGER */}
-              {cmsSubTab === 'faqs' && (
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                    <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--brand-primary-light)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <i className="fa-solid fa-circle-question"></i> Kelola Pertanyaan FAQ (Public Web)
-                    </h4>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={handleAddFaq}>
-                      <i className="fa-solid fa-plus" style={{ marginRight: '4px' }}></i> Tambah FAQ Baru
-                    </button>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {(bizForm.faqs || []).map((faq, idx) => (
-                      <div key={idx} style={{ background: 'var(--bg-elevated)', padding: '14px', borderRadius: '10px', border: '1px solid var(--bg-border)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--brand-primary-light)' }}>
-                            FAQ #{idx + 1}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteFaq(idx)}
-                            style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}
-                          >
-                            <i className="fa-solid fa-trash-can" style={{ marginRight: '4px' }}></i> Hapus
-                          </button>
-                        </div>
-                        <div className="form-group" style={{ marginBottom: '8px' }}>
-                          <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Judul Pertanyaan (English)..."
-                            value={faq.q}
-                            onChange={e => handleUpdateFaq(idx, 'q', e.target.value)}
-                          />
-                        </div>
-                        <div className="form-group" style={{ marginBottom: 0 }}>
-                          <textarea
-                            className="form-control"
-                            rows={2}
-                            placeholder="Jawaban Penjelasan (English)..."
-                            value={faq.a}
-                            onChange={e => handleUpdateFaq(idx, 'a', e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* SUB-TAB 5: STORAGE GALERI FOTO WEB (DIRECT FILE UPLOADER) */}
-              {cmsSubTab === 'storage_gallery' && (
-                <div>
-                  <div style={{ background: 'var(--bg-elevated)', padding: '20px', borderRadius: '14px', border: '2px dashed var(--brand-primary)', textAlign: 'center', marginBottom: '24px' }}>
-                    <div style={{ fontSize: '36px', color: 'var(--brand-primary)', marginBottom: '8px' }}>
-                      <i className="fa-solid fa-cloud-arrow-up"></i>
-                    </div>
-                    <h4 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--brand-primary-light)', margin: '0 0 6px 0' }}>
-                      Upload Foto Baru Langsung Dari Perangkat (HP / Laptop)
-                    </h4>
-                    <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', marginBottom: '18px', maxWidth: '540px', margin: '0 auto 18px auto', lineHeight: 1.5 }}>
-                      Klien/Admin dapat langsung memilih file foto dari Galeri HP atau Laptop. Foto akan otomatis disimpan ke Storage Repositori tanpa perlu memasukkan URL atau mengetik kode file!
-                    </p>
-
-                    <label className="btn btn-primary" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 28px', fontSize: '13px', fontWeight: 800 }}>
-                      <i className="fa-solid fa-folder-open"></i>
-                      <span>Pilih & Upload Foto Dari HP / Laptop</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleFileUploadToStorage}
-                        style={{ display: 'none' }}
-                      />
-                    </label>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
-                    <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--brand-primary-light)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <i className="fa-solid fa-hard-drive"></i> Repositori Storage Galeri Foto ({bizForm.uploadedStoragePhotos?.length || 0} Foto Tersimpan)
-                    </h4>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={handleDownloadGalleryBackup}>
-                      <i className="fa-solid fa-download" style={{ marginRight: '6px', color: '#22C55E' }}></i> Download Backup Galeri Foto (JSON Archive)
-                    </button>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px' }}>
-                    {(bizForm.uploadedStoragePhotos || []).map((photo) => (
-                      <div
-                        key={photo.id}
-                        style={{
-                          background: 'var(--bg-elevated)',
-                          padding: '12px',
-                          borderRadius: '12px',
-                          border: '1px solid var(--bg-border)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '10px'
-                        }}
-                      >
-                        <img src={photo.url} alt={photo.title} style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--bg-border)' }} />
-                        <div style={{ fontSize: '11.5px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }}>
-                          {photo.title}
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '6px', marginTop: 'auto' }}>
-                          <button
-                            type="button"
-                            onClick={() => handleUseStoragePhotoInGallery(photo)}
-                            className="btn btn-primary btn-sm"
-                            style={{ flex: 1, padding: '6px 8px', fontSize: '11px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
-                            title="Gunakan foto ini ke landing page"
-                          >
-                            <i className="fa-solid fa-plus"></i> Pakai Di Web
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteStoragePhoto(photo.id)}
-                            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#EF4444', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px' }}
-                            title="Hapus dari storage"
-                          >
-                            <i className="fa-solid fa-trash-can"></i>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div style={{ marginTop: '24px', borderTop: '1px solid var(--bg-border)', paddingTop: '16px' }}>
-                <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-                  <i className="fa-solid fa-floppy-disk" style={{ marginRight: '6px' }}></i> Simpan Pengaturan CMS Web Publik
-                </button>
-              </div>
-            </form>
+          <div className="card">
+            <h3 style={{ margin: '0 0 6px' }}><i className="fa-solid fa-cloud-arrow-down" style={{ marginRight: '8px' }}></i> Backup Data</h3>
+            <p style={{ margin: '0 0 14px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              Paket gratis Supabase tidak menyediakan backup otomatis. Unduh backup lengkap (.json) secara berkala,
+              mis. seminggu sekali, dan simpan di Google Drive. Ukuran file = kuota transfer Supabase yang terpakai,
+              jadi tidak perlu terlalu sering.
+            </p>
+            <button type="button" className="btn btn-primary" onClick={handleFullBackupDownload} disabled={backupLoading}>
+              {backupLoading
+                ? <><i className="fa-solid fa-spinner fa-spin"></i> Menyiapkan backup…</>
+                : <><i className="fa-solid fa-download"></i> Unduh Backup Lengkap</>}
+            </button>
           </div>
         </div>
       )}
@@ -2222,133 +1220,6 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* MODAL FORM TAMBAH FOTO SHOWCASE GALERI WEB */}
-      {showAddPhotoModal && (
-        <div className="modal-overlay" onClick={() => setShowAddPhotoModal(false)}>
-          <div className="modal modal-md" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-title">
-                <i className="fa-solid fa-camera-retro" style={{ marginRight: '6px', color: 'var(--brand-primary-light)' }}></i>
-                Tambah Foto Showcase Galeri Web Pelanggan
-              </div>
-              <button className="modal-close" onClick={() => setShowAddPhotoModal(false)}>✕</button>
-            </div>
-
-            <form onSubmit={handleSaveNewPhotoModal}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="photo-title">
-                  <i className="fa-solid fa-heading" style={{ marginRight: '6px' }}></i> Judul Foto Showcase <span className="required">*</span>
-                </label>
-                <input
-                  id="photo-title"
-                  type="text"
-                  className="form-control"
-                  placeholder="e.g. Mint Green Vespa in Canggu Beach"
-                  value={newPhotoForm.title}
-                  onChange={e => setNewPhotoForm(p => ({ ...p, title: e.target.value }))}
-                  required
-                />
-              </div>
-
-              <div className="form-row cols-2">
-                <div className="form-group">
-                  <label className="form-label" htmlFor="photo-tag">
-                    <i className="fa-solid fa-tag" style={{ marginRight: '6px' }}></i> Kategori / Pill Badge Tag
-                  </label>
-                  <input
-                    id="photo-tag"
-                    type="text"
-                    className="form-control"
-                    placeholder="e.g. Stylish Scooters, Free Delivery"
-                    value={newPhotoForm.tag}
-                    onChange={e => setNewPhotoForm(p => ({ ...p, tag: e.target.value }))}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="photo-icon">
-                    <i className="fa-solid fa-icons" style={{ marginRight: '6px' }}></i> Ikon FontAwesome
-                  </label>
-                  <input
-                    id="photo-icon"
-                    type="text"
-                    className="form-control"
-                    placeholder="fa-solid fa-motorcycle"
-                    value={newPhotoForm.icon}
-                    onChange={e => setNewPhotoForm(p => ({ ...p, icon: e.target.value }))}
-                  />
-                </div>
-              </div>
-
-              {/* Direct File Picker Upload Button */}
-              <div className="form-group" style={{ marginBottom: '14px' }}>
-                <label className="form-label">
-                  <i className="fa-solid fa-cloud-arrow-up" style={{ marginRight: '6px', color: 'var(--brand-primary)' }}></i> Upload File Foto Dari Perangkat (HP / Laptop)
-                </label>
-                <label className="btn btn-secondary btn-sm" style={{ width: '100%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px', background: 'var(--bg-elevated)', border: '1px dashed var(--brand-primary)' }}>
-                  <i className="fa-solid fa-folder-open" style={{ color: 'var(--brand-primary)' }}></i>
-                  <span>Pilih & Upload Foto Langsung Dari HP / Laptop</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleModalFileUpload}
-                    style={{ display: 'none' }}
-                  />
-                </label>
-              </div>
-
-              {/* Quick Preset Selector */}
-              <div className="form-group">
-                <label className="form-label">
-                  <i className="fa-solid fa-images" style={{ marginRight: '6px' }}></i> Atau Pilih Dari Repositori Storage Opsi #5 ({bizForm.uploadedStoragePhotos?.length || 0} Foto Tersimpan)
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', maxHeight: '160px', overflowY: 'auto', padding: '6px', background: 'var(--bg-elevated)', borderRadius: '8px', border: '1px solid var(--bg-border)' }}>
-                  {((bizForm.uploadedStoragePhotos && bizForm.uploadedStoragePhotos.length > 0) ? bizForm.uploadedStoragePhotos : PHOTO_PRESETS).map((preset, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => setNewPhotoForm(p => ({ ...p, url: preset.url, title: p.title || preset.label || preset.title }))}
-                      style={{
-                        padding: '6px',
-                        borderRadius: '6px',
-                        border: newPhotoForm.url === preset.url ? '2px solid var(--brand-primary)' : '1px solid var(--bg-border)',
-                        cursor: 'pointer',
-                        textAlign: 'center',
-                        background: 'var(--bg-card)'
-                      }}
-                    >
-                      <img src={preset.url} alt={preset.label || preset.title} style={{ width: '100%', height: '48px', objectFit: 'cover', borderRadius: '4px', marginBottom: '4px' }} />
-                      <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {preset.label || preset.title}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="photo-url">
-                  <i className="fa-solid fa-link" style={{ marginRight: '6px' }}></i> URL / Path Foto / Preview Base64 <span className="required">*</span>
-                </label>
-                <input
-                  id="photo-url"
-                  type="text"
-                  className="form-control"
-                  placeholder="/images/boss_rent_bento_1.png atau data:image/png;base64..."
-                  value={newPhotoForm.url}
-                  onChange={e => setNewPhotoForm(p => ({ ...p, url: e.target.value }))}
-                  required
-                />
-              </div>
-
-              <div className="modal-footer" style={{ padding: '16px 0 0 0' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowAddPhotoModal(false)}>Batal</button>
-                <button type="submit" className="btn btn-primary">
-                  <i className="fa-solid fa-floppy-disk" style={{ marginRight: '6px' }}></i> Simpan Foto Ke Galeri
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
