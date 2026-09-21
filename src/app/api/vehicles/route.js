@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireAuth, readJsonBody, missingFields, toNonNegativeNumber } from '@/lib/apiAuth';
 import { NextResponse } from 'next/server';
+import { VEHICLE_LIGHT_COLUMNS } from '@/lib/queryColumns';
 
 const VALID_STATUS = ['available', 'rented', 'maintenance'];
 const VALID_CATEGORIES = ['honda', 'yamaha', 'suzuki', 'kawasaki', 'vespa', 'other'];
@@ -13,8 +14,10 @@ export async function GET(request) {
   const supabase = await createAdminClient();
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status');
+  // ?view=light → tanpa foto katalog (image_url base64 bisa ratusan KB per motor)
+  const columns = searchParams.get('view') === 'light' ? VEHICLE_LIGHT_COLUMNS : '*';
 
-  let query = supabase.from('vehicles').select('*').order('created_at', { ascending: false });
+  let query = supabase.from('vehicles').select(columns).order('created_at', { ascending: false });
   if (status && status !== 'all') query = query.eq('status', status);
 
   const { data, error } = await query;

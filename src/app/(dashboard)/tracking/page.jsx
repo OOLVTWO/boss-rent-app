@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { TX_LIGHT_SELECT, VEHICLE_LIGHT_COLUMNS } from '@/lib/queryColumns';
+import { startVisiblePolling } from '@/lib/visiblePolling';
 import { getWhatsAppShareUrl, getWaReminderTemplate } from '@/lib/countryCodes';
 
 const VALID_TRACKING_TABS = ['all', 'overdue', 'critical', 'upcoming'];
@@ -432,10 +434,10 @@ export default function TrackingPage() {
     const [{ data: txData }, { data: vData }] = await Promise.all([
       supabase
         .from('transactions')
-        .select('*, vehicles(id, name, plate_number, category, rate_per_day)')
+        .select(TX_LIGHT_SELECT)
         .eq('status', 'active')
         .order('end_date', { ascending: true }),
-      supabase.from('vehicles').select('*'),
+      supabase.from('vehicles').select(VEHICLE_LIGHT_COLUMNS),
     ]);
     const validTxData = (txData || []).filter(tx => tx.vehicles && tx.vehicles.id);
     setTransactions(validTxData);
@@ -484,8 +486,9 @@ export default function TrackingPage() {
   useEffect(() => {
     // Defer ke microtask: hindari setState sinkron di dalam effect
     Promise.resolve().then(loadData);
-    refreshRef.current = setInterval(loadData, 60000);
-    return () => clearInterval(refreshRef.current);
+    // Polling hanya saat tab terlihat (hemat kuota egress Supabase)
+    refreshRef.current = startVisiblePolling(loadData, 60000);
+    return () => refreshRef.current?.();
   }, [loadData]);
 
   // Build vehicle lookup

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { compressImage } from '@/lib/imageCompressor';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { uploadHandoverPhoto, resolvePhotoSrc, resolvePhotoDataUrl, removeHandoverPhoto } from '@/lib/handoverPhoto';
+import { TX_LIGHT_COLUMNS, TX_LIGHT_SELECT, VEHICLE_LIGHT_COLUMNS } from '@/lib/queryColumns';
 import { getPaymentMethods, getPaymentMethodMeta } from '@/lib/paymentMethods';
 import { COUNTRY_CODES, getWhatsAppShareUrl, generateInvoiceText, generateInvoiceNumber, getFlagImageUrl } from '@/lib/countryCodes';
 import { createClient } from '@/lib/supabase/client';
@@ -676,7 +677,6 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
     end_date: '',
     deposit: '',
     discount: '',
-    customer_image_url: '',
     handover_image_url: '',
     km_start: '',
     payment_method: 'cash',
@@ -691,6 +691,26 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showOptional, setShowOptional] = useState(false);
+  const photoClient = useMemo(() => createClient(), []);
+  const pendingUploadRef = useRef(null);   // foto yang sudah diunggah tapi belum disimpan
+  const [photoChanged, setPhotoChanged] = useState(false);
+  const [handoverPreview, setHandoverPreview] = useState(null);
+
+  // Ubah nilai kolom foto (referensi Storage / base64 lama) jadi src yang bisa ditampilkan.
+  useEffect(() => {
+    let cancelled = false;
+    const value = form.handover_image_url;
+    Promise.resolve().then(async () => {
+      if (!value) { if (!cancelled) setHandoverPreview(null); return; }
+      try {
+        const src = await resolvePhotoSrc(photoClient, value);
+        if (!cancelled) setHandoverPreview(src);
+      } catch {
+        if (!cancelled) setHandoverPreview(null);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [form.handover_image_url, photoClient]);
   const [showConfirm, setShowConfirm] = useState(false);
 
   // ── Kalkulasi harga otomatis: pilih kombinasi termurah daily/weekly/monthly ──
@@ -732,7 +752,6 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
       renter_phone: cust.phone || prev.renter_phone,
       renter_id_number: cust.id_number || prev.renter_id_number,
       renter_address: cust.address || prev.renter_address,
-      customer_image_url: cust.customer_image_url || prev.customer_image_url,
     }));
 
     if (cust.phone) {
@@ -761,7 +780,6 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
           end_date: editData.end_date || '',
           deposit: editData.deposit || '',
           discount: editData.discount || '',
-          customer_image_url: editData.customer_image_url || '',
           handover_image_url: editData.handover_image_url || '',
           km_start: editData.km_start || '',
           payment_method: editData.payment_method || 'cash',
@@ -796,7 +814,6 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
           end_date: '',
           deposit: '',
           discount: '',
-          customer_image_url: '',
           handover_image_url: '',
           km_start: '',
           payment_method: 'cash',
@@ -809,6 +826,8 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
         setTotalPrice(0);
         setShowOptional(false);
       }
+      setPhotoChanged(false);
+      pendingUploadRef.current = null;
     });
   }, [editData, isOpen]);
 
@@ -839,18 +858,42 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleImageFile = async (e, fieldName = 'customer_image_url') => {
+  // Foto serah terima: dikompres lalu langsung diunggah ke Supabase Storage.
+  // Kolom hanya menyimpan referensi pendek; file yang diunggah tapi batal
+  // disimpan akan dihapus lagi saat modal ditutup.
+  const handleImageFile = async (e) => {
     const file = e.target.files[0];
+    e.target.value = '';
     if (!file) return;
     setUploading(true);
     try {
-      const compressedDataUrl = await compressImage(file, { maxWidth: 1000, maxHeight: 1000, quality: 0.82 });
-      setForm(prev => ({ ...prev, [fieldName]: compressedDataUrl }));
+      const ref = await uploadHandoverPhoto(photoClient, file);
+      if (pendingUploadRef.current) removeHandoverPhoto(photoClient, pendingUploadRef.current);
+      pendingUploadRef.current = ref;
+      setPhotoChanged(true);
+      setForm(prev => ({ ...prev, handover_image_url: ref }));
     } catch (err) {
       alert(err.message || 'Gagal memproses gambar.');
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleRemovePhoto = () => {
+    if (pendingUploadRef.current) {
+      removeHandoverPhoto(photoClient, pendingUploadRef.current);
+      pendingUploadRef.current = null;
+    }
+    setPhotoChanged(true);
+    setForm(p => ({ ...p, handover_image_url: '' }));
+  };
+
+  const handleClose = () => {
+    if (pendingUploadRef.current) {
+      removeHandoverPhoto(photoClient, pendingUploadRef.current);
+      pendingUploadRef.current = null;
+    }
+    onClose();
   };
 
   const handleSubmit = async (e) => {
@@ -867,7 +910,12 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
     const cleanVehicleId = (form.vehicle_id || '').trim();
     setShowConfirm(false);
     setLoading(true);
-    await onSubmit({ ...form, vehicle_id: cleanVehicleId, total_price: totalPrice });
+    // Saat edit, kolom foto hanya dikirim kalau memang diubah (mencegah foto terhapus tanpa sengaja).
+    const { handover_image_url, ...rest } = form;
+    const payload = { ...rest, vehicle_id: cleanVehicleId, total_price: totalPrice };
+    if (!editData || photoChanged) payload.handover_image_url = handover_image_url || null;
+    const ok = await onSubmit(payload);
+    if (ok !== false) pendingUploadRef.current = null;
     setLoading(false);
   };
 
@@ -880,7 +928,7 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
   const selectedVehicleObj = vehicles.find(v => v.id === form.vehicle_id);
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={handleClose}>
       <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <div>
@@ -893,7 +941,7 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
             </div>
             <div className="modal-subtitle">Isi data penyewaan motor & customer</div>
           </div>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <button className="modal-close" onClick={handleClose}>✕</button>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -1096,65 +1144,41 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
                 <input id="tx-id-num" name="renter_id_number" type="text" className="form-control" placeholder="Nomor identitas" value={form.renter_id_number} onChange={handleChange} />
               </div>
 
-              {/* Dual Photo Upload */}
+              {/* Foto Serah Terima (1 foto: penyewa + motor) — disimpan di Supabase Storage */}
               <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--brand-primary-light)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <i className="fa-solid fa-camera-retro"></i> Upload Dokumentasi Foto (Opsional)
+                <i className="fa-solid fa-camera-retro"></i> Foto Serah Terima (Opsional)
               </div>
-              <div className="form-row cols-2" style={{ gap: '14px' }}>
-                {/* Foto KTP */}
-                <div className="form-group mb-0">
-                  <label className="form-label" style={{ fontSize: '12px' }}>
-                    <i className="fa-solid fa-id-card" style={{ marginRight: '6px', color: 'var(--brand-primary)' }}></i> Foto KTP / Paspor / SIM
-                  </label>
-                  {form.customer_image_url ? (
-                    <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #22C55E' }}>
-                      <img src={form.customer_image_url} alt="KTP" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      <button type="button" onClick={() => setForm(p => ({ ...p, customer_image_url: '' }))}
-                        style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(239,68,68,0.9)', color: '#FFF', border: 'none', borderRadius: '50%', width: '26px', height: '26px', cursor: 'pointer', fontWeight: 800, fontSize: '12px' }}>✕</button>
-                      <span style={{ position: 'absolute', bottom: '6px', left: '6px', background: 'rgba(15,23,42,0.9)', color: '#22C55E', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 800 }}>✓ Foto Dimuat</span>
-                    </div>
-                  ) : (
-                    <div>
-                      <input type="file" accept="image/*" id="tx-id-photo-input" onChange={(e) => handleImageFile(e, 'customer_image_url')} style={{ display: 'none' }} />
-                      <label htmlFor="tx-id-photo-input" className="custom-file-btn"
-                        style={{ height: '100px', flexDirection: 'column', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed var(--brand-primary)', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', cursor: 'pointer', padding: '12px', textAlign: 'center' }}>
-                        <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '22px', color: 'var(--brand-primary)' }}></i>
-                        <span style={{ fontSize: '11px', fontWeight: 700, marginTop: '6px' }}>Upload Foto KTP / Paspor</span>
-                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Klik / Ambil dari Kamera</span>
-                      </label>
-                    </div>
-                  )}
-                </div>
-
-                {/* Foto Handover */}
-                <div className="form-group mb-0">
-                  <label className="form-label" style={{ fontSize: '12px' }}>
-                    <i className="fa-solid fa-motorcycle" style={{ marginRight: '6px', color: '#3B82F6' }}></i> Foto Orang + Motor (Handover)
-                  </label>
-                  {form.handover_image_url ? (
-                    <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #3B82F6' }}>
-                      <img src={form.handover_image_url} alt="Handover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      <button type="button" onClick={() => setForm(p => ({ ...p, handover_image_url: '' }))}
-                        style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(239,68,68,0.9)', color: '#FFF', border: 'none', borderRadius: '50%', width: '26px', height: '26px', cursor: 'pointer', fontWeight: 800, fontSize: '12px' }}>✕</button>
-                      <span style={{ position: 'absolute', bottom: '6px', left: '6px', background: 'rgba(15,23,42,0.9)', color: '#3B82F6', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 800 }}>✓ Foto Dimuat</span>
-                    </div>
-                  ) : (
-                    <div>
-                      <input type="file" accept="image/*" id="tx-handover-photo-input" onChange={(e) => handleImageFile(e, 'handover_image_url')} style={{ display: 'none' }} />
-                      <label htmlFor="tx-handover-photo-input" className="custom-file-btn"
-                        style={{ height: '100px', flexDirection: 'column', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed #3B82F6', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', cursor: 'pointer', padding: '12px', textAlign: 'center' }}>
-                        <i className="fa-solid fa-camera" style={{ fontSize: '22px', color: '#3B82F6' }}></i>
-                        <span style={{ fontSize: '11px', fontWeight: 700, marginTop: '6px' }}>Foto Serah Terima</span>
-                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Dokumentasi Orang + Motor</span>
-                      </label>
-                    </div>
-                  )}
-                </div>
+              <div className="form-group mb-0">
+                <label className="form-label" style={{ fontSize: '12px' }}>
+                  <i className="fa-solid fa-motorcycle" style={{ marginRight: '6px', color: '#3B82F6' }}></i> Foto Penyewa + Motor saat serah terima
+                </label>
+                {form.handover_image_url ? (
+                  <div style={{ position: 'relative', width: '100%', maxWidth: '360px', height: '180px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #3B82F6', background: 'var(--bg-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {handoverPreview ? (
+                      <img src={handoverPreview} alt="Serah terima" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <i className="fa-solid fa-spinner fa-spin" style={{ color: 'var(--text-muted)' }}></i>
+                    )}
+                    <button type="button" onClick={handleRemovePhoto} title="Hapus foto"
+                      style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(239,68,68,0.9)', color: '#FFF', border: 'none', borderRadius: '50%', width: '26px', height: '26px', cursor: 'pointer', fontWeight: 800, fontSize: '12px' }}>✕</button>
+                    <span style={{ position: 'absolute', bottom: '6px', left: '6px', background: 'rgba(15,23,42,0.9)', color: '#3B82F6', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 800 }}>✓ Foto tersimpan</span>
+                  </div>
+                ) : (
+                  <div>
+                    <input type="file" accept="image/*" id="tx-handover-photo-input" onChange={handleImageFile} style={{ display: 'none' }} disabled={uploading} />
+                    <label htmlFor="tx-handover-photo-input" className="custom-file-btn"
+                      style={{ height: '100px', maxWidth: '360px', flexDirection: 'column', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed #3B82F6', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', cursor: 'pointer', padding: '12px', textAlign: 'center' }}>
+                      <i className="fa-solid fa-camera" style={{ fontSize: '22px', color: '#3B82F6' }}></i>
+                      <span style={{ fontSize: '11px', fontWeight: 700, marginTop: '6px' }}>Ambil / pilih foto serah terima</span>
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Penyewa bersama motor</span>
+                    </label>
+                  </div>
+                )}
               </div>
 
               {uploading && (
                 <div style={{ fontSize: '11px', color: 'var(--brand-primary-light)', marginTop: '8px', textAlign: 'center' }}>
-                  <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '4px' }}></i> Mengompresi gambar...
+                  <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '4px' }}></i> Mengompres & mengunggah foto...
                 </div>
               )}
             </div>
@@ -1162,7 +1186,7 @@ function TransactionModal({ isOpen, onClose, onSubmit, vehicles, editData }) {
 
           {/* ── Footer ── */}
           <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>Batal</button>
+            <button type="button" className="btn btn-secondary" onClick={handleClose}>Batal</button>
             <button type="submit" className="btn btn-primary" disabled={loading || uploading}>
               {loading ? (
                 <><i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '4px' }}></i> Menyimpan...</>
@@ -1535,18 +1559,12 @@ function WhatsAppInvoiceModal({ isOpen, onClose, tx, vehicle }) {
               </div>
 
               {/* Documentation Photos on Invoice Card */}
-              {(tx.customer_image_url || tx.handover_image_url) && (
+              {tx.handover_image_url && (
                 <div style={{ marginBottom: '20px', background: '#F8FAFC', padding: '14px', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
                   <div style={{ fontSize: '10.5px', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <i className="fa-solid fa-camera" style={{ color: '#2563EB' }}></i> Transaction Photo Documentation
                   </div>
                   <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
-                    {tx.customer_image_url && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <img src={tx.customer_image_url} alt="ID Card" style={{ width: '110px', height: '76px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #CBD5E1' }} />
-                        <span style={{ fontSize: '10px', color: '#16A34A', fontWeight: 700 }}>✓ ID Photo (KTP/Passport)</span>
-                      </div>
-                    )}
                     {tx.handover_image_url && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <img src={tx.handover_image_url} alt="Handover" style={{ width: '110px', height: '76px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #CBD5E1' }} />
@@ -2119,6 +2137,10 @@ export default function TransactionsPage() {
   const [lunasToast, setLunasToast] = useState({ open: false, renterName: '' });
   const [saveToast, setSaveToast] = useState({ open: false, isEdit: false, renterName: '' });
   const [errorToast, setErrorToast] = useState({ open: false, message: '' });
+  // id transaksi yang punya foto serah terima (list tidak lagi membawa isi foto)
+  const [photoIds, setPhotoIds] = useState(() => new Set());
+  const [openingId, setOpeningId] = useState(null);
+  const [photoViewer, setPhotoViewer] = useState({ open: false, loading: false, src: null, name: '' });
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -2129,14 +2151,19 @@ export default function TransactionsPage() {
     // ke Supabase (sama seperti halaman Ketersediaan/Tracking) supaya data
     // transaksi & motor TIDAK pernah tampak "hilang".
     try {
-      const [txRes, vRes] = await Promise.all([
+      // List transaksi & motor TANPA foto (lihat lib/queryColumns.js);
+      // foto diambil per transaksi saat Edit / Invoice / Lihat foto dibuka.
+      const [txRes, vRes, photoRes] = await Promise.all([
         fetch('/api/transactions'),
-        fetch('/api/vehicles'),
+        fetch('/api/vehicles?view=light'),
+        fetch('/api/transactions?view=photo_ids'),
       ]);
       const txData = txRes.ok ? await txRes.json() : null;
       const vData = vRes.ok ? await vRes.json() : null;
+      const photoData = photoRes.ok ? await photoRes.json() : null;
       if (Array.isArray(txData)) txList = txData;
       if (Array.isArray(vData)) vList = vData;
+      if (Array.isArray(photoData?.handover)) setPhotoIds(new Set(photoData.handover));
       if (txList === null || vList === null) {
         console.warn('API /api/transactions|/api/vehicles gagal — fallback ke Supabase langsung.');
       }
@@ -2150,12 +2177,12 @@ export default function TransactionsPage() {
         if (txList === null) {
           let txQ = await supabase
             .from('transactions')
-            .select('*, vehicles(id, name, plate_number, rate_per_day)')
+            .select(TX_LIGHT_SELECT)
             .order('created_at', { ascending: false });
           if (txQ.error) {
             // Relasi/kolom bermasalah → ambil polos lalu gabung manual
-            const txPlain = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
-            const vehAll = await supabase.from('vehicles').select('*');
+            const txPlain = await supabase.from('transactions').select(TX_LIGHT_COLUMNS).order('created_at', { ascending: false });
+            const vehAll = await supabase.from('vehicles').select(VEHICLE_LIGHT_COLUMNS);
             const vehMap = (vehAll.data || []).reduce((m, v) => { m[v.id] = v; return m; }, {});
             txList = (txPlain.data || []).map(t => ({ ...t, vehicles: vehMap[t.vehicle_id] || null }));
           } else {
@@ -2163,7 +2190,7 @@ export default function TransactionsPage() {
           }
         }
         if (vList === null) {
-          const vQ = await supabase.from('vehicles').select('*').order('created_at', { ascending: false });
+          const vQ = await supabase.from('vehicles').select(VEHICLE_LIGHT_COLUMNS).order('created_at', { ascending: false });
           vList = vQ.error ? [] : (vQ.data || []);
         }
       } catch (err) {
@@ -2199,7 +2226,6 @@ const handleSubmit = async (formData) => {
           phone: formData.renter_phone,
           id_number: formData.renter_id_number,
           address: formData.renter_address,
-          customer_image_url: formData.customer_image_url,
         });
       } catch { /* ignore */ }
 
@@ -2207,9 +2233,63 @@ const handleSubmit = async (formData) => {
       setEditData(null);
       fetchAll();
       setSaveToast({ open: true, isEdit, renterName: formData.renter_name });
-    } else {
-      const err = await res.json();
-      setErrorToast({ open: true, message: err.error || 'Terjadi kesalahan, coba lagi.' });
+      return true;
+    }
+    const err = await res.json().catch(() => ({}));
+    setErrorToast({ open: true, message: err.error || 'Terjadi kesalahan, coba lagi.' });
+    return false;
+  };
+
+  // Ambil SATU transaksi lengkap (termasuk foto) — hanya saat dibutuhkan.
+  const fetchFullTransaction = async (txId) => {
+    const res = await fetch(`/api/transactions/${txId}`);
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.error || 'Gagal memuat detail transaksi.');
+    return json;
+  };
+
+  // Edit WAJIB memakai data lengkap: form edit ikut menyimpan kolom foto.
+  const openEdit = async (tx) => {
+    setOpeningId(tx.id);
+    try {
+      const full = await fetchFullTransaction(tx.id);
+      setEditData(full);
+      setShowModal(true);
+    } catch (err) {
+      setErrorToast({ open: true, message: err.message });
+    } finally {
+      setOpeningId(null);
+    }
+  };
+
+  const openWa = async (tx) => {
+    if (!photoIds.has(tx.id)) {
+      setWaModal({ open: true, tx });
+      return;
+    }
+    setOpeningId(tx.id);
+    try {
+      const full = await fetchFullTransaction(tx.id);
+      // Invoice visual dirender ke gambar → pakai data URL supaya canvas tidak "tainted".
+      let photo = null;
+      try { photo = await resolvePhotoDataUrl(createClient(), full.handover_image_url); } catch { photo = null; }
+      setWaModal({ open: true, tx: { ...full, customer_image_url: null, handover_image_url: photo } });
+    } catch (err) {
+      setErrorToast({ open: true, message: err.message });
+    } finally {
+      setOpeningId(null);
+    }
+  };
+
+  const openPhoto = async (tx) => {
+    setPhotoViewer({ open: true, loading: true, src: null, name: tx.renter_name });
+    try {
+      const full = await fetchFullTransaction(tx.id);
+      const src = await resolvePhotoSrc(createClient(), full.handover_image_url);
+      setPhotoViewer({ open: true, loading: false, src, name: tx.renter_name });
+    } catch (err) {
+      setPhotoViewer({ open: false, loading: false, src: null, name: '' });
+      setErrorToast({ open: true, message: err.message });
     }
   };
 
@@ -2360,16 +2440,13 @@ const handleSubmit = async (formData) => {
                       <div className="tx-customer-cell">
                         <div style={{ display: 'flex', position: 'relative', flexShrink: 0 }}>
                           <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'var(--bg-card-hover)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid var(--bg-border)' }}>
-                            {tx.customer_image_url ? (
-                              <img src={tx.customer_image_url} alt={tx.renter_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} title="Foto KTP/SIM Penyewa" />
-                            ) : (
-                              <i className="fa-solid fa-user" style={{ fontSize: '16px', color: 'var(--brand-primary)' }}></i>
-                            )}
+                            <i className="fa-solid fa-user" style={{ fontSize: '16px', color: 'var(--brand-primary)' }}></i>
                           </div>
-                          {tx.handover_image_url && (
-                            <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#3B82F6', overflow: 'hidden', position: 'absolute', bottom: '-2px', right: '-4px', border: '2px solid #0F172A' }} title="Foto Serah Terima Motor">
-                              <img src={tx.handover_image_url} alt="Serah Terima" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            </div>
+                          {photoIds.has(tx.id) && (
+                            <button type="button" onClick={() => openPhoto(tx)} title="Lihat foto serah terima"
+                              style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#3B82F6', color: '#fff', position: 'absolute', bottom: '-2px', right: '-6px', border: '2px solid #0F172A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', cursor: 'pointer', padding: 0 }}>
+                              <i className="fa-solid fa-camera"></i>
+                            </button>
                           )}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
@@ -2467,7 +2544,8 @@ const handleSubmit = async (formData) => {
                           className="btn btn-success btn-sm"
                           title="Kirim Invoice WhatsApp"
                           style={{ background: '#25D366', borderColor: '#25D366', color: '#fff', padding: '7px 10px' }}
-                          onClick={() => setWaModal({ open: true, tx })}
+                          onClick={() => openWa(tx)}
+                          disabled={openingId === tx.id}
                         >
                           <i className="fa-brands fa-whatsapp"></i>
                         </button>
@@ -2498,9 +2576,10 @@ const handleSubmit = async (formData) => {
                           className="btn btn-secondary btn-sm"
                           title="Edit Transaksi"
                           style={{ padding: '7px 10px' }}
-                          onClick={() => { setEditData(tx); setShowModal(true); }}
+                          onClick={() => openEdit(tx)}
+                          disabled={openingId === tx.id}
                         >
-                          <i className="fa-solid fa-pen-to-square"></i>
+                          <i className={openingId === tx.id ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-pen-to-square'}></i>
                         </button>
                         <button
                           className="btn btn-danger btn-sm"
@@ -2538,6 +2617,26 @@ const handleSubmit = async (formData) => {
         tx={waModal.tx}
         vehicle={waModal.tx?.vehicles}
       />
+
+      {photoViewer.open && (
+        <div className="modal-overlay" onClick={() => setPhotoViewer({ open: false, loading: false, src: null, name: '' })}>
+          <div className="modal modal-md" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title"><i className="fa-solid fa-camera" style={{ marginRight: '6px' }}></i> Foto Serah Terima — {photoViewer.name}</div>
+              <button className="modal-close" type="button" onClick={() => setPhotoViewer({ open: false, loading: false, src: null, name: '' })}>✕</button>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+              {photoViewer.loading ? (
+                <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '22px', color: 'var(--text-muted)' }}></i>
+              ) : photoViewer.src ? (
+                <img src={photoViewer.src} alt="Foto serah terima" style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: '10px' }} />
+              ) : (
+                <span style={{ color: 'var(--text-muted)' }}>Foto tidak ditemukan.</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <CompleteModal
         isOpen={completeModal.open}

@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { exportFinancesToExcel } from '@/lib/excel';
 import { getLocalDateStr } from '@/lib/finance';
 import { createClient } from '@/lib/supabase/client';
+import { TX_LIGHT_SELECT } from '@/lib/queryColumns';
 
 const VALID_TYPE_TABS = ['all', 'income', 'expense'];
 
@@ -94,7 +95,9 @@ function FinanceModal({ isOpen, onClose, onSubmit, editData, defaultType = 'expe
   const [form, setForm] = useState({
     type: 'expense',
     title: '',
-    categoryKey: 'service',
+    // Default 'Lain-lain': sebelumnya default 'Servis' membuat gojek/makan/gaji
+    // tercatat sebagai biaya servis.
+    categoryKey: 'other',
     amount: '',
     expense_date: getLocalDateStr(),
     notes: '',
@@ -118,7 +121,7 @@ function FinanceModal({ isOpen, onClose, onSubmit, editData, defaultType = 'expe
         setForm({
           type: defaultType,
           title: '',
-          categoryKey: defaultType === 'income' ? 'other_income' : 'service',
+          categoryKey: defaultType === 'income' ? 'other_income' : 'other',
           amount: '',
           expense_date: getLocalDateStr(),
           notes: '',
@@ -131,7 +134,7 @@ function FinanceModal({ isOpen, onClose, onSubmit, editData, defaultType = 'expe
     setForm(prev => ({
       ...prev,
       type: newType,
-      categoryKey: newType === 'income' ? 'other_income' : 'service'
+      categoryKey: newType === 'income' ? 'other_income' : 'other'
     }));
   };
 
@@ -461,7 +464,8 @@ export default function FinancesPage() {
     try {
       const [expRes, txRes] = await Promise.all([
         fetch('/api/expenses').then(r => r.json()).catch(() => []),
-        fetch('/api/transactions').then(r => r.json()).catch(() => [])
+        // Hanya transaksi selesai yang punya klaim denda (bukan seluruh transaksi)
+        fetch('/api/transactions?status=completed&damage_only=1').then(r => r.json()).catch(() => [])
       ]);
 
       let manualRecords = Array.isArray(expRes) ? expRes : [];
@@ -481,7 +485,9 @@ export default function FinancesPage() {
           if (!Array.isArray(txRes)) {
             const { data: txData } = await supabase
               .from('transactions')
-              .select('*, vehicles(id, name, plate_number, rate_per_day)')
+              .select(TX_LIGHT_SELECT)
+              .eq('status', 'completed')
+              .gt('damage_fee', 0)
               .order('created_at', { ascending: false });
             txRecords = txData || [];
           }

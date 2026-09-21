@@ -1,9 +1,14 @@
+import { CUSTOMER_LIGHT_COLUMNS, fetchAllRows } from '@/lib/queryColumns';
+
 /**
  * Helper modul data Customer / Client Boss Rent Pererenan
  * Mendukung Dual-Mode: Supabase `customers` table + Fallback Automatic Aggregation dari `transactions` & localStorage.
  */
 
 const LOCAL_CUSTOMERS_KEY = 'boss_rent_customers_master';
+
+// Kolom transaksi untuk statistik customer (tanpa foto).
+const CUSTOMER_TX_STAT_COLUMNS = 'id, renter_name, renter_phone, renter_id_number, renter_address, start_date, created_at, status, total_price';
 
 /**
  * Normalisasi nomor HP untuk keperluan pencocokan unik (hapus spasi, strip, dll)
@@ -31,9 +36,10 @@ export async function fetchCustomers(supabase) {
 
     // 1. Cek & Ambil dari tabel Supabase `customers` jika ada
     if (supabase) {
+      // Tanpa kolom foto (base64) — lihat lib/queryColumns.js
       const { data: dbData, error: dbErr } = await supabase
         .from('customers')
-        .select('*')
+        .select(CUSTOMER_LIGHT_COLUMNS)
         .order('created_at', { ascending: false });
 
       if (!dbErr && Array.isArray(dbData)) {
@@ -45,10 +51,11 @@ export async function fetchCustomers(supabase) {
     // 2. Ambil seluruh transaksi untuk menghitung statistik (total_rentals, total_spent, last_rental_date)
     let transactionsList = [];
     if (supabase) {
-      const { data: txData, error: txErr } = await supabase
+      // Hanya kolom yang dibutuhkan statistik (tanpa foto), dengan paging.
+      const { data: txData, error: txErr } = await fetchAllRows(() => supabase
         .from('transactions')
-        .select('*')
-        .order('start_date', { ascending: false });
+        .select(CUSTOMER_TX_STAT_COLUMNS)
+        .order('start_date', { ascending: false }));
 
       if (!txErr && Array.isArray(txData)) {
         transactionsList = txData;
@@ -197,9 +204,13 @@ export async function upsertCustomer(supabase, customerData) {
     id_number: customerData.id_number ? customerData.id_number.trim() : null,
     address: customerData.address ? customerData.address.trim() : null,
     notes: customerData.notes ? customerData.notes.trim() : null,
-    customer_image_url: customerData.customer_image_url || null,
     updated_at: new Date().toISOString(),
   };
+  // Hanya timpa kolom yang memang dikirim pemanggil. Sebelumnya setiap simpan
+  // transaksi ikut mengosongkan catatan customer (notes → null).
+  ['id_number', 'address', 'notes'].forEach((key) => {
+    if (!(key in customerData)) delete payload[key];
+  });
 
   // Check Supabase DB
   let dbSuccess = false;
@@ -265,7 +276,7 @@ export async function syncTransactionsToCustomers(supabase) {
   let count = 0;
 
   try {
-    const { data: txList } = await supabase.from('transactions').select('*');
+    const { data: txList } = await fetchAllRows(() => supabase.from('transactions').select(CUSTOMER_TX_STAT_COLUMNS));
     if (!txList || txList.length === 0) return { count: 0 };
 
     const uniqueMap = new Map();
@@ -278,7 +289,6 @@ export async function syncTransactionsToCustomers(supabase) {
           phone: tx.renter_phone,
           id_number: tx.renter_id_number || null,
           address: tx.renter_address || null,
-          customer_image_url: tx.customer_image_url || null,
           notes: 'Auto-synced from historical transactions',
           created_at: tx.created_at || new Date().toISOString(),
           updated_at: new Date().toISOString(),

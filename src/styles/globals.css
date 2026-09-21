@@ -3190,86 +3190,6 @@ textarea {
   width: 100%;
 }
 
-/* =========================================
-   VOICE USER INTERFACE (VUI) ASSISTANT
-   ========================================= */
-.vui-voice-container {
-  position: relative;
-}
-
-.vui-voice-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(96, 165, 250, 0.15));
-  border: 1px solid rgba(37, 99, 235, 0.4);
-  color: var(--brand-primary-light);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.vui-voice-btn:hover {
-  background: var(--brand-primary);
-  color: #ffffff;
-  border-color: var(--brand-primary);
-  box-shadow: 0 0 16px rgba(37, 99, 235, 0.4);
-}
-
-.vui-voice-btn.listening {
-  background: #EF4444;
-  color: #ffffff;
-  border-color: #EF4444;
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
-}
-
-.vui-voice-popover {
-  position: absolute;
-  top: 48px;
-  right: 0;
-  width: 240px;
-  background: #1A1A26;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
-  z-index: 999;
-  animation: fadeIn 0.2s ease forwards;
-}
-
-.vui-status-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--brand-primary-light);
-  margin-bottom: 6px;
-}
-
-.vui-pulse-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #22C55E;
-  box-shadow: 0 0 8px #22C55E;
-}
-
-.vui-transcript {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-primary);
-  font-style: italic;
-}
-
-.vui-feedback {
-  font-size: 11px;
-  color: var(--text-secondary);
-  margin-top: 4px;
-}
-
 /* Bento Pill Tags & Chart Stack */
 .bento-pill-tag {
   background: rgba(37, 99, 235, 0.12);
@@ -3604,9 +3524,6 @@ textarea {
     gap: var(--space-3);
   }
 
-  .vui-btn-label {
-    display: none;
-  }
 }
 
 @media (max-width: 600px) {
@@ -5451,9 +5368,6 @@ select.form-control option { background: var(--bg-surface); color: var(--text-pr
   }
   .header-date {
     display: none;
-  }
-  .vui-voice-btn {
-    padding: 6px 10px;
   }
   .theme-dropdown-menu {
     right: -4px;

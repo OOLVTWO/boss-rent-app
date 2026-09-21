@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { startVisiblePolling } from '@/lib/visiblePolling';
 import { useState, useEffect } from 'react';
 
 // ── Nav grouped by section ──
@@ -63,6 +64,11 @@ const NAV_SECTIONS = [
           { href: '/availability?tab=maintenance', iconClass: 'fa-solid fa-wrench',             label: 'Perawatan' },
         ],
       },
+      {
+        href: '/service',
+        iconClass: 'fa-solid fa-screwdriver-wrench',
+        label: 'Servis Motor',
+      },
     ],
   },
   {
@@ -94,23 +100,6 @@ const NAV_SECTIONS = [
     ],
   },
   {
-    label: 'Tools',
-    items: [
-      {
-        href: '/maintenance',
-        iconClass: 'fa-solid fa-robot',
-        label: 'AI Diagnostic',
-        isDropdown: true,
-        children: [
-          { href: '/maintenance?tab=diagnostics', iconClass: 'fa-solid fa-robot',              label: 'Skor Kesehatan' },
-          { href: '/maintenance?tab=history',     iconClass: 'fa-solid fa-clock-rotate-left',  label: 'Riwayat Servis' },
-          { href: '/maintenance?tab=reports',     iconClass: 'fa-solid fa-clipboard-list',     label: 'Keluhan Pelanggan' },
-        ],
-      },
-      { href: '/gallery',     iconClass: 'fa-solid fa-images', label: 'Galeri Foto' },
-    ],
-  },
-  {
     label: 'Lainnya',
     items: [
       {
@@ -119,11 +108,11 @@ const NAV_SECTIONS = [
         label: 'Pengaturan',
         isDropdown: true,
         children: [
-          { href: '/settings?tab=storage',  iconClass: 'fa-solid fa-database',       label: 'Database & Storage' },
+          { href: '/settings?tab=business', iconClass: 'fa-solid fa-store',          label: 'Profil Bisnis' },
           { href: '/settings?tab=payment',  iconClass: 'fa-solid fa-credit-card',    label: 'Metode Pembayaran' },
-          { href: '/settings?tab=wacustom', iconClass: 'fa-brands fa-whatsapp',      label: 'Template Invoice WA' },
+          { href: '/settings?tab=wacustom', iconClass: 'fa-brands fa-whatsapp',      label: 'Template WhatsApp' },
           { href: '/settings?tab=security', iconClass: 'fa-solid fa-shield-halved', label: 'Keamanan & Password' },
-          { href: '/settings?tab=business', iconClass: 'fa-solid fa-sliders',        label: 'Operasional Rental' },
+          { href: '/settings?tab=storage',  iconClass: 'fa-solid fa-database',       label: 'Data & Backup' },
         ],
       },
       { href: '/fleet', iconClass: 'fa-solid fa-globe', label: 'Website Publik' },
@@ -185,8 +174,7 @@ export default function Sidebar({ user, mobileOpen, onClose }) {
       } catch { /* ignore */ }
     };
     fetchAlerts();
-    const interval = setInterval(fetchAlerts, 60000);
-    return () => clearInterval(interval);
+    return startVisiblePolling(fetchAlerts, 60000);
   }, []);
 
   const handleLogout = async () => {

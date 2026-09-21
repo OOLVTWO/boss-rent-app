@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client';
 import { fetchCustomers, upsertCustomer, syncTransactionsToCustomers } from '@/lib/customers';
 import { exportCustomersToExcel, formatRupiah } from '@/lib/excel';
 import { COUNTRY_CODES, getFlagImageUrl } from '@/lib/countryCodes';
-import { compressImage } from '@/lib/imageCompressor';
 
 const VALID_CUSTOMER_TABS = ['all', 'repeat', 'new'];
 
@@ -159,11 +158,9 @@ export default function CustomersPage() {
     id_number: '',
     address: '',
     notes: '',
-    customer_image_url: '',
   });
   const [countryCode, setCountryCode] = useState('+62');
   const [phoneNumberOnly, setPhoneNumberOnly] = useState('');
-  const [uploadingImg, setUploadingImg] = useState(false);
 
   const supabase = createClient();
 
@@ -210,8 +207,7 @@ export default function CustomersPage() {
       id_number: '',
       address: '',
       notes: '',
-      customer_image_url: '',
-    });
+      });
     setCountryCode('+62');
     setPhoneNumberOnly('');
     setModalOpen(true);
@@ -225,7 +221,6 @@ export default function CustomersPage() {
       id_number: customer.id_number || '',
       address: customer.address || '',
       notes: customer.notes || '',
-      customer_image_url: customer.customer_image_url || '',
     });
 
     if (customer.phone) {
@@ -243,20 +238,6 @@ export default function CustomersPage() {
     }
 
     setModalOpen(true);
-  };
-
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setUploadingImg(true);
-    try {
-      const compressed = await compressImage(file, { maxWidth: 1000, maxHeight: 1000, quality: 0.82 });
-      setForm(prev => ({ ...prev, customer_image_url: compressed }));
-    } catch (err) {
-      alert(err.message || 'Gagal memproses foto customer.');
-    } finally {
-      setUploadingImg(false);
-    }
   };
 
   const handleSubmitForm = async (e) => {
@@ -744,32 +725,6 @@ export default function CustomersPage() {
             </div>
 
             <form onSubmit={handleSubmitForm} style={{ padding: '20px' }}>
-              {/* Photo Upload */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
-                <div style={{
-                  width: '64px', height: '64px', borderRadius: '50%',
-                  background: 'var(--bg-elevated)', border: '2px dashed var(--brand-primary)',
-                  overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
-                  {form.customer_image_url ? (
-                    <img src={form.customer_image_url} alt="Foto Customer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <i className="fa-solid fa-camera" style={{ fontSize: '22px', color: 'var(--brand-primary)' }}></i>
-                  )}
-                </div>
-
-                <div>
-                  <label className="btn btn-secondary" style={{ fontSize: '12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                    <i className="fa-solid fa-upload"></i> Upload Foto / Paspor
-                    <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
-                  </label>
-                  {uploadingImg && <span style={{ fontSize: '11px', color: 'var(--brand-primary)', marginLeft: '8px' }}>Memproses foto...</span>}
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    Foto wajah atau scan dokumen identitas customer.
-                  </div>
-                </div>
-              </div>
-
               {/* Name */}
               <div className="form-group" style={{ marginBottom: '14px' }}>
                 <label className="form-label">
