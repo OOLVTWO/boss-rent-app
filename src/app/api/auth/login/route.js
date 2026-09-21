@@ -12,11 +12,17 @@ import { NextResponse } from 'next/server';
  * punya proteksi apa pun selain limit bawaan Supabase — brute-force di
  * app level tidak tercegah.
  *
- * Limit lebih ketat dari API data (5 percobaan / 5 menit per IP) karena
- * ini titik masuk paling sensitif di seluruh aplikasi.
+ * Limit lebih ketat dari API data (10 percobaan / 10 menit per IP) karena
+ * ini titik masuk paling sensitif di seluruh aplikasi. Dinaikkan dari 5/5
+ * menit — terlalu ketat untuk penggunaan nyata: satu kantor/WiFi dipakai
+ * bersama oleh beberapa staff, jadi beberapa kali salah ketik password dari
+ * orang berbeda bisa mengunci SEMUA orang di jaringan yang sama sekaligus.
+ * 10/10 menit masih memberi proteksi brute-force yang berarti (jauh dari
+ * cukup untuk menebak password acak) sambil memberi ruang wajar untuk
+ * kesalahan normal.
  */
 export async function POST(request) {
-  const rl = rateLimit(request, { windowMs: 5 * 60_000, max: 5 });
+  const rl = rateLimit(request, { windowMs: 10 * 60_000, max: 10 });
   if (!rl.ok) {
     return NextResponse.json(
       { error: 'Terlalu banyak percobaan login. Silakan coba lagi beberapa menit lagi.' },

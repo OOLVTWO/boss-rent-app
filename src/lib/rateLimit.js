@@ -24,7 +24,20 @@ export function rateLimit(request, { windowMs = DEFAULT_WINDOW_MS, max = DEFAULT
   const ip =
     request?.headers?.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     request?.headers?.get('x-real-ip') ||
-    'unknown';
+    null;
+
+  // PERBAIKAN: kalau IP tidak bisa dideteksi (header proxy tidak ada/beda
+  // di host tertentu), JANGAN fallback ke satu key bersama ('unknown') —
+  // itu artinya SEMUA pengunjung berbagi satu limit yang sama, jadi
+  // percobaan login siapa pun (termasuk bot/orang lain) bisa mengunci
+  // SEMUA orang keluar, termasuk pemilik sendiri, walau baru percobaan
+  // pertama mereka hari itu. Kondisi persis yang dilaporkan: halaman
+  // login tampil normal, tapi tidak pernah berhasil connect akun.
+  // Lebih aman fail-open (skip rate limit) untuk kasus yang jarang ini
+  // daripada fail-closed yang mengunci semua orang sekaligus.
+  if (!ip) {
+    return { ok: true, remaining: max };
+  }
 
   const bucket = hits.get(ip);
   if (!bucket || bucket.resetAt <= now) {

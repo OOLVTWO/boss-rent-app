@@ -40,4 +40,19 @@ describe('rateLimit (in-memory)', () => {
     resetRateLimiter();
     expect(rateLimit(req, opts).ok).toBe(true);
   });
+
+  it('regression: IP tidak terdeteksi TIDAK boleh fallback ke bucket bersama (fail-open, bukan fail-closed)', () => {
+    // Bug asli: request tanpa x-forwarded-for/x-real-ip (mis. proxy/host
+    // tertentu tidak selalu mengirim header ini) dulu jatuh ke key
+    // 'unknown' yang SAMA untuk semua pengunjung — artinya percobaan
+    // login siapa pun bisa mengunci SEMUA orang keluar sekaligus,
+    // termasuk pemilik sendiri di percobaan pertama mereka.
+    const noIpRequest = { headers: { get: () => null } };
+    const opts = { max: 2 };
+    // Habiskan limit lewat banyak "pengunjung tanpa IP" berbeda —
+    // kalau masih fail-closed/shared-bucket, request berikutnya akan ditolak.
+    for (let i = 0; i < 10; i++) {
+      expect(rateLimit(noIpRequest, opts).ok).toBe(true);
+    }
+  });
 });
