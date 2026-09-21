@@ -1,6 +1,35 @@
 import { createAdminClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/apiAuth';
 import { NextResponse } from 'next/server';
+import { TX_LIGHT_SELECT } from '@/lib/queryColumns';
+import { HANDOVER_BUCKET, refToPath } from '@/lib/handoverPhoto';
+
+// Hapus file foto serah terima lama di Storage (best-effort).
+async function removeStoredPhoto(supabase, value) {
+  const path = refToPath(value);
+  if (!path) return;
+  const { error } = await supabase.storage.from(HANDOVER_BUCKET).remove([path]);
+  if (error) console.warn('Gagal menghapus foto lama dari Storage:', error.message);
+}
+
+// GET /api/transactions/[id] — SATU transaksi lengkap (termasuk kolom foto).
+// Dipakai saat membuka Edit / Invoice WA / lihat foto, bukan untuk list.
+export async function GET(request, { params }) {
+  const authError = await requireAuth(request);
+  if (authError) return authError;
+
+  const { id } = await params;
+  const supabase = await createAdminClient();
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*, vehicles(id, name, plate_number, rate_per_day, category)')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ error: 'Transaksi tidak ditemukan.' }, { status: 404 });
+  return NextResponse.json(data);
+}
 
 // PUT /api/transactions/[id]
 export async function PUT(request, { params }) {
@@ -37,11 +66,19 @@ export async function PUT(request, { params }) {
   if ('km_end' in updateData) updateData.km_end = parseInt(updateData.km_end) || 0;
   // Keep payment_status as-is (string 'paid' or 'unpaid')
 
+  // Foto serah terima lama (untuk dibersihkan dari Storage kalau diganti/dihapus)
+  let previousPhoto = null;
+  if ('handover_image_url' in updateData) {
+    const { data: prev } = await supabase
+      .from('transactions').select('handover_image_url').eq('id', id).maybeSingle();
+    previousPhoto = prev?.handover_image_url || null;
+  }
+
   let { data, error } = await supabase
     .from('transactions')
     .update(updateData)
     .eq('id', id)
-    .select(`*, vehicles(id, name, plate_number, rate_per_day)`)
+    .select(TX_LIGHT_SELECT)
     .single();
 
   // Smart Fallback jika kolom baru belum di-migrate di Supabase database
@@ -53,7 +90,7 @@ export async function PUT(request, { params }) {
       .from('transactions')
       .update(fallbackUpdate)
       .eq('id', id)
-      .select(`*, vehicles(id, name, plate_number, rate_per_day)`)
+      .select(TX_LIGHT_SELECT)
       .single();
 
     data = retry.data;
@@ -63,6 +100,10 @@ export async function PUT(request, { params }) {
   if (error) {
     console.error('Update transaction error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  if (previousPhoto && previousPhoto !== updateData.handover_image_url) {
+    await removeStoredPhoto(supabase, previousPhoto);
   }
 
   if (body.status === 'completed' || body.status === 'cancelled') {
@@ -87,12 +128,14 @@ export async function DELETE(request, { params }) {
 
   const { data: tx } = await supabase
     .from('transactions')
-    .select('vehicle_id, status')
+    .select('vehicle_id, status, handover_image_url')
     .eq('id', id)
     .single();
 
   const { error } = await supabase.from('transactions').delete().eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if (tx?.handover_image_url) await removeStoredPhoto(supabase, tx.handover_image_url);
 
   if (tx && tx.status === 'active') {
     await supabase

@@ -17,6 +17,7 @@ import {
 } from '@/lib/countryCodes';
 import { updateFavicon } from '@/lib/favicon';
 import { fetchAllRows } from '@/lib/queryColumns';
+import { uploadHandoverPhoto } from '@/lib/handoverPhoto';
 import { DEFAULT_SERVICE_INTERVAL_KM, DEFAULT_SERVICE_INTERVAL_DAYS } from '@/lib/serviceLog';
 
 // Panel Pengaturan difokuskan untuk ADMINISTRASI saja.
@@ -119,6 +120,11 @@ export default function SettingsPage() {
   // Backup State
   const [backupLoading, setBackupLoading] = useState(false);
 
+  // Migrasi foto serah terima lama (base64 di database) → Supabase Storage
+  const [legacyPhotoCount, setLegacyPhotoCount] = useState(null);
+  const [migratingPhotos, setMigratingPhotos] = useState(false);
+  const [migrateProgress, setMigrateProgress] = useState('');
+
   useEffect(() => {
     // Defer ke microtask: baca localStorage + setState tidak sinkron di effect
     Promise.resolve().then(() => {
@@ -211,8 +217,61 @@ export default function SettingsPage() {
       next[t.key] = results[i].error ? null : (results[i].count ?? 0);
     });
     setStats(next);
+
+    // Hitung foto lama yang masih berupa base64 (count+head: tidak mengunduh foto)
+    const legacy = await supabase.from('transactions')
+      .select('id', { count: 'exact', head: true })
+      .like('handover_image_url', 'data:%');
+    setLegacyPhotoCount(legacy.error ? null : (legacy.count ?? 0));
     setLoadingStats(false);
   }, []);
+
+  // Sekali jalan: pindahkan foto base64 lama ke bucket Storage, satu per satu.
+  const handleMigrateLegacyPhotos = async () => {
+    setMigratingPhotos(true);
+    setMigrateProgress('');
+    const supabase = createClient();
+    let moved = 0;
+    const failed = [];
+    try {
+      const { data: ids, error } = await supabase.from('transactions')
+        .select('id').like('handover_image_url', 'data:%');
+      if (error) throw new Error(error.message);
+
+      for (let i = 0; i < ids.length; i += 1) {
+        const { id } = ids[i];
+        setMigrateProgress(`Memproses foto ${i + 1} dari ${ids.length}…`);
+        try {
+          const { data: row, error: rowErr } = await supabase.from('transactions')
+            .select('handover_image_url').eq('id', id).maybeSingle();
+          if (rowErr) throw new Error(rowErr.message);
+          const value = row?.handover_image_url;
+          if (!value || !value.startsWith('data:')) continue;
+
+          const ref = await uploadHandoverPhoto(supabase, value); // dikompres ulang ±1280px
+          const { error: upErr } = await supabase.from('transactions')
+            .update({ handover_image_url: ref })
+            .eq('id', id)
+            .like('handover_image_url', 'data:%');
+          if (upErr) throw new Error(upErr.message);
+          moved += 1;
+        } catch (err) {
+          failed.push(`${id.slice(0, 8)}: ${err.message}`);
+        }
+      }
+      if (failed.length) {
+        showAlert(`${moved} foto dipindahkan, ${failed.length} gagal: ${failed.join('; ')}`, 'danger');
+      } else {
+        showAlert(`${moved} foto serah terima lama berhasil dipindahkan ke Storage.`);
+      }
+    } catch (err) {
+      showAlert(`Gagal memindahkan foto: ${err.message}`, 'danger');
+    } finally {
+      setMigratingPhotos(false);
+      setMigrateProgress('');
+      fetchStats();
+    }
+  };
 
   useEffect(() => {
     // Defer ke microtask: hindari setState sinkron di dalam effect
@@ -1060,6 +1119,21 @@ export default function SettingsPage() {
               ))}
             </div>
           </div>
+
+          {legacyPhotoCount > 0 && (
+            <div className="card" style={{ borderLeft: '4px solid var(--status-warning)' }}>
+              <h3 style={{ margin: '0 0 6px' }}><i className="fa-solid fa-images" style={{ marginRight: '8px' }}></i> Pindahkan Foto Lama ke Storage</h3>
+              <p style={{ margin: '0 0 14px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                Ada {legacyPhotoCount} foto serah terima lama yang masih tersimpan di dalam database (beberapa MB per foto).
+                Pindahkan sekali saja: foto dikompres ulang, disimpan di Supabase Storage, dan database hanya menyimpan tautannya.
+              </p>
+              <button type="button" className="btn btn-primary" onClick={handleMigrateLegacyPhotos} disabled={migratingPhotos}>
+                {migratingPhotos
+                  ? <><i className="fa-solid fa-spinner fa-spin"></i> {migrateProgress || 'Memproses…'}</>
+                  : <><i className="fa-solid fa-truck-arrow-right"></i> Pindahkan {legacyPhotoCount} Foto</>}
+              </button>
+            </div>
+          )}
 
           <div className="card">
             <h3 style={{ margin: '0 0 6px' }}><i className="fa-solid fa-cloud-arrow-down" style={{ marginRight: '8px' }}></i> Backup Data</h3>
