@@ -35,14 +35,25 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Email dan password wajib diisi.' }, { status: 400 });
   }
 
+  // Normalize the email server-side regardless of what the client sends —
+  // mobile keyboards can auto-capitalize the first letter of a text field
+  // even with type="email", and autofill/typing can leave a stray leading
+  // or trailing space. Trimming + lowercasing here means a login can never
+  // silently fail just because of that, independent of whatever the
+  // client-side input attributes do.
+  const email = body.email.trim().toLowerCase();
+  const password = body.password;
+
   const supabase = await createClient();
-  const { error: authError } = await supabase.auth.signInWithPassword({
-    email: body.email,
-    password: body.password,
-  });
+  const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
   if (authError) {
-    // Pesan generik — jangan bocorkan apakah email terdaftar atau tidak.
+    // Pesan generik ke client — jangan bocorkan apakah email terdaftar atau
+    // tidak. Tapi log alasan ASLI di server (mis. "Invalid login
+    // credentials" vs "Email not confirmed" vs lainnya) supaya bisa
+    // didiagnosis lewat Vercel function logs kalau user melapor tidak bisa
+    // login padahal yakin password benar.
+    console.error('Login failed:', authError.message || authError);
     return NextResponse.json({ error: 'Email atau password salah.' }, { status: 401 });
   }
 
