@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import DashboardCharts from '@/components/dashboard/DashboardCharts';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { getServiceIntervals, getServiceStatus } from '@/lib/serviceLog';
 import { calcFinancialSummary, formatRupiah, getLocalMonthStr, getLocalDateStr, toLocalDateStr, isPaidTransaction, isIncomeEntry } from '@/lib/finance';
 
 const MONTH_NAMES = [
@@ -67,6 +68,9 @@ export default function DashboardClient({ transactions, vehicles, loadedYear }) 
   // datanya memang belum pernah diminta dari server.
   const [extraYearData, setExtraYearData] = useState(null); // { year, transactions, expenses }
   const [loadingYear, setLoadingYear] = useState(false);
+  const [serviceIntervals, setServiceIntervals] = useState(null);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- baca localStorage setelah mount
+  useEffect(() => { setServiceIntervals(getServiceIntervals()); }, []);
 
   // Tahun mana yang SEDANG dilihat user, baik lewat mode Bulanan (tahun ikut
   // bagian dari selectedMonth) maupun mode Tahunan (selectedYear).
@@ -150,6 +154,10 @@ export default function DashboardClient({ transactions, vehicles, loadedYear }) 
   const viewingExtraYear = extraYearData?.year === viewingYear && viewingYear !== String(effectiveLoadedYear);
   const safeTx       = viewingExtraYear ? (extraYearData.transactions || []) : (Array.isArray(transactions) ? transactions : []);
   const safeVehicles = Array.isArray(vehicles) ? vehicles : [];
+  // Pengingat servis: interval dibaca dari localStorage setelah mount (hindari hydration mismatch).
+  const serviceDueVehicles = serviceIntervals
+    ? safeVehicles.filter(v => getServiceStatus(v, serviceIntervals).level === 'due')
+    : [];
   const safeExpenses = viewingExtraYear ? (extraYearData.expenses || []) : (Array.isArray(expenses) ? expenses : []);
 
   const periodRange = useMemo(() => {
@@ -296,13 +304,25 @@ export default function DashboardClient({ transactions, vehicles, loadedYear }) 
   return (
     <div className="dashboard-v2 fade-in">
 
-      {unpaidTx.length > 0 && (
+      {(unpaidTx.length > 0 || serviceDueVehicles.length > 0) && (
         <div className="dash-alerts">
-          <Link href="/transactions" className="dash-alert-bar unpaid">
-            <i className="fa-solid fa-triangle-exclamation"></i>
-            <span>{unpaidTx.length} sewa aktif belum bayar — total piutang {formatRupiah(totalUnpaid)}</span>
-            <span className="alert-cta">Lihat Transaksi &rarr;</span>
-          </Link>
+          {unpaidTx.length > 0 && (
+            <Link href="/transactions" className="dash-alert-bar unpaid">
+              <i className="fa-solid fa-triangle-exclamation"></i>
+              <span>{unpaidTx.length} sewa aktif belum bayar — total piutang {formatRupiah(totalUnpaid)}</span>
+              <span className="alert-cta">Lihat Transaksi &rarr;</span>
+            </Link>
+          )}
+          {serviceDueVehicles.length > 0 && (
+            <Link href="/service" className="dash-alert-bar maintenance">
+              <i className="fa-solid fa-screwdriver-wrench"></i>
+              <span>
+                {serviceDueVehicles.length} motor sudah waktunya servis — {serviceDueVehicles.slice(0, 4).map(v => v.name).join(', ')}
+                {serviceDueVehicles.length > 4 ? ` +${serviceDueVehicles.length - 4} lagi` : ''}
+              </span>
+              <span className="alert-cta">Buka Servis &rarr;</span>
+            </Link>
+          )}
         </div>
       )}
 
@@ -487,6 +507,11 @@ export default function DashboardClient({ transactions, vehicles, loadedYear }) 
               <i className="fa-solid fa-circle-half-stroke"></i>
               <div className="qbtn-label">Cek Armada</div>
               <div className="qbtn-sub">Status real-time</div>
+            </Link>
+            <Link href="/service" className="dash-quick-btn q-purple">
+              <i className="fa-solid fa-screwdriver-wrench"></i>
+              <div className="qbtn-label">Servis Motor</div>
+              <div className="qbtn-sub">Catat &amp; cek jadwal</div>
             </Link>
             <Link href="/reports?tab=investor" className="dash-quick-btn q-green">
               <i className="fa-solid fa-chart-line"></i>

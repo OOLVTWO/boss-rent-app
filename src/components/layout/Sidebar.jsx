@@ -63,6 +63,11 @@ const NAV_SECTIONS = [
           { href: '/availability?tab=maintenance', iconClass: 'fa-solid fa-wrench',             label: 'Perawatan' },
         ],
       },
+      {
+        href: '/service',
+        iconClass: 'fa-solid fa-screwdriver-wrench',
+        label: 'Servis Motor',
+      },
     ],
   },
   {
